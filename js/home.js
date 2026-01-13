@@ -1,47 +1,51 @@
 import CONFIG from './config.js';
 
-async function fetchHomeData() {
-    try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/home-data`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+/**
+ * Fetches home page data and updates the UI.
+ * Validates the API response format and handles missing categories.
+ */
+function fetchHomeData() {
+    fetch(`${CONFIG.API_BASE_URL}/home-data`)
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('API request failed');
+            }
+            return res.json();
+        })
+        .then(data => {
+            console.log('Home API response:', data);
 
-        const data = await response.json();
-        
-        // Defensive check for API response structure
-        if (data && data.status === true) {
-            
-            // Render banners only if present and valid
-            if (data.banners && Array.isArray(data.banners)) {
+            // ✅ Defensive check for banners
+            if (data && Array.isArray(data.banners)) {
                 renderBanners(data.banners);
             }
 
-            // Categories logic disabled as backend does not return categories
-            // renderCategories(data.categories);
+            // ✅ ONLY handle products if they exist as an array
+            if (data?.products && Array.isArray(data.products)) {
+                // Populate both grids in the index.html template
+                renderProducts(data.products, 'featured-products-grid');
+                renderProducts(data.products, 'latest-products-grid');
+            } else {
+                console.error('Invalid home-data response extra key check:', data);
+            }
+
+            // ❌ Disable category rendering as backend does not return it
             const categorySection = document.getElementById('categories-row');
             if (categorySection) {
                 categorySection.style.display = 'none';
             }
-
-            // Render products using data.products as per API specification
-            if (data.products && Array.isArray(data.products)) {
-                // Feature products grid
-                renderProducts(data.products, 'featured-products-grid');
-                // Latest products grid (using same products as fallback)
-                renderProducts(data.products, 'latest-products-grid');
+        })
+        .catch(err => {
+            console.error('Home fetch failed:', err);
+            if (window.showToast) {
+                window.showToast('Failed to sync content', 'error');
             }
-        }
-        
-    } catch (e) {
-        console.error('Home data load failed:', e);
-        if (window.showToast) {
-            window.showToast('Failed to load home data', 'error');
-        }
-    }
+        });
 }
 
+/**
+ * Renders the hero slider banners with safety checks.
+ */
 function renderBanners(banners) {
     const container = document.getElementById('hero-slider-content');
     if (!container || !Array.isArray(banners) || banners.length === 0) return;
@@ -59,58 +63,55 @@ function renderBanners(banners) {
 }
 
 /**
- * Category rendering disabled. 
- * Use this only if data.categories is restored in the backend.
+ * Renders products into a grid.
+ * Correctly builds image URLs using backend storage path.
  */
-/*
-function renderCategories(categories) {
-    const row = document.getElementById('categories-row');
-    if (!row || !Array.isArray(categories)) return;
-    row.innerHTML = categories.map(c => `
-        <a href="/shop.html?category=${c.id}" class="flex flex-col items-center gap-2 no-underline group flex-shrink-0">
-            <div class="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center p-2 group-hover:bg-[#2874f0]/5 transition-all overflow-hidden border border-slate-100">
-                <img src="${c.image_url}" class="h-full w-full object-contain group-hover:scale-110 transition-transform" onerror="this.src='https://placehold.co/100x100?text=Category'">
-            </div>
-            <p class="text-[11px] font-bold text-slate-700 group-hover:text-[#2874f0] tracking-wide m-0 text-center">${c.name}</p>
-        </a>
-    `).join('');
-}
-*/
-
 function renderProducts(products, gridId) {
-    const grid = document.getElementById(gridId);
-    if (!grid || !Array.isArray(products)) return;
+    // ✅ SAFETY CHECK: accept only array
+    if (!Array.isArray(products)) {
+        console.error(`renderProducts expects array for ${gridId}`);
+        return;
+    }
 
-    grid.innerHTML = products.map(p => {
-        const price = Number(p.price) || 0;
-        const discount = Number(p.discount_percent) || 0;
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+
+    grid.innerHTML = products.map(product => {
+        // Build image URL using backend storage path or fallback
+        const imageUrl = product.image
+            ? `https://solocart-backend.onrender.com/storage/${product.image}`
+            : (product.image_url || 'https://placehold.co/400x400?text=No+Image');
+
+        const price = Number(product.price) || 0;
+        const discount = Number(product.discount_percent) || 0;
         const originalPrice = discount > 0 ? (price / (1 - discount / 100)).toFixed(0) : (price * 1.2).toFixed(0);
 
         return `
             <div class="group bg-white rounded-sm overflow-hidden transition-all duration-300 hover:shadow-xl relative flex flex-col h-full border border-transparent hover:border-slate-100 p-4">
-                <a href="/product-details.html?slug=${p.slug || p.id}" class="no-underline text-inherit flex flex-col h-full">
+                <a href="/product-details.html?slug=${product.slug || product.id}" class="no-underline text-inherit flex flex-col h-full">
                     <div class="relative w-full aspect-square mb-4 overflow-hidden flex items-center justify-center">
-                        <img src="${p.image_url}" class="h-full object-contain group-hover:scale-105 transition-transform duration-700" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
+                        <img src="${imageUrl}" class="h-full object-contain group-hover:scale-105 transition-transform duration-700" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
                         ${discount > 0 ? `<span class="absolute top-0 right-0 text-[10px] font-black text-white bg-green-500 px-2 py-1 rounded-bl-lg uppercase">${discount}% OFF</span>` : ''}
                     </div>
                     <div class="flex-grow">
-                        <h3 class="text-xs font-bold text-slate-800 line-clamp-2 mb-1 group-hover:text-[#2874f0] min-h-[32px]">${p.name || 'Unavailable'}</h3>
+                        <h3 class="text-xs font-bold text-slate-800 line-clamp-2 mb-1 group-hover:text-[#2874f0] min-h-[32px]">${product.name || 'Unavailable'}</h3>
                         <div class="flex items-center gap-2 mb-2">
                             <div class="bg-green-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
-                                ${p.rating || '4.2'} <i class="fas fa-star text-[7px]"></i>
+                                ${product.rating || '4.2'} <i class="fas fa-star text-[7px]"></i>
                             </div>
                             <span class="text-slate-400 text-[10px] font-bold">(${Math.floor(Math.random() * 500) + 50})</span>
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="text-base font-black text-slate-900">₹${price.toLocaleString()}</span>
-                            ${discount > 0 || true ? `<span class="text-[10px] text-slate-400 line-through font-bold">₹${Number(originalPrice).toLocaleString()}</span>` : ''}
+                            <span class="text-[10px] text-slate-400 line-through font-bold">₹${Number(originalPrice).toLocaleString()}</span>
                         </div>
                     </div>
                 </a>
-                <button onclick="window.addToCart(${p.id}, 1)" class="mt-4 w-full bg-[#ff9f00] text-white py-2 text-xs font-bold rounded-sm hover:bg-[#fb641b] transition-colors uppercase tracking-tight">Add to Cart</button>
+                <button onclick="window.addToCart(${product.id}, 1)" class="mt-4 w-full bg-[#ff9f00] text-white py-2 text-xs font-bold rounded-sm hover:bg-[#fb641b] transition-colors uppercase tracking-tight">Add to Cart</button>
             </div>
         `;
     }).join('');
 }
 
+// Initialize on load
 document.addEventListener('DOMContentLoaded', fetchHomeData);
