@@ -4,10 +4,10 @@
 
 The frontend is trying to connect to:
 ```
-https://my-backend.onrender.com/api
+https://solocart-backend.onrender.com/api
 ```
 
-This is a **placeholder URL** and needs to be replaced with your **actual backend URL**.
+This is your **actual backend URL** on Render.
 
 ---
 
@@ -105,7 +105,7 @@ After updating the URL, make sure your **backend** allows requests from your fro
 'allowed_origins' => [
     'http://localhost:8080',
     'http://127.0.0.1:8080',
-    'https://your-netlify-site.netlify.app',
+    'https://polite-bombolone-b0c069.netlify.app',
 ],
 ```
 
@@ -118,9 +118,9 @@ Or allow all (for testing):
 
 ## 📝 Quick Steps to Fix Now
 
-1. **Find your backend URL**
+1. **Find your backend URL** (Already configured: `https://solocart-backend.onrender.com`)
 2. **Edit `js/config.js`** in your project
-3. **Replace** `https://my-backend.onrender.com/api` with your actual URL
+3. **Verify** the URL is `https://solocart-backend.onrender.com/api`
 4. **Save the file**
 5. **Refresh your browser** (Ctrl + F5)
 6. **Try login again**

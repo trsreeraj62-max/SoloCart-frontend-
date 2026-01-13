@@ -121,7 +121,7 @@ Then open: `http://localhost:8000`
 
 ### API Integration Tests
 Open Browser Console (F12) and check:
-- [ ] API calls go to `https://my-backend.onrender.com/api`
+- [ ] API calls go to `https://solocart-backend.onrender.com/api`
 - [ ] Authentication tokens stored in localStorage
 - [ ] Toast notifications appear on actions
 - [ ] Error messages display properly
@@ -283,7 +283,7 @@ After deploying to Netlify:
 ## 📝 Important Notes
 
 ### Backend API
-- Current API: `https://my-backend.onrender.com/api`
+- Current API: `https://solocart-backend.onrender.com/api`
 - Ensure backend is deployed and running
 - Backend must have CORS enabled for your Netlify domain
 

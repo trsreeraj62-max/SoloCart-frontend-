@@ -58,7 +58,7 @@ Press **F12** to open Developer Tools and check:
 ### ✅ Good Signs:
 - CSS loads from `/css/app.css`
 - JavaScript modules load
-- API calls go to `https://my-backend.onrender.com/api`
+- API calls go to `https://solocart-backend.onrender.com/api`
 - No 404 errors for HTML files
 
 ### ⚠️ Expected Warnings:
