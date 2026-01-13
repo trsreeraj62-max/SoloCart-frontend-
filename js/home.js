@@ -2,7 +2,7 @@ import CONFIG from './config.js';
 
 /**
  * Fetches home page data and updates the UI.
- * Validates the API response format and handles missing categories.
+ * Handles products safely and manages the "No Products" popup.
  */
 function fetchHomeData() {
     fetch(`${CONFIG.API_BASE_URL}/home-data`)
@@ -13,23 +13,24 @@ function fetchHomeData() {
             return res.json();
         })
         .then(data => {
-            console.log('Home API response:', data);
+            console.log('HOME DATA:', data);
 
-            // ✅ Defensive check for banners
+            // Handle Banners if present
             if (data && Array.isArray(data.banners)) {
                 renderBanners(data.banners);
             }
 
-            // ✅ ONLY handle products if they exist as an array
-            if (data?.products && Array.isArray(data.products)) {
-                // Populate both grids in the index.html template
+            // ✅ Popup logic based on products presence and length
+            if (data?.products && Array.isArray(data.products) && data.products.length > 0) {
                 renderProducts(data.products, 'featured-products-grid');
                 renderProducts(data.products, 'latest-products-grid');
+                hideNoProductsPopup(); // Hide popup if products exist
             } else {
-                console.error('Invalid home-data response extra key check:', data);
+                console.warn('Products missing or empty array');
+                showNoProductsPopup(); // Show popup if no products
             }
 
-            // ❌ Disable category rendering as backend does not return it
+            // Disable category rendering as backend does not return it
             const categorySection = document.getElementById('categories-row');
             if (categorySection) {
                 categorySection.style.display = 'none';
@@ -37,6 +38,7 @@ function fetchHomeData() {
         })
         .catch(err => {
             console.error('Home fetch failed:', err);
+            showNoProductsPopup(); // Show popup on fetch failure
             if (window.showToast) {
                 window.showToast('Failed to sync content', 'error');
             }
@@ -44,7 +46,20 @@ function fetchHomeData() {
 }
 
 /**
- * Renders the hero slider banners with safety checks.
+ * Popup UI Controls
+ */
+function showNoProductsPopup() {
+    const popup = document.getElementById('no-products-popup');
+    if (popup) popup.style.display = 'flex'; // Use flex for centering as per Tailwind classes
+}
+
+function hideNoProductsPopup() {
+    const popup = document.getElementById('no-products-popup');
+    if (popup) popup.style.display = 'none';
+}
+
+/**
+ * Renders the hero slider banners.
  */
 function renderBanners(banners) {
     const container = document.getElementById('hero-slider-content');
@@ -63,13 +78,11 @@ function renderBanners(banners) {
 }
 
 /**
- * Renders products into a grid.
- * Correctly builds image URLs using backend storage path.
+ * Renders products into aSpecified grid container.
  */
 function renderProducts(products, gridId) {
-    // ✅ SAFETY CHECK: accept only array
     if (!Array.isArray(products)) {
-        console.error(`renderProducts expects array for ${gridId}`);
+        console.error('renderProducts expects an array');
         return;
     }
 
@@ -77,7 +90,6 @@ function renderProducts(products, gridId) {
     if (!grid) return;
 
     grid.innerHTML = products.map(product => {
-        // Build image URL using backend storage path or fallback
         const imageUrl = product.image
             ? `https://solocart-backend.onrender.com/storage/${product.image}`
             : (product.image_url || 'https://placehold.co/400x400?text=No+Image');
