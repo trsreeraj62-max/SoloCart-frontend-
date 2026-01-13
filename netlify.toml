@@ -1,0 +1,20 @@
+[build]
+  publish = "."
+
+# Clean URLs: /shop will serve /shop.html if it exists
+[processing]
+  skip_processing = false
+[processing.html]
+  pretty_urls = true
+
+# Fallback to index.html for unknown routes (optional, but good for SPAs)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
+[[headers]]
+  for = "/*"
+    [headers.values]
+      Access-Control-Allow-Origin = "*"

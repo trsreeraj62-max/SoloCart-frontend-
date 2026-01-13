@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — SoloCart Premium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/resources/public/css/app.css">
+    <style>
+        :root { --fk-blue: #2874f0; --fk-yellow: #ffe500; --fk-bg: #f1f3f6; }
+        body { background-color: var(--fk-bg); font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; min-h-screen; padding: 20px; }
+        .login-card { max-width: 850px; width: 100%; display: flex; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; background: white; }
+        .login-banner { width: 40%; background: var(--fk-blue); padding: 40px 30px; color: white; display: flex; flex-col; gap: 20px; }
+        .login-form-side { width: 60%; padding: 50px; }
+    </style>
+</head>
+<body class="min-h-screen bg-[#f1f3f6] flex items-center justify-center p-4">
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"></div>
+
+    <div class="login-card">
+        <!-- Left Side -->
+        <div class="login-banner hidden md:flex flex-col justify-between">
+            <div>
+                <h1 class="text-3xl font-black italic tracking-tighter mb-4">Login</h1>
+                <p class="text-lg opacity-80 font-medium leading-relaxed">Get access to your Orders, Wishlist and Recommendations</p>
+            </div>
+            <img src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/login_img_c4a81e.png" alt="Login Banner" class="w-full mt-auto opacity-40 grayscale brightness-200">
+        </div>
+
+        <!-- Right Side -->
+        <div class="login-form-side">
+            <form id="login-form" class="space-y-6">
+                <div class="relative group">
+                    <input type="text" id="email" required class="w-full border-b border-slate-300 py-2 outline-none focus:border-[#2874f0] text-sm peer bg-transparent" placeholder=" ">
+                    <label class="absolute left-0 top-2 text-slate-400 text-sm transition-all pointer-events-none peer-focus:-top-4 peer-focus:text-[10px] peer-focus:text-[#2874f0] peer-[:not(:placeholder-shown)]:-top-4 peer-[:not(:placeholder-shown)]:text-[10px]">Enter Email/Mobile number</label>
+                </div>
+
+                <div class="relative group">
+                    <input type="password" id="password" required class="w-full border-b border-slate-300 py-2 outline-none focus:border-[#2874f0] text-sm peer bg-transparent" placeholder=" ">
+                    <label class="absolute left-0 top-2 text-slate-400 text-sm transition-all pointer-events-none peer-focus:-top-4 peer-focus:text-[10px] peer-focus:text-[#2874f0] peer-[:not(:placeholder-shown)]:-top-4 peer-[:not(:placeholder-shown)]:text-[10px]">Enter Password</label>
+                </div>
+
+                <p class="text-[10px] text-slate-500 leading-tight">By continuing, you agree to SoloCart's <a href="#" class="text-[#2874f0] font-bold">Terms of Use</a> and <a href="#" class="text-[#2874f0] font-bold">Privacy Policy</a>.</p>
+
+                <button type="submit" id="login-btn" class="w-full bg-[#fb641b] text-white py-3 rounded-sm font-black text-sm shadow-md hover:shadow-lg transition-all">Login</button>
+                
+                <div class="text-center">
+                    <span class="text-xs text-slate-400 font-bold uppercase tracking-widest">OR</span>
+                </div>
+
+                <button type="button" id="request-otp-btn" class="w-full bg-white text-[#2874f0] py-3 rounded-sm font-black text-sm shadow border border-slate-100 uppercase tracking-tighter">Request OTP</button>
+
+                <div class="pt-10 text-center">
+                    <a href="/register" class="text-[#2874f0] text-sm font-black no-underline">New to SoloCart? Create an account</a>
+                </div>
+            </form>
+
+            <!-- OTP Form (Hidden by default) -->
+            <form id="otp-form" class="hidden space-y-8">
+                 <div>
+                    <h2 class="text-xl font-bold text-slate-800 mb-2">Verify OTP</h2>
+                    <p class="text-xs text-slate-500">Sent to your registered signal frequency</p>
+                </div>
+                <div class="flex justify-between gap-2">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-14 border border-slate-200 rounded text-center text-xl font-black focus:border-[#2874f0] outline-none">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-14 border border-slate-200 rounded text-center text-xl font-black focus:border-[#2874f0] outline-none">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-14 border border-slate-200 rounded text-center text-xl font-black focus:border-[#2874f0] outline-none">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-14 border border-slate-200 rounded text-center text-xl font-black focus:border-[#2874f0] outline-none">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-14 border border-slate-200 rounded text-center text-xl font-black focus:border-[#2874f0] outline-none">
+                    <input type="text" maxlength="1" class="otp-input w-12 h-14 border border-slate-200 rounded text-center text-xl font-black focus:border-[#2874f0] outline-none">
+                </div>
+                <button type="submit" class="w-full bg-[#fb641b] text-white py-3 rounded-sm font-black text-sm shadow-md uppercase">Verify & Login</button>
+                <div class="text-center">
+                    <button type="button" id="back-to-login" class="text-[10px] font-black uppercase text-slate-400 hover:text-[#2874f0]">Back to Login</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="/js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us — SoloCart Support</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/resources/public/css/app.css">
+    <style>
+        :root { --fk-blue: #2874f0; --fk-bg: #f1f3f6; }
+        body { background-color: var(--fk-bg); font-family: 'Inter', sans-serif; }
+        .container-max { max-width: 1200px; }
+    </style>
+</head>
+<body>
+    <div id="toast-container" class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"></div>
+
+    <!-- Navigation -->
+    <nav class="bg-[#2874f0] text-white py-2 sticky top-0 z-[1000] shadow-md" id="main-nav">
+        <div class="container container-max flex items-center justify-between">
+            <div class="flex items-center gap-10">
+                <a href="/" class="flex flex-col leading-none no-underline">
+                    <span class="text-2xl font-black italic tracking-tighter text-white">SoloCart</span>
+                </a>
+                <ul class="hidden md:flex items-center gap-6 m-0 p-0 list-none text-sm font-bold">
+                    <li><a href="/" class="text-white no-underline hover:text-[#ffe500]">Home</a></li>
+                    <li><a href="/shop" class="text-white no-underline hover:text-[#ffe500]">Shop</a></li>
+                    <li><a href="/contact" class="text-[#ffe500] no-underline">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container container-max py-16 px-4">
+        <div class="max-w-5xl mx-auto">
+            <div class="bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
+                <!-- Left: Info -->
+                <div class="md:w-2/5 bg-[#2874f0] p-12 text-white flex flex-col justify-between relative overflow-hidden">
+                    <div class="absolute -right-20 -bottom-20 opacity-10 pointer-events-none">
+                        <i class="fas fa-paper-plane text-[300px] rotate-45"></i>
+                    </div>
+                    <div class="relative z-10">
+                        <h2 class="text-3xl font-black italic tracking-tighter mb-6">Connect With Us</h2>
+                        <p class="text-sm opacity-80 leading-relaxed font-medium mb-12">Having trouble with a transmission? Need to adjust your signal frequency? We're here 24/7 to help.</p>
+                        
+                        <div class="space-y-8">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"><i class="fas fa-phone-alt"></i></div>
+                                <div><p class="text-[10px] uppercase font-black opacity-50">Signal Line</p><p class="text-sm font-bold">+1-800-SOLOCART</p></div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"><i class="fas fa-envelope"></i></div>
+                                <div><p class="text-[10px] uppercase font-black opacity-50">Pulse Mail</p><p class="text-sm font-bold">support@solocart.io</p></div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"><i class="fas fa-map-marker-alt"></i></div>
+                                <div><p class="text-[10px] uppercase font-black opacity-50">Headquarters</p><p class="text-sm font-bold">Quadrant 7, Silicon Valley, CA</p></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4 mt-12 relative z-10">
+                         <a href="#" class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:text-[#2874f0] transition-all"><i class="fab fa-twitter"></i></a>
+                         <a href="#" class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:text-[#2874f0] transition-all"><i class="fab fa-instagram"></i></a>
+                         <a href="#" class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:text-[#2874f0] transition-all"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+
+                <!-- Right: Form -->
+                <div class="md:w-3/5 p-12">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-8">Send a Transmission</h3>
+                    <form id="contact-form" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Full Name</label>
+                                <input type="text" placeholder="John Doe" class="w-full border-b-2 border-slate-100 py-2 outline-none focus:border-[#2874f0] transition-colors text-sm font-medium">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Email Address</label>
+                                <input type="email" placeholder="john@example.com" class="w-full border-b-2 border-slate-100 py-2 outline-none focus:border-[#2874f0] transition-colors text-sm font-medium">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Subject</label>
+                            <input type="text" placeholder="How can we help?" class="w-full border-b-2 border-slate-100 py-2 outline-none focus:border-[#2874f0] transition-colors text-sm font-medium">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Signal Message</label>
+                            <textarea rows="4" placeholder="Your message here..." class="w-full border-b-2 border-slate-100 py-2 outline-none focus:border-[#2874f0] transition-colors text-sm font-medium resize-none"></textarea>
+                        </div>
+                        <button type="submit" class="bg-[#fb641b] text-white px-12 py-4 rounded-xl font-black text-sm uppercase shadow-xl hover:scale-105 transition-transform active:scale-95">Initiate Signal</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-[0.2em]">
+        © 2026 SoloCart Global • Secure Transmission Guaranteed
+    </footer>
+
+    <script type="module" src="/js/main.js"></script>
+    <script>
+        document.getElementById('contact-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            window.showToast('Signal transmitted successfully!');
+            e.target.reset();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Command Center — SoloCart</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --fk-blue: #2874f0; --fk-bg: #f8fafc; }
+        body { background-color: var(--fk-bg); font-family: 'Inter', sans-serif; }
+        .sidebar { width: 260px; height: 100vh; position: fixed; left: 0; top: 0; background: #1e293b; color: white; }
+        .main-content { margin-left: 260px; padding: 2rem; }
+    </style>
+</head>
+<body>
+    <div id="toast-container" class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar p-6 flex flex-col">
+        <div class="mb-10">
+            <h1 class="text-2xl font-black italic tracking-tighter text-white">SoloCart <span class="text-[#2874f0]">Admin</span></h1>
+        </div>
+        
+        <nav class="flex-grow space-y-2">
+            <a href="/admin/dashboard" class="flex items-center gap-3 px-4 py-3 bg-[#2874f0] text-white rounded-lg text-sm font-bold no-underline">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+            <a href="/admin/products" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline transition-all">
+                <i class="fas fa-box-open"></i> Products
+            </a>
+            <a href="/admin/orders" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline transition-all">
+                <i class="fas fa-shopping-bag"></i> Orders
+            </a>
+            <a href="/admin/users" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline transition-all">
+                <i class="fas fa-users"></i> User Base
+            </a>
+            <a href="/admin/banners" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline transition-all">
+                <i class="fas fa-image"></i> Banners
+            </a>
+        </nav>
+
+        <div class="pt-10 border-t border-slate-700">
+            <button id="admin-logout" class="flex items-center gap-3 px-4 py-3 text-rose-400 hover:bg-rose-500/10 rounded-lg text-sm font-bold w-full text-left transition-all">
+                <i class="fas fa-sign-out-alt"></i> Logout Signal
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <!-- Top Bar -->
+        <div class="flex justify-between items-center mb-10">
+            <div>
+                <h2 class="text-2xl font-black text-slate-800 tracking-tighter">Command Dashboard</h2>
+                <p class="text-sm font-medium text-slate-400 uppercase tracking-widest">Real-time Acquisition Data</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <span class="block text-sm font-bold text-slate-700" id="admin-name">Admin Node</span>
+                    <span class="text-[10px] font-black uppercase text-green-500 tracking-widest">Online</span>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=2874f0&color=fff" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-[#2874f0] flex items-center justify-center"><i class="fas fa-gem"></i></div>
+                    <span class="text-green-500 text-xs font-bold">+12.5%</span>
+                </div>
+                <span class="text-xs font-black uppercase tracking-widest text-slate-400 block mb-1">Total Revenue</span>
+                <span class="text-2xl font-black text-slate-800" id="stat-revenue">₹0</span>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center"><i class="fas fa-shopping-cart"></i></div>
+                    <span class="text-green-500 text-xs font-bold">+5.2%</span>
+                </div>
+                <span class="text-xs font-black uppercase tracking-widest text-slate-400 block mb-1">Total Orders</span>
+                <span class="text-2xl font-black text-slate-800" id="stat-orders">0</span>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center"><i class="fas fa-users"></i></div>
+                    <span class="text-slate-400 text-xs font-bold">Stable</span>
+                </div>
+                <span class="text-xs font-black uppercase tracking-widest text-slate-400 block mb-1">Total Users</span>
+                <span class="text-2xl font-black text-slate-800" id="stat-users">0</span>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center"><i class="fas fa-box"></i></div>
+                    <span class="text-rose-500 text-xs font-bold">-2 Low</span>
+                </div>
+                <span class="text-xs font-black uppercase tracking-widest text-slate-400 block mb-1">Active Products</span>
+                <span class="text-2xl font-black text-slate-800" id="stat-products">0</span>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="text-lg font-bold mb-6">Revenue Trajectory</h3>
+                <canvas id="revenueChart" height="200"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="text-lg font-bold mb-6">Category Distribution</h3>
+                <canvas id="categoryChart" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-6 border-b border-slate-50 flex justify-between items-center">
+                <h3 class="text-lg font-bold">Recent Signal Acquisitions</h3>
+                <a href="/admin/orders" class="text-xs font-black uppercase tracking-widest text-[#2874f0] hover:underline">View All Signal Logs</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        <tr>
+                            <th class="px-6 py-4">Order ID</th>
+                            <th class="px-6 py-4">User</th>
+                            <th class="px-6 py-4">Total Amount</th>
+                            <th class="px-6 py-4">Status</th>
+                            <th class="px-6 py-4">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50 text-sm font-medium" id="recent-orders-table">
+                        <!-- Loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="/js/admin-dashboard.js"></script>
+</body>
+</html>

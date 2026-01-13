@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details — SoloCart History</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/resources/public/css/app.css">
+    <style>
+        :root { --fk-blue: #2874f0; --fk-bg: #f1f3f6; }
+        body { background-color: var(--fk-bg); font-family: 'Inter', sans-serif; }
+        .container-max { max-width: 1200px; }
+    </style>
+</head>
+<body>
+    <div id="toast-container" class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"></div>
+
+    <nav class="bg-[#2874f0] text-white py-2 sticky top-0 z-[1000] shadow-md" id="main-nav">
+        <div class="container container-max flex items-center justify-between">
+            <div class="flex items-center gap-10">
+                <a href="/" class="flex flex-col leading-none no-underline">
+                    <span class="text-2xl font-black italic tracking-tighter text-white">SoloCart</span>
+                </a>
+            </div>
+            <div id="auth-actions"></div>
+        </div>
+    </nav>
+
+    <main class="container container-max py-6 px-4">
+        <div class="bg-white rounded-sm shadow-sm border border-slate-100 overflow-hidden mb-6">
+            <div class="p-4 border-b flex flex-wrap justify-between items-center gap-4 bg-slate-50">
+                <div>
+                    <h1 class="text-lg font-bold text-slate-800">Order ID: <span id="display-order-id">#ORD-0000</span></h1>
+                    <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mt-1">Acquisition Signal Timestamp: <span id="display-order-date">...</span></p>
+                </div>
+                <div class="flex gap-2">
+                    <button id="download-invoice-btn" class="hidden bg-white text-[#2874f0] border border-[#2874f0] px-4 py-2 rounded-sm text-xs font-bold hover:bg-blue-50 transition-all">
+                        <i class="fas fa-file-pdf"></i> Download Invoice
+                    </button>
+                    <button class="bg-[#ff9f00] text-white px-4 py-2 rounded-sm text-xs font-bold shadow hover:opacity-90 transition-all">
+                        <i class="fas fa-headset"></i> Need Help?
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tracker -->
+            <div class="p-8 border-b">
+                <div class="flex items-center justify-between max-w-4xl mx-auto relative">
+                    <div class="absolute top-1/2 left-0 w-full h-1 bg-slate-100 -translate-y-1/2 z-0"></div>
+                    <div id="progress-bar-fill" class="absolute top-1/2 left-0 w-0 h-1 bg-green-500 -translate-y-1/2 z-10 transition-all duration-1000"></div>
+                    
+                    <div class="relative z-20 flex flex-col items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-xs"><i class="fas fa-check"></i></div>
+                        <span class="text-[10px] font-black uppercase text-slate-400">Ordered</span>
+                    </div>
+                    <div class="relative z-20 flex flex-col items-center gap-3">
+                        <div id="step-shipped" class="w-8 h-8 rounded-full bg-slate-200 text-white flex items-center justify-center text-xs"><i class="fas fa-truck"></i></div>
+                        <span class="text-[10px] font-black uppercase text-slate-400">Shipped</span>
+                    </div>
+                    <div class="relative z-20 flex flex-col items-center gap-3">
+                        <div id="step-delivered" class="w-8 h-8 rounded-full bg-slate-200 text-white flex items-center justify-center text-xs"><i class="fas fa-box-open"></i></div>
+                        <span class="text-[10px] font-black uppercase text-slate-400">Delivered</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x">
+                <!-- Delivery Details -->
+                <div class="p-6">
+                    <h3 class="text-sm font-black uppercase tracking-widest text-[#2874f0] mb-4">Signal Destination</h3>
+                    <div id="delivery-address" class="space-y-1">
+                        <!-- Loaded via JS -->
+                        <div class="animate-pulse space-y-2">
+                             <div class="h-4 bg-slate-100 w-3/4"></div>
+                             <div class="h-4 bg-slate-100 w-full"></div>
+                             <div class="h-4 bg-slate-100 w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Details -->
+                <div class="p-6">
+                    <h3 class="text-sm font-black uppercase tracking-widest text-[#2874f0] mb-4">Frequency Response</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-bold text-slate-600">
+                            <span>Payment Method</span>
+                            <span id="payment-method" class="uppercase">...</span>
+                        </div>
+                        <div class="flex justify-between text-xs font-bold text-slate-600">
+                            <span>Signal Status</span>
+                            <span id="payment-status" class="uppercase text-green-600 font-black">UNLOCKED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rewards / Summary -->
+                <div class="p-6">
+                    <h3 class="text-sm font-black uppercase tracking-widest text-[#2874f0] mb-4">Order Value</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between text-xl font-black text-slate-800">
+                            <span>Total Amount</span>
+                            <span id="total-amount">₹0</span>
+                        </div>
+                        <div class="p-3 bg-green-50 rounded-sm border border-green-100">
+                             <p class="text-[10px] font-black text-green-700 uppercase leading-none">Status Confirmation</p>
+                             <p class="text-xs font-bold text-green-600 mt-1" id="order-status-text">Your order is being processed.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-sm shadow-sm border border-slate-100">
+             <div class="p-4 border-b font-black text-xs uppercase tracking-widest text-slate-400">Synchronized Items</div>
+             <div id="order-items-list" class="divide-y">
+                 <!-- Loaded via JS -->
+             </div>
+        </div>
+    </main>
+
+    <script type="module" src="/js/main.js"></script>
+    <script type="module" src="/js/order-details.js"></script>
+</body>
+</html>

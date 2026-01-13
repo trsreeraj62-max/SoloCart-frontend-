@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Discounts — SoloCart Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --fk-blue: #2874f0; --fk-bg: #f8fafc; }
+        body { background-color: var(--fk-bg); font-family: 'Inter', sans-serif; }
+        .sidebar { width: 260px; height: 100vh; position: fixed; left: 0; top: 0; background: #1e293b; color: white; }
+        .main-content { margin-left: 260px; padding: 2rem; }
+    </style>
+</head>
+<body>
+    <div id="toast-container" class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"></div>
+
+    <aside class="sidebar p-6 flex flex-col">
+        <div class="mb-10"><h1 class="text-2xl font-black italic tracking-tighter text-white">SoloCart <span class="text-[#2874f0]">Admin</span></h1></div>
+        <nav class="flex-grow space-y-2">
+            <a href="/admin/dashboard" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="/admin/products" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline"><i class="fas fa-box-open"></i> Products</a>
+            <a href="/admin/orders" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline"><i class="fas fa-shopping-bag"></i> Orders</a>
+            <a href="/admin/users" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline"><i class="fas fa-users"></i> Users</a>
+            <a href="/admin/banners" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline"><i class="fas fa-image"></i> Banners</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div class="flex justify-between items-center mb-10">
+            <div>
+                <h2 class="text-2xl font-black text-slate-800 tracking-tighter">Discount Protocols</h2>
+                <p class="text-sm font-medium text-slate-400 uppercase tracking-widest">Coupon & Price Adjustments</p>
+            </div>
+            <button id="add-discount-btn" class="bg-[#2874f0] text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-lg hover:shadow-xl flex items-center gap-2">
+                <i class="fas fa-plus"></i> Inject New Protocol
+            </button>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        <tr>
+                            <th class="px-6 py-4">Protocol Code</th>
+                            <th class="px-6 py-4">Discount Value</th>
+                            <th class="px-6 py-4">Usage Frequency</th>
+                            <th class="px-6 py-4">Expiry Signal</th>
+                            <th class="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50 text-sm font-medium" id="discounts-table">
+                        <!-- Loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="/js/admin-discounts.js"></script>
+</body>
+</html>

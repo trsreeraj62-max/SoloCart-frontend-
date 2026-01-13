@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmed — SoloCart</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --fk-blue: #2874f0; --fk-bg: #f1f3f6; }
+        body { background-color: var(--fk-bg); font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; min-h-screen; }
+    </style>
+</head>
+<body>
+    <div class="bg-white p-10 rounded-sm shadow-xl text-center max-w-md w-full border border-slate-100">
+        <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-6">
+            <i class="fas fa-check"></i>
+        </div>
+        <h1 class="text-2xl font-black text-slate-800 mb-2 italic tracking-tighter">Order Placed!</h1>
+        <p class="text-slate-500 mb-8 font-medium">Your acquisition has been successfully transmitted and indexed.</p>
+        
+        <div class="bg-slate-50 p-4 rounded-sm mb-8 border border-slate-100">
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Order Index Signal</span>
+            <span id="order-id-display" class="text-xl font-black text-[#2874f0]">#ORD-000000</span>
+        </div>
+
+        <div class="space-y-3">
+            <a href="/orders" class="block w-full bg-[#2874f0] text-white py-3 rounded-sm font-black text-sm uppercase shadow-md no-underline">View My Orders</a>
+            <a href="/" class="block w-full bg-white text-slate-600 py-3 rounded-sm font-black text-sm uppercase border border-slate-200 no-underline hover:bg-slate-50">Continue Shopping</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const orderId = params.get('order_id');
+            if (orderId) {
+                document.getElementById('order-id-display').innerText = `#${orderId}`;
+            }
+        });
+    </script>
+</body>
+</html>
