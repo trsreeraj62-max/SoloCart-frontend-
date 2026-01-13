@@ -12,8 +12,9 @@ async function initProfile() {
     document.getElementById('user-display-name').innerText = userData.name;
     document.getElementById('user-initials').innerText = userData.name.charAt(0).toUpperCase();
     
-    document.getElementById('p-name').value = userData.name;
-    document.getElementById('p-email').value = userData.email;
+    document.getElementById('p-name').value = userData.name || '';
+    document.getElementById('p-email').value = userData.email || '';
+    document.getElementById('p-bio').value = userData.bio || '';
     
     setupEventListeners();
 }
@@ -30,21 +31,32 @@ function setupEventListeners() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ name, bio })
             });
 
-            if (response.ok) {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
                 const data = await response.json();
-                localStorage.setItem('user_data', JSON.stringify(data.user));
-                window.showToast('Profile Signal Updated');
-                document.getElementById('user-display-name').innerText = data.user.name;
+                if (response.ok) {
+                    localStorage.setItem('user_data', JSON.stringify(data.user));
+                    window.showToast('Profile Signal Updated');
+                    document.getElementById('user-display-name').innerText = data.user.name;
+                } else {
+                    console.error('Profile update failed:', data);
+                    const errorMessage = data.message || (data.errors ? Object.values(data.errors).flat().join(', ') : 'Backend rejection');
+                    window.showToast(`Update Failed: ${errorMessage}`, 'error');
+                }
             } else {
-                window.showToast('Failed to update signal', 'error');
+                const text = await response.text();
+                console.error('Non-JSON response during profile update:', text);
+                window.showToast('Backend connection error (Non-JSON)', 'error');
             }
         } catch (e) {
-            window.showToast('Signal interruption', 'error');
+            console.error('Profile update signal interruption:', e);
+            window.showToast('Signal interruption. Try again.', 'error');
         }
     });
 

@@ -42,7 +42,8 @@ async function initShop() {
 async function fetchCategories() {
     try {
         const response = await fetch(`${CONFIG.API_BASE_URL}/categories`);
-        const categories = await response.json();
+        const data = await response.json();
+        const categories = data.categories || data.data || (Array.isArray(data) ? data : []);
         renderCategories(categories);
     } catch (e) {
         console.error('Failed to load categories', e);
@@ -137,31 +138,35 @@ async function fetchProducts(append = false) {
 
 function renderProducts(products, append = false) {
     const grid = document.getElementById('shop-products-grid');
-    const html = products.map(p => `
-        <div class="group bg-white rounded-sm overflow-hidden transition-all duration-300 hover:shadow-xl relative flex flex-col h-full border border-transparent hover:border-slate-100 p-4">
-            <a href="/product-details.html?slug=${p.slug || p.id}" class="no-underline text-inherit flex flex-col h-full">
-                <div class="relative w-full aspect-square mb-4 overflow-hidden flex items-center justify-center">
-                    <img src="${p.image_url}" class="h-full object-contain group-hover:scale-105 transition-transform duration-700" onerror="this.src='https://placehold.co/400x400?text=No+Image'">
-                    ${p.discount_percent > 0 ? `<span class="absolute top-0 right-0 text-[10px] font-black text-white bg-green-500 px-2 py-1 rounded-bl-lg uppercase">${p.discount_percent}% OFF</span>` : ''}
-                </div>
-                <div class="flex-grow">
-                    <h3 class="text-xs font-bold text-slate-800 line-clamp-2 mb-1 group-hover:text-[#2874f0] min-h-[32px]">${p.name}</h3>
-                    <div class="flex items-center gap-2 mb-2">
-                        <div class="bg-green-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
-                            ${p.rating || '4.2'} <i class="fas fa-star text-[7px]"></i>
+    const html = products.map(p => {
+        const imageUrl = p.image 
+            ? `https://solocart-backend.onrender.com/storage/${p.image}` 
+            : (p.image_url || 'https://placehold.co/400x400?text=No+Image');
+
+        return `
+            <div class="group bg-white rounded-sm overflow-hidden transition-all duration-300 hover:shadow-xl relative flex flex-col h-full border border-transparent hover:border-slate-100 p-4">
+                <a href="/product-details.html?slug=${p.slug || p.id}" class="no-underline text-inherit flex flex-col h-full">
+                    <div class="relative w-full aspect-square mb-4 overflow-hidden flex items-center justify-center">
+                        <img src="${imageUrl}" class="h-full object-contain group-hover:scale-105 transition-transform duration-700" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
+                        ${p.discount_percent > 0 ? `<span class="absolute top-0 right-0 text-[10px] font-black text-white bg-green-500 px-2 py-1 rounded-bl-lg uppercase">${p.discount_percent}% OFF</span>` : ''}
+                    </div>
+                    <div class="flex-grow">
+                        <h3 class="text-xs font-bold text-slate-800 line-clamp-2 mb-1 group-hover:text-[#2874f0] min-h-[32px]">${p.name}</h3>
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="bg-green-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
+                                ${p.rating || '4.2'} <i class="fas fa-star text-[7px]"></i>
+                            </div>
+                            <span class="text-slate-400 text-[10px] font-bold">(${Math.floor(Math.random() * 500) + 50})</span>
                         </div>
-                        <span class="text-slate-400 text-[10px] font-bold">(${Math.floor(Math.random() * 500) + 50})</span>
+                        <div class="flex items-center gap-3">
+                            <span class="text-base font-black text-slate-900">₹${Number(p.price).toLocaleString()}</span>
+                            ${p.discount_percent > 0 ? `<span class="text-[10px] text-slate-400 line-through font-bold">₹${(p.price * 1.2).toFixed(0)}</span>` : ''}
+                        </div>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-base font-black text-slate-900">₹${Number(p.price).toLocaleString()}</span>
-                        ${p.discount_percent > 0 ? `<span class="text-[10px] text-slate-400 line-through font-bold">₹${(p.price * 1.2).toFixed(0)}</span>` : ''}
-                    </div>
-                </div>
-            </a>
-            <!-- Simple Add to Cart Button for Shop Page -->
-            <button onclick="window.addToCart(${p.id}, 1)" class="mt-4 w-full bg-[#ff9f00] text-white py-2 text-xs font-bold rounded-sm hover:bg-[#fb641b] transition-colors uppercase tracking-tight">Add to Cart</button>
-        </div>
-    `).join('');
+                </a>
+            </div>
+        `;
+    }).join('');
 
     if (append) {
         grid.insertAdjacentHTML('beforeend', html);

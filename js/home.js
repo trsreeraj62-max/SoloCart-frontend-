@@ -16,8 +16,16 @@ function fetchHomeData() {
             console.log('HOME DATA:', data);
 
             // Handle Banners if present
-            if (data && Array.isArray(data.banners)) {
+            if (data && data.banners && Array.isArray(data.banners) && data.banners.length > 0) {
                 renderBanners(data.banners);
+            } else {
+                // Fallback: try fetching banners from dedicated endpoint if home-data doesn't have them
+                fetch(`${CONFIG.API_BASE_URL}/banners`)
+                    .then(res => res.json())
+                    .then(bannerData => {
+                        const banners = bannerData.banners || bannerData.data || [];
+                        if (banners.length > 0) renderBanners(banners);
+                    }).catch(e => console.warn('Banners fallback fetch failed', e));
             }
 
             // ✅ Popup logic based on products presence and length
@@ -65,16 +73,22 @@ function renderBanners(banners) {
     const container = document.getElementById('hero-slider-content');
     if (!container || !Array.isArray(banners) || banners.length === 0) return;
 
-    container.innerHTML = banners.map((b, i) => `
-        <div class="carousel-item ${i === 0 ? 'active' : ''}">
-            <img src="${b.image_url}" class="d-block w-full h-[280px] md:h-[350px] object-cover" alt="Banner" onerror="this.src='https://placehold.co/1600x400?text=Banner'">
-            ${b.title ? `
-            <div class="carousel-caption d-none d-md-block bg-black/20 backdrop-blur-sm rounded-lg p-4 mb-10 max-w-lg mx-auto text-white">
-                <h5 class="text-3xl font-black italic tracking-tighter">${b.title}</h5>
-                <p class="font-bold text-sm tracking-widest uppercase opacity-80">${b.subtitle || ''}</p>
-            </div>` : ''}
-        </div>
-    `).join('');
+    container.innerHTML = banners.map((b, i) => {
+        const imageUrl = b.image 
+            ? `https://solocart-backend.onrender.com/storage/${b.image}` 
+            : (b.image_url || 'https://placehold.co/1600x400?text=Banner');
+
+        return `
+            <div class="carousel-item ${i === 0 ? 'active' : ''}">
+                <img src="${imageUrl}" class="d-block w-full h-[280px] md:h-[350px] object-cover" alt="Banner" onerror="this.onerror=null;this.src='https://placehold.co/1600x400?text=Banner'">
+                ${b.title ? `
+                <div class="carousel-caption d-none d-md-block bg-black/20 backdrop-blur-sm rounded-lg p-4 mb-10 max-w-lg mx-auto text-white">
+                    <h5 class="text-3xl font-black italic tracking-tighter">${b.title}</h5>
+                    <p class="font-bold text-sm tracking-widest uppercase opacity-80">${b.subtitle || ''}</p>
+                </div>` : ''}
+            </div>
+        `;
+    }).join('');
 }
 
 /**
@@ -119,7 +133,6 @@ function renderProducts(products, gridId) {
                         </div>
                     </div>
                 </a>
-                <button onclick="window.addToCart(${product.id}, 1)" class="mt-4 w-full bg-[#ff9f00] text-white py-2 text-xs font-bold rounded-sm hover:bg-[#fb641b] transition-colors uppercase tracking-tight">Add to Cart</button>
             </div>
         `;
     }).join('');

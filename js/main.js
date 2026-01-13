@@ -91,19 +91,28 @@ window.addToCart = async function(productId, quantity = 1) {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({ product_id: productId, quantity: quantity })
         });
         
-        const data = await response.json();
-        if (response.ok) {
-            showToast('Added to Cart Successfully');
-            updateCartBadge();
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            const data = await response.json();
+            if (response.ok) {
+                showToast('Added to Cart Successfully');
+                updateCartBadge();
+            } else {
+                showToast(data.message || 'Failed to add to cart', 'error');
+            }
         } else {
-            showToast(data.message || 'Failed to add to cart', 'error');
+            const text = await response.text();
+            console.error('Non-JSON response:', text);
+            showToast('Error connecting to server', 'error');
         }
     } catch (e) {
+        console.error('Add to cart failed', e);
         showToast('Error connecting to server', 'error');
     }
 };

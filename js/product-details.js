@@ -22,7 +22,7 @@ async function fetchProductDetails(slug) {
         if (!response.ok) throw new Error('Product not found');
         
         const data = await response.json();
-        currentProduct = data.product;
+        currentProduct = data.product || data.data || data;
         
         renderProductInfo(currentProduct);
         renderRelatedProducts(data.related_products || []);
@@ -38,7 +38,12 @@ async function fetchProductDetails(slug) {
 function renderProductInfo(p) {
     document.title = `${p.name} — SoloCart`;
     document.getElementById('crumb-product-name').innerText = p.name;
-    document.getElementById('product-image').src = p.image_url;
+    
+    const imageUrl = p.image 
+        ? `https://solocart-backend.onrender.com/storage/${p.image}` 
+        : (p.image_url || 'https://placehold.co/400x400?text=No+Image');
+        
+    document.getElementById('product-image').src = imageUrl;
     document.getElementById('product-name').innerText = p.name;
     document.getElementById('product-rating').innerText = p.rating || '4.2';
     document.getElementById('product-price').innerText = `₹${Number(p.price).toLocaleString()}`;
@@ -77,19 +82,25 @@ function renderRelatedProducts(products) {
         return;
     }
 
-    grid.innerHTML = products.map(p => `
-        <div class="bg-white rounded-sm border border-slate-100 p-3 hover:shadow-lg transition-all group">
-            <a href="/product-details.html?slug=${p.slug || p.id}" class="no-underline text-inherit">
-                <div class="aspect-square mb-3 overflow-hidden flex items-center justify-center">
-                    <img src="${p.image_url}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform">
-                </div>
-                <h4 class="text-xs font-bold text-slate-800 line-clamp-2 mb-1 group-hover:text-[#2874f0]">${p.name}</h4>
-                <div class="flex items-center gap-2">
-                    <span class="text-sm font-black">₹${Number(p.price).toLocaleString()}</span>
-                </div>
-            </a>
-        </div>
-    `).join('');
+    grid.innerHTML = products.map(p => {
+        const imageUrl = p.image 
+            ? `https://solocart-backend.onrender.com/storage/${p.image}` 
+            : (p.image_url || 'https://placehold.co/400x400?text=No+Image');
+
+        return `
+            <div class="bg-white rounded-sm border border-slate-100 p-3 hover:shadow-lg transition-all group">
+                <a href="/product-details.html?slug=${p.slug || p.id}" class="no-underline text-inherit">
+                    <div class="aspect-square mb-3 overflow-hidden flex items-center justify-center">
+                        <img src="${imageUrl}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
+                    </div>
+                    <h4 class="text-xs font-bold text-slate-800 line-clamp-2 mb-1 group-hover:text-[#2874f0]">${p.name}</h4>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-black">₹${Number(p.price).toLocaleString()}</span>
+                    </div>
+                </a>
+            </div>
+        `;
+    }).join('');
 }
 
 function setupEventListeners() {
@@ -98,6 +109,11 @@ function setupEventListeners() {
 }
 
 async function addToCart(isBuyNow = false) {
+    if (!currentProduct) {
+        window.showToast('Product data not loaded. Please refresh.', 'error');
+        return;
+    }
+
     const token = getAuthToken();
     if (!token) {
         window.showToast('Please login to continue', 'error');
@@ -112,6 +128,7 @@ async function addToCart(isBuyNow = false) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
@@ -120,15 +137,22 @@ async function addToCart(isBuyNow = false) {
             })
         });
 
-        const data = await response.json();
-        if (response.ok) {
-            window.showToast(isBuyNow ? 'Moving to checkout...' : 'Added to cart successfully');
-            await updateCartBadge();
-            if (isBuyNow) {
-                window.location.href = '/checkout.html';
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            const data = await response.json();
+            if (response.ok) {
+                window.showToast(isBuyNow ? 'Moving to checkout...' : 'Added to cart successfully');
+                await updateCartBadge();
+                if (isBuyNow) {
+                    window.location.href = '/checkout.html';
+                }
+            } else {
+                window.showToast(data.message || 'Failed to update cart', 'error');
             }
         } else {
-            window.showToast(data.message || 'Failed to update cart', 'error');
+            const text = await response.text();
+            console.error('Non-JSON response:', text);
+            throw new Error('Server returned non-JSON response');
         }
     } catch (e) {
         console.error('Cart add failed', e);
