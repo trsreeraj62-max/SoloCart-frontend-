@@ -7,7 +7,7 @@ let savedAddress = null;
 async function initCheckout() {
     const token = getAuthToken();
     if (!token) {
-        window.location.href = '/login?redirect=/checkout';
+        window.location.href = '/login.html?redirect=/checkout.html';
         return;
     }
 
@@ -27,7 +27,7 @@ async function fetchCartData() {
         cartData = await response.json();
 
         if (cartData.items.length === 0) {
-            window.location.href = '/cart';
+            window.location.href = '/cart.html';
             return;
         }
 
@@ -116,7 +116,7 @@ async function completeOrder() {
         if (response.ok) {
             window.showToast('Order Successful!');
             setTimeout(() => {
-                window.location.href = `/checkout-success?order_id=${data.order.order_number}`;
+                window.location.href = `/checkout-success.html?order_id=${data.order.order_number}`;
             }, 1500);
         } else {
             window.showToast(data.message || 'Order failed', 'error');

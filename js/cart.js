@@ -4,7 +4,7 @@ import { getAuthToken, updateCartBadge } from './main.js';
 async function initCart() {
     const token = getAuthToken();
     if (!token) {
-        window.location.href = `/login?redirect=${encodeURIComponent(window.location.href)}`;
+        window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.href)}`;
         return;
     }
 
@@ -142,7 +142,7 @@ function updatePriceDetails(data) {
 
 function setupEventListeners() {
     document.getElementById('place-order-btn').addEventListener('click', () => {
-        window.location.href = '/checkout';
+        window.location.href = '/checkout.html';
     });
 }
 

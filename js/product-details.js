@@ -8,7 +8,7 @@ async function initProductDetails() {
     const slug = params.get('slug');
 
     if (!slug) {
-        window.location.href = '/shop';
+        window.location.href = '/shop.html';
         return;
     }
 
@@ -79,7 +79,7 @@ function renderRelatedProducts(products) {
 
     grid.innerHTML = products.map(p => `
         <div class="bg-white rounded-sm border border-slate-100 p-3 hover:shadow-lg transition-all group">
-            <a href="/product-details?slug=${p.slug || p.id}" class="no-underline text-inherit">
+            <a href="/product-details.html?slug=${p.slug || p.id}" class="no-underline text-inherit">
                 <div class="aspect-square mb-3 overflow-hidden flex items-center justify-center">
                     <img src="${p.image_url}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform">
                 </div>
@@ -102,7 +102,7 @@ async function addToCart(isBuyNow = false) {
     if (!token) {
         window.showToast('Please login to continue', 'error');
         setTimeout(() => {
-            window.location.href = `/login?redirect=${encodeURIComponent(window.location.href)}`;
+            window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.href)}`;
         }, 1500);
         return;
     }
@@ -125,7 +125,7 @@ async function addToCart(isBuyNow = false) {
             window.showToast(isBuyNow ? 'Moving to checkout...' : 'Added to cart successfully');
             await updateCartBadge();
             if (isBuyNow) {
-                window.location.href = '/checkout';
+                window.location.href = '/checkout.html';
             }
         } else {
             window.showToast(data.message || 'Failed to update cart', 'error');

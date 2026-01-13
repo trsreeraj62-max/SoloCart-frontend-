@@ -104,11 +104,43 @@
     </footer>
 
     <script type="module" src="/js/main.js"></script>
-    <script>
-        document.getElementById('contact-form')?.addEventListener('submit', (e) => {
+    <script type="module">
+        import CONFIG from './js/config.js';
+        
+        document.getElementById('contact-form')?.addEventListener('submit', async (e) => {
             e.preventDefault();
-            window.showToast('Signal transmitted successfully!');
-            e.target.reset();
+            const form = e.target;
+            const btn = form.querySelector('button');
+            const originalText = btn.innerText;
+            
+            const name = form.querySelector('input[placeholder="John Doe"]').value;
+            const email = form.querySelector('input[placeholder="john@example.com"]').value;
+            const subject = form.querySelector('input[placeholder="How can we help?"]').value;
+            const message = form.querySelector('textarea').value;
+
+            btn.disabled = true;
+            btn.innerText = 'Transmitting...';
+
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/contact`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, subject, message })
+                });
+
+                if (response.ok) {
+                    window.showToast('Signal transmitted successfully!');
+                    form.reset();
+                } else {
+                    const data = await response.json();
+                    window.showToast(data.message || 'Failed to transmit signal', 'error');
+                }
+            } catch (e) {
+                window.showToast('Link failure. Check your connection.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
         });
     </script>
 </body>

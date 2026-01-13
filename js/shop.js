@@ -9,6 +9,9 @@ let currentFilters = {
     page: 1
 };
 
+let isLoading = false;
+let hasMore = true;
+
 async function initShop() {
     // Parse URL parameters
     const params = new URLSearchParams(window.location.search);
@@ -76,14 +79,20 @@ function renderCategories(categories) {
     });
 }
 
-async function fetchProducts() {
+async function fetchProducts(append = false) {
+    if (isLoading || (!hasMore && append)) return;
+    isLoading = true;
+
     const grid = document.getElementById('shop-products-grid');
     const emptyState = document.getElementById('empty-state');
     const countText = document.getElementById('results-count');
     
-    // Show loading state
-    grid.innerHTML = Array(8).fill('<div class="bg-white p-4 h-80 animate-pulse rounded-sm"></div>').join('');
-    emptyState.classList.add('hidden');
+    if (!append) {
+        grid.innerHTML = Array(8).fill('<div class="bg-white p-4 h-80 animate-pulse rounded-sm"></div>').join('');
+        emptyState.classList.add('hidden');
+        currentFilters.page = 1;
+        hasMore = true;
+    }
 
     try {
         const query = new URLSearchParams({
@@ -98,31 +107,41 @@ async function fetchProducts() {
         const response = await fetch(`${CONFIG.API_BASE_URL}/products?${query}`);
         const data = await response.json();
 
-        if (!data.products || data.products.length === 0) {
+        const products = data.products || data.data || [];
+        const pagination = data.pagination || data.meta || { current_page: 1, last_page: 1 };
+
+        if (!append && products.length === 0) {
             grid.innerHTML = '';
             emptyState.classList.remove('hidden');
             countText.innerText = 'No results found';
-            renderPagination(0);
             return;
         }
 
-        countText.innerText = `Showing ${data.total || data.products.length} products`;
-        renderProducts(data.products);
-        renderPagination(data.pagination || { current_page: 1, last_page: 1 });
+        if (!append) {
+            grid.innerHTML = '';
+        }
+
+        countText.innerText = `Showing ${data.total || products.length} products`;
+        renderProducts(products, append);
+        
+        hasMore = pagination.current_page < pagination.last_page;
+        currentFilters.page = pagination.current_page + 1;
         
     } catch (e) {
         console.error('Failed to load products', e);
         window.showToast('Error loading products', 'error');
+    } finally {
+        isLoading = false;
     }
 }
 
-function renderProducts(products) {
+function renderProducts(products, append = false) {
     const grid = document.getElementById('shop-products-grid');
-    grid.innerHTML = products.map(p => `
+    const html = products.map(p => `
         <div class="group bg-white rounded-sm overflow-hidden transition-all duration-300 hover:shadow-xl relative flex flex-col h-full border border-transparent hover:border-slate-100 p-4">
-            <a href="/product-details?slug=${p.slug || p.id}" class="no-underline text-inherit flex flex-col h-full">
+            <a href="/product-details.html?slug=${p.slug || p.id}" class="no-underline text-inherit flex flex-col h-full">
                 <div class="relative w-full aspect-square mb-4 overflow-hidden flex items-center justify-center">
-                    <img src="${p.image_url}" class="h-full object-contain group-hover:scale-105 transition-transform duration-700">
+                    <img src="${p.image_url}" class="h-full object-contain group-hover:scale-105 transition-transform duration-700" onerror="this.src='https://placehold.co/400x400?text=No+Image'">
                     ${p.discount_percent > 0 ? `<span class="absolute top-0 right-0 text-[10px] font-black text-white bg-green-500 px-2 py-1 rounded-bl-lg uppercase">${p.discount_percent}% OFF</span>` : ''}
                 </div>
                 <div class="flex-grow">
@@ -139,34 +158,19 @@ function renderProducts(products) {
                     </div>
                 </div>
             </a>
+            <!-- Simple Add to Cart Button for Shop Page -->
+            <button onclick="window.addToCart(${p.id}, 1)" class="mt-4 w-full bg-[#ff9f00] text-white py-2 text-xs font-bold rounded-sm hover:bg-[#fb641b] transition-colors uppercase tracking-tight">Add to Cart</button>
         </div>
     `).join('');
+
+    if (append) {
+        grid.insertAdjacentHTML('beforeend', html);
+    } else {
+        grid.innerHTML = html;
+    }
 }
 
-function renderPagination(pagination) {
-    const container = document.getElementById('pagination');
-    if (!pagination || pagination.last_page <= 1) {
-        container.innerHTML = '';
-        return;
-    }
-
-    let html = '';
-    for (let i = 1; i <= pagination.last_page; i++) {
-        html += `
-            <button class="px-3 py-2 rounded-sm text-sm font-black transition-all ${pagination.current_page === i ? 'bg-[#2874f0] text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}" data-page="${i}">
-                ${i}
-            </button>
-        `;
-    }
-    container.innerHTML = html;
-
-    container.querySelectorAll('button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            currentFilters.page = parseInt(btn.dataset.page);
-            applyFilters();
-        });
-    });
-}
+// Pagination removed for Infinite Scroll
 
 function setupEventListeners() {
     // Search
@@ -203,7 +207,14 @@ function setupEventListeners() {
 
     // Reset
     document.getElementById('reset-filters').addEventListener('click', () => {
-        window.location.href = '/shop';
+        window.location.href = '/shop.html';
+    });
+
+    // Infinite Scroll Listener
+    window.addEventListener('scroll', () => {
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+            fetchProducts(true);
+        }
     });
 }
 
@@ -214,9 +225,8 @@ function applyFilters() {
     if (currentFilters.sort !== 'newest') params.set('sort', currentFilters.sort);
     if (currentFilters.min_price) params.set('min_price', currentFilters.min_price);
     if (currentFilters.max_price) params.set('max_price', currentFilters.max_price);
-    if (currentFilters.page > 1) params.set('page', currentFilters.page);
 
-    window.history.pushState({}, '', `/shop?${params.toString()}`);
+    window.history.pushState({}, '', `/shop.html?${params.toString()}`);
     fetchProducts();
     updateSortButtons();
 }

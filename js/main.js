@@ -32,8 +32,8 @@ export function updateAuthUI() {
                 </button>
                 <div class="absolute right-0 top-full pt-2 hidden group-hover:block z-[1001]">
                     <div class="bg-white rounded-sm shadow-2xl border border-slate-100 py-2 w-48 text-slate-800">
-                        <a href="/profile" class="block px-4 py-2 hover:bg-slate-50 text-xs font-black uppercase tracking-widest no-underline text-inherit">My Profile</a>
-                        <a href="/orders" class="block px-4 py-2 hover:bg-slate-50 text-xs font-black uppercase tracking-widest no-underline text-inherit">My Orders</a>
+                        <a href="/profile.html" class="block px-4 py-2 hover:bg-slate-50 text-xs font-black uppercase tracking-widest no-underline text-inherit">My Profile</a>
+                        <a href="/orders.html" class="block px-4 py-2 hover:bg-slate-50 text-xs font-black uppercase tracking-widest no-underline text-inherit">My Orders</a>
                         <button id="logout-btn" class="w-full text-left px-4 py-2 hover:bg-rose-50 text-rose-500 text-xs font-black uppercase tracking-widest border-0 bg-transparent">Logout</button>
                     </div>
                 </div>
@@ -44,10 +44,18 @@ export function updateAuthUI() {
 }
 
 async function handleLogout() {
+    const token = getAuthToken();
+    try {
+        await fetch(`${CONFIG.API_BASE_URL}/logout`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    } catch (e) {}
+
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_data');
     showToast('Logged out successfully');
-    window.location.href = '/';
+    window.location.href = '/index.html';
 }
 
 export async function updateCartBadge() {
@@ -60,12 +68,45 @@ export async function updateCartBadge() {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await response.json();
-        if (data.total_items > 0) {
-            badge.innerText = data.total_items;
+        const count = data.total_items || (data.items ? data.items.length : 0);
+        if (count > 0) {
+            badge.innerText = count;
             badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
         }
     } catch (e) { console.error('Cart fetch failed'); }
 }
+
+window.addToCart = async function(productId, quantity = 1) {
+    const token = getAuthToken();
+    if (!token) {
+        showToast('Please login to add to cart', 'error');
+        window.location.href = '/login.html';
+        return;
+    }
+
+    try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/cart/add`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ product_id: productId, quantity: quantity })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            showToast('Added to Cart Successfully');
+            updateCartBadge();
+        } else {
+            showToast(data.message || 'Failed to add to cart', 'error');
+        }
+    } catch (e) {
+        showToast('Error connecting to server', 'error');
+    }
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     updateAuthUI();
