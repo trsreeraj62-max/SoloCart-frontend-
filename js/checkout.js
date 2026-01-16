@@ -1,5 +1,5 @@
 import CONFIG from './config.js';
-import { getAuthToken } from './main.js';
+import { getAuthToken, apiCall, safeJSONParse } from './main.js';
 
 let cartData = null;
 let savedAddress = null;
@@ -11,22 +11,22 @@ async function initCheckout() {
         return;
     }
 
-    const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-    document.getElementById('auth-status-info').innerText = userData.name || userData.email;
+    const userData = safeJSONParse(localStorage.getItem('user_data'), {});
+    const authStatusInfo = document.getElementById('auth-status-info');
+    if (authStatusInfo) {
+        authStatusInfo.innerText = userData.name || userData.email || 'Logged In';
+    }
 
     await fetchCartData();
     setupEventListeners();
 }
 
 async function fetchCartData() {
-    const token = getAuthToken();
     try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/cart`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        cartData = await response.json();
+        const data = await apiCall('/cart');
+        cartData = data;
 
-        if (cartData.items.length === 0) {
+        if (!cartData || !cartData.items || cartData.items.length === 0) {
             window.location.href = '/cart.html';
             return;
         }
@@ -34,38 +34,52 @@ async function fetchCartData() {
         renderPriceDetails(cartData);
         renderOrderSummary(cartData.items);
     } catch (e) {
-        console.error(e);
+        console.error('Failed to fetch cart data', e);
     }
 }
 
 function renderPriceDetails(data) {
-    document.getElementById('price-details-count').innerText = data.items.length;
-    document.getElementById('total-mrp').innerText = `₹${Number(data.total_mrp).toLocaleString()}`;
-    document.getElementById('total-discount').innerText = `- ₹${Number(data.total_mrp - data.total_price).toLocaleString()}`;
-    document.getElementById('grand-total').innerText = `₹${Number(data.total_price).toLocaleString()}`;
+    const countEl = document.getElementById('price-details-count');
+    const mrpEl = document.getElementById('total-mrp');
+    const discEl = document.getElementById('total-discount');
+    const grandEl = document.getElementById('grand-total');
+
+    if (countEl) countEl.innerText = data.items.length;
+    if (mrpEl) mrpEl.innerText = `₹${Number(data.total_mrp || 0).toLocaleString()}`;
+    if (discEl) discEl.innerText = `- ₹${Number((data.total_mrp || 0) - (data.total_price || 0)).toLocaleString()}`;
+    if (grandEl) grandEl.innerText = `₹${Number(data.total_price || 0).toLocaleString()}`;
 }
 
 function renderOrderSummary(items) {
     const container = document.getElementById('checkout-items-list');
-    container.innerHTML = items.map(item => `
+    if (!container || !Array.isArray(items)) return;
+
+    container.innerHTML = items.map(item => {
+        const product = item.product || {};
+        const imageUrl = product.image_url 
+            ? product.image_url.replace(/^http:/, 'https:')
+            : (product.image ? `https://solocart-backend.onrender.com/storage/${product.image}` : 'https://placehold.co/400x400?text=No+Image');
+
+        return `
         <div class="py-4 flex gap-4 border-b last:border-0">
             <div class="w-16 h-16 border rounded-sm p-1">
-                <img src="${item.product.image_url}" class="h-full w-full object-contain">
+                <img src="${imageUrl}" class="h-full w-full object-contain">
             </div>
             <div>
-                <h4 class="text-xs font-bold text-slate-800 line-clamp-1">${item.product.name}</h4>
+                <h4 class="text-xs font-bold text-slate-800 line-clamp-1">${product.name || 'Unavailable'}</h4>
                 <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">Qty: ${item.quantity}</p>
                 <div class="flex items-center gap-2 mt-1">
-                    <span class="text-sm font-black text-slate-900">₹${Number(item.product.price * item.quantity).toLocaleString()}</span>
+                    <span class="text-sm font-black text-slate-900">₹${Number((product.price || 0) * item.quantity).toLocaleString()}</span>
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function setupEventListeners() {
     // Address Form
-    document.getElementById('address-form').addEventListener('submit', (e) => {
+    document.getElementById('address-form')?.addEventListener('submit', (e) => {
         e.preventDefault();
         savedAddress = {
             name: document.getElementById('name').value,
@@ -78,69 +92,59 @@ function setupEventListeners() {
         };
         
         // Move to next step
-        document.getElementById('step-address').classList.add('step-inactive');
-        document.getElementById('step-summary').classList.remove('step-inactive');
-        window.showToast('Address Locked');
+        document.getElementById('step-address')?.classList.add('step-inactive');
+        document.getElementById('step-summary')?.classList.remove('step-inactive');
+        if (window.showToast) window.showToast('Address Locked');
     });
 
     // Summary Confirmation
-    document.getElementById('confirm-summary-btn').addEventListener('click', () => {
-        document.getElementById('step-summary').classList.add('step-inactive');
-        document.getElementById('step-payment').classList.remove('step-inactive');
+    document.getElementById('confirm-summary-btn')?.addEventListener('click', () => {
+        document.getElementById('step-summary')?.classList.add('step-inactive');
+        document.getElementById('step-payment')?.classList.remove('step-inactive');
     });
 
     // Complete Order
-    document.getElementById('complete-order-btn').addEventListener('click', completeOrder);
+    document.getElementById('complete-order-btn')?.addEventListener('click', completeOrder);
 }
 
 async function completeOrder() {
-    const token = getAuthToken();
     const btn = document.getElementById('complete-order-btn');
-    btn.disabled = true;
-    btn.innerText = 'Transmitting Order...';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Transmitting Order...';
+    }
 
     try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/orders`, {
+        const data = await apiCall('/orders', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
             body: JSON.stringify({
                 address: savedAddress,
                 payment_method: 'cod'
             })
         });
 
-        const data = await response.json();
-        if (response.ok) {
-            window.showToast('Order Successful!');
+        if (data && (data.order || data.success)) {
+            if (window.showToast) window.showToast('Order Successful!');
+            const orderId = data.order?.order_number || data.order?.id || 'SUCCESS';
             setTimeout(() => {
-                window.location.href = `/checkout-success.html?order_id=${data.order.order_number}`;
+                window.location.href = `/checkout-success.html?order_id=${orderId}`;
             }, 1500);
         } else {
-            window.showToast(data.message || 'Order failed', 'error');
+            if (window.showToast) window.showToast(data?.message || 'Order failed', 'error');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'CONFIRM ORDER';
+            }
+        }
+    } catch (e) {
+        console.error('Order completion failed', e);
+        if (window.showToast) window.showToast('Server error', 'error');
+        if (btn) {
             btn.disabled = false;
             btn.innerText = 'CONFIRM ORDER';
         }
-    } catch (e) {
-        console.error(e);
-        window.showToast('Server error', 'error');
-        btn.disabled = false;
-        btn.innerText = 'CONFIRM ORDER';
     }
 }
 
-// Simple Toast fallback
-if (!window.showToast) {
-    window.showToast = (msg, type = 'success') => {
-        const container = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        toast.className = `p-4 rounded shadow-lg text-white font-bold text-sm mb-2 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
-        toast.innerText = msg;
-        container.appendChild(toast);
-        setTimeout(() => toast.remove(), 4000);
-    };
-}
-
 document.addEventListener('DOMContentLoaded', initCheckout);
+

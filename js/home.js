@@ -1,56 +1,62 @@
 import CONFIG from './config.js';
+import { apiCall } from './main.js';
 
 /**
  * Fetches home page data and updates the UI.
  * Handles products safely and manages the "No Products" popup.
  */
-function fetchHomeData() {
-    fetch(`${CONFIG.API_BASE_URL}/home-data`)
-        .then(res => {
-            if (!res.ok) {
-                throw new Error('API request failed');
-            }
-            return res.json();
-        })
-        .then(data => {
-            console.log('HOME DATA:', data);
+async function fetchHomeData() {
+    try {
+        const data = await apiCall('/home-data');
+        console.log('HOME DATA:', data);
 
-            // Handle Banners if present
-            if (data && data.banners && Array.isArray(data.banners) && data.banners.length > 0) {
-                renderBanners(data.banners);
-            } else {
-                // Fallback: try fetching banners from dedicated endpoint if home-data doesn't have them
-                fetch(`${CONFIG.API_BASE_URL}/banners`)
-                    .then(res => res.json())
-                    .then(bannerData => {
-                        const banners = bannerData.banners || bannerData.data || [];
-                        if (banners.length > 0) renderBanners(banners);
-                    }).catch(e => console.warn('Banners fallback fetch failed', e));
-            }
+        if (!data) {
+            showNoProductsPopup();
+            return;
+        }
 
-            // ✅ Popup logic based on products presence and length
-            if (data?.products && Array.isArray(data.products) && data.products.length > 0) {
-                renderProducts(data.products, 'featured-products-grid');
-                renderProducts(data.products, 'latest-products-grid');
-                hideNoProductsPopup(); // Hide popup if products exist
-            } else {
-                console.warn('Products missing or empty array');
-                showNoProductsPopup(); // Show popup if no products
-            }
+        // Handle Banners if present
+        const banners = data.banners || data.data?.banners || [];
+        if (Array.isArray(banners) && banners.length > 0) {
+            renderBanners(banners);
+        } else {
+            // Fallback: try fetching banners from dedicated endpoint
+            const bannerData = await apiCall('/banners');
+            const fallbackBanners = bannerData?.banners || bannerData?.data || (Array.isArray(bannerData) ? bannerData : []);
+            if (fallbackBanners.length > 0) renderBanners(fallbackBanners);
+        }
 
-            // Disable category rendering as backend does not return it
-            const categorySection = document.getElementById('categories-row');
-            if (categorySection) {
-                categorySection.style.display = 'none';
-            }
-        })
-        .catch(err => {
-            console.error('Home fetch failed:', err);
-            showNoProductsPopup(); // Show popup on fetch failure
-            if (window.showToast) {
-                window.showToast('Failed to sync content', 'error');
-            }
-        });
+        // Handle Products - extract from data.products or data.data or data itself
+        let products = [];
+        if (data.products && Array.isArray(data.products)) {
+            products = data.products;
+        } else if (data.data && Array.isArray(data.data)) {
+            products = data.data;
+        } else if (Array.isArray(data)) {
+            products = data;
+        }
+
+        if (products.length > 0) {
+            renderProducts(products, 'featured-products-grid');
+            renderProducts(products, 'latest-products-grid');
+            hideNoProductsPopup();
+        } else {
+            console.warn('Products missing or empty array');
+            showNoProductsPopup();
+        }
+
+        // Disable category row if no data
+        const categorySection = document.getElementById('categories-row');
+        if (categorySection) {
+            categorySection.style.display = 'none';
+        }
+    } catch (err) {
+        console.error('Home fetch failed:', err);
+        showNoProductsPopup();
+        if (window.showToast) {
+            window.showToast('Failed to sync content', 'error');
+        }
+    }
 }
 
 /**
@@ -58,7 +64,7 @@ function fetchHomeData() {
  */
 function showNoProductsPopup() {
     const popup = document.getElementById('no-products-popup');
-    if (popup) popup.style.display = 'flex'; // Use flex for centering as per Tailwind classes
+    if (popup) popup.style.display = 'flex';
 }
 
 function hideNoProductsPopup() {
@@ -74,9 +80,10 @@ function renderBanners(banners) {
     if (!container || !Array.isArray(banners) || banners.length === 0) return;
 
     container.innerHTML = banners.map((b, i) => {
-        const imageUrl = b.image 
-            ? `https://solocart-backend.onrender.com/storage/${b.image}` 
-            : (b.image_url || 'https://placehold.co/1600x400?text=Banner');
+        // Use full URL if provided by backend, else construct it
+        const imageUrl = b.image_url 
+            ? b.image_url.replace(/^http:/, 'https:')
+            : (b.image ? `https://solocart-backend.onrender.com/storage/${b.image}` : 'https://placehold.co/1600x400?text=Banner');
 
         return `
             <div class="carousel-item ${i === 0 ? 'active' : ''}">
@@ -92,7 +99,7 @@ function renderBanners(banners) {
 }
 
 /**
- * Renders products into aSpecified grid container.
+ * Renders products into a Specified grid container.
  */
 function renderProducts(products, gridId) {
     if (!Array.isArray(products)) {
@@ -104,13 +111,14 @@ function renderProducts(products, gridId) {
     if (!grid) return;
 
     grid.innerHTML = products.map(product => {
-        const imageUrl = product.image
-            ? `https://solocart-backend.onrender.com/storage/${product.image}`
-            : (product.image_url || 'https://placehold.co/400x400?text=No+Image');
+        // Use full URL if provided by backend (image_url), else construct it
+        const imageUrl = product.image_url 
+            ? product.image_url.replace(/^http:/, 'https:')
+            : (product.image ? `https://solocart-backend.onrender.com/storage/${product.image}` : 'https://placehold.co/400x400?text=No+Image');
 
         const price = Number(product.price) || 0;
         const discount = Number(product.discount_percent) || 0;
-        const originalPrice = discount > 0 ? (price / (1 - discount / 100)).toFixed(0) : (price * 1.2).toFixed(0);
+        const originalPrice = discount > 0 ? (price / (1 - discount / 100)).toFixed(0) : (price * 1.25).toFixed(0);
 
         return `
             <div class="group bg-white rounded-sm overflow-hidden transition-all duration-300 hover:shadow-xl relative flex flex-col h-full border border-transparent hover:border-slate-100 p-4">
@@ -125,7 +133,7 @@ function renderProducts(products, gridId) {
                             <div class="bg-green-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
                                 ${product.rating || '4.2'} <i class="fas fa-star text-[7px]"></i>
                             </div>
-                            <span class="text-slate-400 text-[10px] font-bold">(${Math.floor(Math.random() * 500) + 50})</span>
+                            <span class="text-slate-400 text-[10px] font-bold">(50+)</span>
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="text-base font-black text-slate-900">₹${price.toLocaleString()}</span>
@@ -140,3 +148,4 @@ function renderProducts(products, gridId) {
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', fetchHomeData);
+

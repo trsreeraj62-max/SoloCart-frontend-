@@ -89,8 +89,8 @@ async function fetchProducts(append = false) {
     const countText = document.getElementById('results-count');
     
     if (!append) {
-        grid.innerHTML = Array(8).fill('<div class="bg-white p-4 h-80 animate-pulse rounded-sm"></div>').join('');
-        emptyState.classList.add('hidden');
+        if (grid) grid.innerHTML = Array(8).fill('<div class="bg-white p-4 h-80 animate-pulse rounded-sm"></div>').join('');
+        if (emptyState) emptyState.classList.add('hidden');
         currentFilters.page = 1;
         hasMore = true;
     }
@@ -105,24 +105,31 @@ async function fetchProducts(append = false) {
             page: currentFilters.page
         }).toString();
 
-        const response = await fetch(`${CONFIG.API_BASE_URL}/products?${query}`);
-        const data = await response.json();
+        const data = await apiCall(`/products?${query}`);
 
-        const products = data.products || data.data || [];
-        const pagination = data.pagination || data.meta || { current_page: 1, last_page: 1 };
+        // Handle various response structures
+        let products = [];
+        let pagination = { current_page: 1, last_page: 1 };
+        let total = 0;
+
+        if (data) {
+            products = data.products || data.data || (Array.isArray(data) ? data : []);
+            pagination = data.pagination || data.meta || { current_page: data.current_page || 1, last_page: data.last_page || 1 };
+            total = data.total || products.length;
+        }
 
         if (!append && products.length === 0) {
-            grid.innerHTML = '';
-            emptyState.classList.remove('hidden');
-            countText.innerText = 'No results found';
+            if (grid) grid.innerHTML = '';
+            if (emptyState) emptyState.classList.remove('hidden');
+            if (countText) countText.innerText = 'No results found';
             return;
         }
 
-        if (!append) {
+        if (!append && grid) {
             grid.innerHTML = '';
         }
 
-        countText.innerText = `Showing ${data.total || products.length} products`;
+        if (countText) countText.innerText = `Showing ${total} products`;
         renderProducts(products, append);
         
         hasMore = pagination.current_page < pagination.last_page;
@@ -130,7 +137,7 @@ async function fetchProducts(append = false) {
         
     } catch (e) {
         console.error('Failed to load products', e);
-        window.showToast('Error loading products', 'error');
+        if (window.showToast) window.showToast('Error loading products', 'error');
     } finally {
         isLoading = false;
     }
@@ -138,29 +145,35 @@ async function fetchProducts(append = false) {
 
 function renderProducts(products, append = false) {
     const grid = document.getElementById('shop-products-grid');
+    if (!grid || !Array.isArray(products)) return;
+
     const html = products.map(p => {
-        const imageUrl = p.image 
-            ? `https://solocart-backend.onrender.com/storage/${p.image}` 
-            : (p.image_url || 'https://placehold.co/400x400?text=No+Image');
+        const imageUrl = p.image_url 
+            ? p.image_url.replace(/^http:/, 'https:')
+            : (p.image ? `https://solocart-backend.onrender.com/storage/${p.image}` : 'https://placehold.co/400x400?text=No+Image');
+
+        const price = Number(p.price) || 0;
+        const discount = Number(p.discount_percent) || 0;
+        const originalPrice = discount > 0 ? (price / (1 - discount / 100)).toFixed(0) : (price * 1.25).toFixed(0);
 
         return `
             <div class="group bg-white rounded-sm overflow-hidden transition-all duration-300 hover:shadow-xl relative flex flex-col h-full border border-transparent hover:border-slate-100 p-4">
                 <a href="/product-details.html?slug=${p.slug || p.id}" class="no-underline text-inherit flex flex-col h-full">
                     <div class="relative w-full aspect-square mb-4 overflow-hidden flex items-center justify-center">
                         <img src="${imageUrl}" class="h-full object-contain group-hover:scale-105 transition-transform duration-700" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
-                        ${p.discount_percent > 0 ? `<span class="absolute top-0 right-0 text-[10px] font-black text-white bg-green-500 px-2 py-1 rounded-bl-lg uppercase">${p.discount_percent}% OFF</span>` : ''}
+                        ${discount > 0 ? `<span class="absolute top-0 right-0 text-[10px] font-black text-white bg-green-500 px-2 py-1 rounded-bl-lg uppercase">${discount}% OFF</span>` : ''}
                     </div>
                     <div class="flex-grow">
-                        <h3 class="text-xs font-bold text-slate-800 line-clamp-2 mb-1 group-hover:text-[#2874f0] min-h-[32px]">${p.name}</h3>
+                        <h3 class="text-xs font-bold text-slate-800 line-clamp-2 mb-1 group-hover:text-[#2874f0] min-h-[32px]">${p.name || 'Unavailable'}</h3>
                         <div class="flex items-center gap-2 mb-2">
                             <div class="bg-green-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
                                 ${p.rating || '4.2'} <i class="fas fa-star text-[7px]"></i>
                             </div>
-                            <span class="text-slate-400 text-[10px] font-bold">(${Math.floor(Math.random() * 500) + 50})</span>
+                            <span class="text-slate-400 text-[10px] font-bold">(50+)</span>
                         </div>
                         <div class="flex items-center gap-3">
-                            <span class="text-base font-black text-slate-900">₹${Number(p.price).toLocaleString()}</span>
-                            ${p.discount_percent > 0 ? `<span class="text-[10px] text-slate-400 line-through font-bold">₹${(p.price * 1.2).toFixed(0)}</span>` : ''}
+                            <span class="text-base font-black text-slate-900">₹${price.toLocaleString()}</span>
+                            <span class="text-[10px] text-slate-400 line-through font-bold">₹${Number(originalPrice).toLocaleString()}</span>
                         </div>
                     </div>
                 </a>
@@ -174,6 +187,7 @@ function renderProducts(products, append = false) {
         grid.innerHTML = html;
     }
 }
+
 
 // Pagination removed for Infinite Scroll
 

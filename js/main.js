@@ -1,11 +1,66 @@
 import CONFIG from './config.js';
 
+/**
+ * Safely parses a JSON string with a fallback.
+ * Prevents "undefined is not valid JSON" crashes.
+ */
+export function safeJSONParse(str, fallback = {}) {
+    if (!str || str === "undefined" || str === "null") return fallback;
+    try {
+        return JSON.parse(str);
+    } catch (e) {
+        console.error("JSON Parse Error:", e, "for string:", str);
+        return fallback;
+    }
+}
+
+/**
+ * Global API call helper to enforce HTTPS and handle common response patterns.
+ */
+export async function apiCall(endpoint, options = {}) {
+    const url = endpoint.startsWith('http') ? endpoint : `${CONFIG.API_BASE_URL}${endpoint}`;
+    // Enforce HTTPS to prevent mixed-content errors
+    const secureUrl = url.replace(/^http:/, 'https:');
+    
+    const token = localStorage.getItem('auth_token');
+    const defaultHeaders = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    };
+    
+    if (token) {
+        defaultHeaders['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+        const response = await fetch(secureUrl, {
+            ...options,
+            headers: { ...defaultHeaders, ...options.headers }
+        });
+
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return await response.json();
+        }
+        
+        const text = await response.text();
+        console.warn('Non-JSON response received:', text);
+        return { success: false, message: 'Server error: Invalid format' };
+    } catch (error) {
+        console.error('API Call Failed:', error);
+        return { success: false, message: 'Network connection lost' };
+    }
+}
+
 window.showToast = function(message, type = 'success') {
     const container = document.getElementById('toast-container');
+    if (!container) return;
+    
     const toast = document.createElement('div');
     toast.className = `p-4 rounded-md shadow-lg text-white font-bold text-sm transform transition-all duration-300 translate-y-0 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
     toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i> ${message}`;
     container.appendChild(toast);
+    
     setTimeout(() => {
         toast.classList.add('opacity-0', 'translate-y-2');
         setTimeout(() => toast.remove(), 300);
@@ -18,10 +73,12 @@ export function getAuthToken() {
 
 export function updateAuthUI() {
     const authActions = document.getElementById('auth-actions');
-    const token = getAuthToken();
-    const user = JSON.parse(localStorage.getItem('user_data') || '{}');
+    if (!authActions) return;
 
-    if (token && user.name) {
+    const token = getAuthToken();
+    const user = safeJSONParse(localStorage.getItem('user_data'), null);
+
+    if (token && user && user.name) {
         authActions.innerHTML = `
             <div class="relative group">
                 <button class="flex items-center gap-2 focus:outline-none">
@@ -40,80 +97,80 @@ export function updateAuthUI() {
             </div>
         `;
         document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
+    } else {
+        // Fallback if not logged in
+        authActions.innerHTML = `<a href="/login.html" class="bg-white text-[#2874f0] px-8 py-1.5 rounded-sm font-bold text-sm shadow-sm transition-all hover:bg-[#f1f3f6] no-underline">Login</a>`;
     }
 }
 
 async function handleLogout() {
     const token = getAuthToken();
-    try {
-        await fetch(`${CONFIG.API_BASE_URL}/logout`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-    } catch (e) {}
+    if (token) {
+        try {
+            await fetch(`${CONFIG.API_BASE_URL}/logout`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+        } catch (e) {
+            console.warn('Logout request failed', e);
+        }
+    }
 
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_data');
     showToast('Logged out successfully');
-    window.location.href = '/index.html';
+    setTimeout(() => {
+        window.location.href = '/index.html';
+    }, 500);
 }
 
 export async function updateCartBadge() {
     const badge = document.getElementById('cart-count-badge');
+    if (!badge) return;
+
     const token = getAuthToken();
-    if (!token) return;
+    if (!token) {
+        badge.classList.add('hidden');
+        return;
+    }
 
     try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/cart`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await response.json();
-        const count = data.total_items || (data.items ? data.items.length : 0);
-        if (count > 0) {
-            badge.innerText = count;
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
+        const data = await apiCall('/cart');
+        if (data) {
+            const count = data.total_items || (Array.isArray(data.items) ? data.items.length : 0);
+            if (count > 0) {
+                badge.innerText = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
         }
-    } catch (e) { console.error('Cart fetch failed'); }
+    } catch (e) { 
+        console.error('Cart badge update failed'); 
+    }
 }
 
 window.addToCart = async function(productId, quantity = 1) {
     const token = getAuthToken();
     if (!token) {
         showToast('Please login to add to cart', 'error');
-        window.location.href = '/login.html';
+        window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.href)}`;
         return;
     }
 
-    try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/cart/add`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ product_id: productId, quantity: quantity })
-        });
-        
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            const data = await response.json();
-            if (response.ok) {
-                showToast('Added to Cart Successfully');
-                updateCartBadge();
-            } else {
-                showToast(data.message || 'Failed to add to cart', 'error');
-            }
-        } else {
-            const text = await response.text();
-            console.error('Non-JSON response:', text);
-            showToast('Error connecting to server', 'error');
-        }
-    } catch (e) {
-        console.error('Add to cart failed', e);
-        showToast('Error connecting to server', 'error');
+    const data = await apiCall('/cart/add', {
+        method: 'POST',
+        body: JSON.stringify({ product_id: productId, quantity: quantity })
+    });
+
+    if (data && (data.success || data.id)) {
+        showToast('Added to Cart Successfully');
+        updateCartBadge();
+    } else {
+        showToast(data?.message || 'Failed to add to cart', 'error');
     }
 };
 
@@ -121,3 +178,4 @@ document.addEventListener('DOMContentLoaded', () => {
     updateAuthUI();
     updateCartBadge();
 });
+
