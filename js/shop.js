@@ -42,8 +42,7 @@ async function initShop() {
 
 async function fetchCategories() {
     try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/categories`);
-        const data = await response.json();
+        const data = await apiCall('/categories');
         const categories = data.categories || data.data || (Array.isArray(data) ? data : []);
         renderCategories(categories);
     } catch (e) {

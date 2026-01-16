@@ -18,8 +18,8 @@ async function handleLogin(e) {
             body: JSON.stringify({ email, password })
         });
 
-        if (data && data.token) {
-            localStorage.setItem('auth_token', data.token);
+        if (data && (data.token || data.access_token)) {
+            localStorage.setItem('auth_token', data.token || data.access_token);
             localStorage.setItem('user_data', JSON.stringify(data.user || {}));
             if (window.showToast) window.showToast('Authentication Successful');
             

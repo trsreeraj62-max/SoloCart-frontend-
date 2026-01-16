@@ -18,11 +18,17 @@ export function safeJSONParse(str, fallback = {}) {
  * Global API call helper to enforce HTTPS and handle common response patterns.
  */
 export async function apiCall(endpoint, options = {}) {
-    const url = endpoint.startsWith('http') ? endpoint : `${CONFIG.API_BASE_URL}${endpoint}`;
+    let url;
+    if (endpoint.startsWith('http')) {
+        url = endpoint;
+    } else {
+        const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+        url = `${CONFIG.API_BASE_URL}${path}`;
+    }
     // Enforce HTTPS to prevent mixed-content errors
     const secureUrl = url.replace(/^http:/, 'https:');
     
-    const token = localStorage.getItem('auth_token');
+    const token = getAuthToken();
     const defaultHeaders = {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -68,7 +74,9 @@ window.showToast = function(message, type = 'success') {
 };
 
 export function getAuthToken() {
-    return localStorage.getItem('auth_token');
+    const token = localStorage.getItem('auth_token');
+    if (!token || token === 'undefined' || token === 'null') return null;
+    return token;
 }
 
 export function updateAuthUI() {
