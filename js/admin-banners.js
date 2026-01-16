@@ -1,37 +1,43 @@
-import CONFIG from '../js/config.js';
+import CONFIG from './config.js';
+import { apiCall } from './main.js';
 
 let banners = [];
 
 async function initAdminBanners() {
     const token = localStorage.getItem('auth_token');
-    if (!token) { window.location.href = '/login'; return; }
+    if (!token) { window.location.href = '/login.html'; return; }
     
     await fetchBanners();
 }
 
 async function fetchBanners() {
-    const token = localStorage.getItem('auth_token');
     try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/admin/banners`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await response.json();
-        banners = data.banners;
-        renderBanners(banners);
+        const data = await apiCall('/admin/banners');
+        if (data && (data.banners || Array.isArray(data))) {
+            banners = data.banners || data;
+            renderBanners(banners);
+        }
     } catch (e) {
-        console.error(e);
+        console.error('Failed to load admin banners', e);
     }
 }
 
 function renderBanners(list) {
     const grid = document.getElementById('banners-grid');
-    grid.innerHTML = list.map(b => `
+    if (!grid || !Array.isArray(list)) return;
+
+    grid.innerHTML = list.map(b => {
+        const imageUrl = b.image_url 
+            ? b.image_url.replace(/^http:/, 'https:')
+            : (b.image ? `https://solocart-backend.onrender.com/storage/${b.image}` : 'https://placehold.co/1600x400?text=Banner');
+
+        return `
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden group">
             <div class="h-40 bg-slate-100 relative overflow-hidden">
-                <img src="${b.image_url}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                <img src="${imageUrl}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" onerror="this.src='https://placehold.co/1600x400?text=Banner'">
                 <div class="absolute top-2 right-2">
                     <span class="px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${b.status === 'active' ? 'bg-green-500 text-white' : 'bg-rose-500 text-white'}">
-                        ${b.status}
+                        ${b.status || 'unknown'}
                     </span>
                 </div>
             </div>
@@ -43,7 +49,8 @@ function renderBanners(list) {
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 
     grid.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => editBanner(btn.dataset.id)));
     grid.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => deleteBanner(btn.dataset.id)));
@@ -51,60 +58,59 @@ function renderBanners(list) {
 
 async function deleteBanner(id) {
     if (!confirm('Abort banner projection?')) return;
-    const token = localStorage.getItem('auth_token');
     try {
-        await fetch(`${CONFIG.API_BASE_URL}/admin/banners/${id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        fetchBanners();
-    } catch (e) { console.error(e); }
+        const data = await apiCall(`/admin/banners/${id}`, { method: 'DELETE' });
+        if (data && (data.success || !data.message?.includes('fail'))) {
+            fetchBanners();
+        }
+    } catch (e) {
+        console.error('Failed to delete banner', e);
+    }
 }
 
 function editBanner(id) {
     const b = banners.find(x => x.id == id);
     if (!b) return;
-    document.getElementById('banner-id').value = b.id;
-    document.getElementById('b-title').value = b.title || '';
-    document.getElementById('b-url').value = b.image_url;
-    document.getElementById('b-status').value = b.status;
-    document.getElementById('bannerModal').classList.remove('hidden');
+    if (document.getElementById('banner-id')) document.getElementById('banner-id').value = b.id;
+    if (document.getElementById('b-title')) document.getElementById('b-title').value = b.title || '';
+    if (document.getElementById('b-url')) document.getElementById('b-url').value = b.image_url || '';
+    if (document.getElementById('b-status')) document.getElementById('b-status').value = b.status || 'active';
+    document.getElementById('bannerModal')?.classList.remove('hidden');
 }
 
-document.getElementById('add-banner-btn').addEventListener('click', () => {
-    document.getElementById('banner-form').reset();
-    document.getElementById('banner-id').value = '';
-    document.getElementById('bannerModal').classList.remove('hidden');
+document.getElementById('add-banner-btn')?.addEventListener('click', () => {
+    document.getElementById('banner-form')?.reset();
+    if (document.getElementById('banner-id')) document.getElementById('banner-id').value = '';
+    document.getElementById('bannerModal')?.classList.remove('hidden');
 });
 
-document.getElementById('banner-form').addEventListener('submit', async (e) => {
+document.getElementById('banner-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('auth_token');
-    const id = document.getElementById('banner-id').value;
-    const data = {
-        title: document.getElementById('b-title').value,
-        image_url: document.getElementById('b-url').value,
-        status: document.getElementById('b-status').value
+    const id = document.getElementById('banner-id')?.value;
+    const bodyData = {
+        title: document.getElementById('b-title')?.value,
+        image_url: document.getElementById('b-url')?.value,
+        status: document.getElementById('b-status')?.value
     };
 
-    const url = id ? `${CONFIG.API_BASE_URL}/admin/banners/${id}` : `${CONFIG.API_BASE_URL}/admin/banners`;
+    const endpoint = id ? `/admin/banners/${id}` : '/admin/banners';
     const method = id ? 'PUT' : 'POST';
 
     try {
-        const response = await fetch(url, {
+        const data = await apiCall(endpoint, {
             method,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(data)
+            body: JSON.stringify(bodyData)
         });
 
-        if (response.ok) {
-            window.closeModal();
+        if (data && (data.success || !data.message?.includes('fail'))) {
+            if (window.closeModal) window.closeModal();
+            else document.getElementById('bannerModal')?.classList.add('hidden');
             fetchBanners();
         }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        console.error('Failed to save banner', e);
+    }
 });
 
 document.addEventListener('DOMContentLoaded', initAdminBanners);
+
