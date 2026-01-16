@@ -1,4 +1,5 @@
 import CONFIG from './config.js';
+import { apiCall } from './main.js';
 
 let currentFilters = {
     category: '',
