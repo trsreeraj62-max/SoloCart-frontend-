@@ -27,21 +27,40 @@ async function fetchHomeData() {
         }
 
         // Handle Products - extract from data.products or data.data or data itself
+        // Robust Product Extraction
+        let featured = [];
+        let latest = [];
         let products = [];
-        if (data.products && Array.isArray(data.products)) {
-            products = data.products;
-        } else if (data.data && Array.isArray(data.data)) {
-            products = data.data;
-        } else if (Array.isArray(data)) {
-            products = data;
-        }
 
-        if (products.length > 0) {
-            renderProducts(products, 'featured-products-grid');
-            renderProducts(products, 'latest-products-grid');
+        // Helper to find array in possible locations
+        const findArray = (keys) => {
+            for (const key of keys) {
+                if (Array.isArray(data[key])) return data[key];
+                if (data.data && Array.isArray(data.data[key])) return data.data[key];
+            }
+            return null;
+        };
+
+        // Try specific lists first
+        featured = findArray(['featured_products', 'featured']) || [];
+        latest = findArray(['latest_products', 'latest']) || [];
+
+        // Try generic products list
+        if (Array.isArray(data.products)) products = data.products;
+        else if (data.data && Array.isArray(data.data.products)) products = data.data.products;
+        else if (data.data && Array.isArray(data.data)) products = data.data;
+        else if (Array.isArray(data)) products = data;
+
+        // Fallback: If specific lists are empty, use generic products
+        if (featured.length === 0) featured = products;
+        if (latest.length === 0) latest = products;
+
+        if (featured.length > 0 || latest.length > 0) {
+            renderProducts(featured.length > 0 ? featured : latest, 'featured-products-grid');
+            renderProducts(latest.length > 0 ? latest : featured, 'latest-products-grid');
             hideNoProductsPopup();
         } else {
-            console.warn('Products missing or empty array');
+            console.warn('Products missing or empty array', data);
             showNoProductsPopup();
         }
 
