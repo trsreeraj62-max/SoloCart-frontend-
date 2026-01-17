@@ -3,7 +3,8 @@ import { apiCall } from './main.js';
 
 async function initAdminProducts() {
     const token = localStorage.getItem('auth_token');
-    if (!token) { window.location.href = '/login.html'; return; }
+    const user = JSON.parse(localStorage.getItem('user_data') || '{}');
+    if (!token || user.role !== 'admin') { window.location.href = '/login.html'; return; }
     
     await fetchProducts();
 }

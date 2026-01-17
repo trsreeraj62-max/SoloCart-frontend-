@@ -24,7 +24,15 @@ async function handleLogin(e) {
             if (window.showToast) window.showToast('Authentication Successful');
             
             const urlParams = new URLSearchParams(window.location.search);
-            const redirect = urlParams.get('redirect') || '/index.html';
+            let redirect = urlParams.get('redirect');
+            
+            if (!redirect) {
+                if (data.user?.role === 'admin') {
+                    redirect = '/admin/dashboard.html';
+                } else {
+                    redirect = '/index.html';
+                }
+            }
             setTimeout(() => window.location.href = redirect, 1000);
         } else {
             if (window.showToast) window.showToast(data?.message || 'Invalid Credentials', 'error');
