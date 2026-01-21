@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoloCart API Integration Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        .test-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 900px;
+        }
+        .test-result {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+        .test-result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .test-result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .test-result.pending {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .endpoint-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        .badge-get { background: #17a2b8; color: white; }
+        .badge-post { background: #28a745; color: white; }
+        .badge-put { background: #ffc107; color: #333; }
+        .badge-delete { background: #dc3545; color: white; }
+        pre {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            max-height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="test-card">
+            <div class="text-center mb-4">
+                <h1 class="display-5 fw-bold text-primary">
+                    <i class="fas fa-link me-2"></i>
+                    SoloCart API Integration Test
+                </h1>
+                <p class="text-muted">Testing Frontend-Backend Connection</p>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card border-primary">
+                        <div class="card-body">
+                            <h6 class="card-title text-primary"><i class="fas fa-server me-2"></i>Backend</h6>
+                            <p class="mb-0 small" id="backend-url">https://solocart-backend.onrender.com</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <h6 class="card-title text-success"><i class="fas fa-desktop me-2"></i>Frontend</h6>
+                            <p class="mb-0 small" id="frontend-url">https://solocart-frontend.onrender.com</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mb-4">
+                <button class="btn btn-primary flex-fill" onclick="runAllTests()">
+                    <i class="fas fa-play me-2"></i>Run All Tests
+                </button>
+                <button class="btn btn-outline-secondary" onclick="clearResults()">
+                    <i class="fas fa-trash me-2"></i>Clear
+                </button>
+            </div>
+
+            <div id="test-results"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import CONFIG from './js/config.js';
+
+        const API_BASE_URL = CONFIG.API_BASE_URL.replace('/api', '');
+        document.getElementById('backend-url').textContent = API_BASE_URL;
+
+        const tests = [
+            {
+                name: 'API Health Check',
+                method: 'GET',
+                endpoint: '/api/health',
+                description: 'Verify backend is running'
+            },
+            {
+                name: 'Fetch Home Data',
+                method: 'GET',
+                endpoint: '/api/home-data',
+                description: 'Get banners, categories, and products'
+            },
+            {
+                name: 'Fetch Products',
+                method: 'GET',
+                endpoint: '/api/products',
+                description: 'List all products with pagination'
+            },
+            {
+                name: 'Fetch Categories',
+                method: 'GET',
+                endpoint: '/api/categories',
+                description: 'Get all product categories'
+            },
+            {
+                name: 'Fetch Banners',
+                method: 'GET',
+                endpoint: '/api/banners',
+                description: 'Get active promotional banners'
+            },
+            {
+                name: 'CORS Test',
+                method: 'OPTIONS',
+                endpoint: '/api/products',
+                description: 'Verify CORS headers are correct'
+            }
+        ];
+
+        window.runAllTests = async function() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<h5 class="mb-3"><i class="fas fa-flask me-2"></i>Test Results</h5>';
+
+            for (let test of tests) {
+                await runTest(test);
+            }
+        };
+
+        async function runTest(test) {
+            const resultsDiv = document.getElementById('test-results');
+            const testId = `test-${tests.indexOf(test)}`;
+            
+            // Add pending test
+            const testDiv = document.createElement('div');
+            testDiv.id = testId;
+            testDiv.className = 'test-result pending';
+            testDiv.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <span class="endpoint-badge badge-${test.method.toLowerCase()}">${test.method}</span>
+                    <strong>${test.name}</strong>
+                    <span class="ms-auto"><i class="fas fa-spinner fa-spin"></i></span>
+                </div>
+                <small class="text-muted d-block mt-1">${test.description}</small>
+            `;
+            resultsDiv.appendChild(testDiv);
+
+            try {
+                const url = `${API_BASE_URL}${test.endpoint}`;
+                const startTime = Date.now();
+                
+                const response = await fetch(url, {
+                    method: test.method,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+
+                let data;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    data = await response.text();
+                }
+
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials')
+                };
+
+                if (response.ok) {
+                    testDiv.className = 'test-result success';
+                    testDiv.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <span class="endpoint-badge badge-${test.method.toLowerCase()}">${test.method}</span>
+                            <strong>${test.name}</strong>
+                            <span class="ms-auto">
+                                <span class="badge bg-success"><i class="fas fa-check me-1"></i>${response.status}</span>
+                                <span class="badge bg-info ms-1">${duration}ms</span>
+                            </span>
+                        </div>
+                        <small class="text-muted d-block mt-1">${test.description}</small>
+                        <details class="mt-2">
+                            <summary class="fw-bold" style="cursor: pointer;">View Response</summary>
+                            <pre class="mt-2 mb-0">${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                        ${test.name === 'CORS Test' ? `
+                        <details class="mt-2">
+                            <summary class="fw-bold" style="cursor: pointer;">CORS Headers</summary>
+                            <pre class="mt-2 mb-0">${JSON.stringify(corsHeaders, null, 2)}</pre>
+                        </details>
+                        ` : ''}
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                testDiv.className = 'test-result error';
+                testDiv.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <span class="endpoint-badge badge-${test.method.toLowerCase()}">${test.method}</span>
+                        <strong>${test.name}</strong>
+                        <span class="ms-auto"><span class="badge bg-danger"><i class="fas fa-times me-1"></i>FAILED</span></span>
+                    </div>
+                    <small class="text-muted d-block mt-1">${test.description}</small>
+                    <div class="mt-2 p-2 bg-light border-start border-danger border-3">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        window.clearResults = function() {
+            document.getElementById('test-results').innerHTML = '';
+        };
+
+        // Auto-run tests on load (optional)
+        // window.addEventListener('DOMContentLoaded', runAllTests);
+    </script>
+</body>
+</html>
