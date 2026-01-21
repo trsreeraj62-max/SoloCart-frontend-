@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP — SoloCart Premium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/resources/public/css/app.css">
+    <style>
+        :root { --fk-blue: #2874f0; --fk-yellow: #ffe500; --fk-bg: #f1f3f6; }
+        body { background-color: var(--fk-bg); font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .login-card { max-width: 850px; width: 100%; display: flex; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; background: white; }
+        .login-banner { width: 40%; background: var(--fk-blue); padding: 40px 30px; color: white; display: flex; flex-direction: column; gap: 20px; }
+        .login-form-side { width: 60%; padding: 50px; }
+    </style>
+</head>
+<body class="min-h-screen bg-[#f1f3f6] flex items-center justify-center p-4">
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"></div>
+
+    <div class="login-card">
+        <!-- Left Side -->
+        <div class="login-banner hidden md:flex flex-col justify-between">
+            <div>
+                <h1 class="text-3xl font-black italic tracking-tighter mb-4">Verification</h1>
+                <p class="text-lg opacity-80 font-medium leading-relaxed">Enter the OTP sent to your email to verify your identity.</p>
+            </div>
+            <img src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/login_img_c4a81e.png" alt="Login Banner" class="w-full mt-auto opacity-40 grayscale brightness-200">
+        </div>
+
+        <!-- Right Side -->
+        <div class="login-form-side">
+            <form id="otp-form" class="space-y-6">
+                <!-- Hidden email field -->
+                <input type="hidden" id="email">
+
+                <div class="relative group">
+                    <input type="text" id="otp" required class="w-full border-b border-slate-300 py-2 outline-none focus:border-[#2874f0] text-sm peer bg-transparent tracking-[1em] font-bold text-center" placeholder=" " maxlength="6">
+                    <label class="absolute left-0 top-2 text-slate-400 text-sm transition-all pointer-events-none peer-focus:-top-4 peer-focus:text-[10px] peer-focus:text-[#2874f0] peer-[:not(:placeholder-shown)]:-top-4 peer-[:not(:placeholder-shown)]:text-[10px]">Enter 6-digit OTP</label>
+                </div>
+
+                <button type="submit" id="verify-btn" class="w-full bg-[#fb641b] text-white py-3 rounded-sm font-black text-sm shadow-md hover:shadow-lg transition-all">VERIFY OTP</button>
+                
+                <div class="pt-6 text-center">
+                    <button type="button" id="resend-btn" class="text-[#2874f0] text-sm font-black bg-transparent border-0 cursor-pointer">Resend OTP</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="/js/auth.js"></script>
+    <script>
+        // Suppress Tailwind CDN production warning
+        const originalWarn = console.warn;
+        console.warn = (...args) => {
+            if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com should not be used in production')) return;
+            originalWarn.apply(console, args);
+        };
+        
+        // Populate email from URL
+        document.addEventListener('DOMContentLoaded', () => {
+             const params = new URLSearchParams(window.location.search);
+             const email = params.get('email');
+             if (email) {
+                 document.getElementById('email').value = email;
+             } else {
+                 alert('Email missing. Please login again.');
+                 window.location.href = '/login.html';
+             }
+        });
+    </script>
+</body>
+</html>

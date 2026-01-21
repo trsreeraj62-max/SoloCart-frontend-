@@ -114,8 +114,17 @@ async function fetchProducts(append = false) {
 
         if (data) {
             products = data.products || data.data || (Array.isArray(data) ? data : []);
+            // Handle pagination metadata from both Laravel standard and resource formats
             pagination = data.pagination || data.meta || { current_page: data.current_page || 1, last_page: data.last_page || 1 };
-            total = data.total || products.length;
+            
+            // Fix total calculation: Check data.total explicitly, otherwise use products length
+            if (data.total !== undefined && data.total !== null) {
+                total = data.total;
+            } else if (data.meta && data.meta.total !== undefined) {
+                total = data.meta.total;
+            } else {
+                total = products.length;
+            }
         }
 
         if (!append && products.length === 0) {
@@ -158,7 +167,7 @@ function renderProducts(products, append = false) {
 
         return `
             <div class="group bg-white rounded-sm overflow-hidden transition-all duration-300 hover:shadow-xl relative flex flex-col h-full border border-transparent hover:border-slate-100 p-4">
-                <a href="/product-details.html?slug=${p.slug || p.id}" class="no-underline text-inherit flex flex-col h-full">
+                <a href="/product-details.html?slug=${p.id || p.slug}" class="no-underline text-inherit flex flex-col h-full">
                     <div class="relative w-full aspect-square mb-4 overflow-hidden flex items-center justify-center">
                         <img src="${imageUrl}" class="h-full object-contain group-hover:scale-105 transition-transform duration-700" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
                         ${discount > 0 ? `<span class="absolute top-0 right-0 text-[10px] font-black text-white bg-green-500 px-2 py-1 rounded-bl-lg uppercase">${discount}% OFF</span>` : ''}

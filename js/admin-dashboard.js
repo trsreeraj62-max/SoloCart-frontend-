@@ -5,7 +5,8 @@ async function initAdminDashboard() {
     const token = localStorage.getItem('auth_token');
     const user = safeJSONParse(localStorage.getItem('user_data'), {});
 
-    if (!token || user.role !== 'admin') {
+    // Robust Admin Check matching auth.js
+    if (!token || !(user.role === 'admin' || user.role === 'Admin' || user.is_admin === true || user.is_admin === 1)) {
         window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.href)}`;
         return;
     }

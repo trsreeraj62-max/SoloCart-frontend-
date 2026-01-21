@@ -18,7 +18,19 @@ async function initProductDetails() {
 
 async function fetchProductDetails(slug) {
     try {
-        const data = await apiCall(`/products/${slug}`);
+        // Attempt 1: Fetch by slug/ID provided
+        let data = await apiCall(`/products/${slug}`);
+        
+        // Attempt 2: If failed and slug contains an ID at the end, try fetching by extracted ID
+        if ((!data || data.message === 'Server error: Invalid format' || !data.id) && /-\d+$/.test(slug)) {
+           const extractedId = slug.match(/-(\d+)$/)[1];
+           console.log(`Attempting fallback fetch with extracted ID: ${extractedId}`);
+           const fallbackData = await apiCall(`/products/${extractedId}`);
+           if (fallbackData && (fallbackData.product || fallbackData.id)) {
+               data = fallbackData;
+           }
+        }
+
         if (!data) throw new Error('Product not found');
         
         currentProduct = data.product || data.data || (data.id ? data : null);
@@ -34,9 +46,13 @@ async function fetchProductDetails(slug) {
         console.error('Failed to load product details', e);
         const nameEl = document.getElementById('product-name');
         const descEl = document.getElementById('product-description');
+        const priceEl = document.getElementById('product-price');
+        
         if (nameEl) nameEl.innerText = 'Product Signal Not Detected';
-        if (descEl) descEl.innerText = 'The requested item could not be retrieved from the server.';
-        if (window.showToast) window.showToast('Product not found', 'error');
+        if (descEl) descEl.innerText = 'The requested item could not be retrieved from the server. Please check your connection or try again later.';
+        if (priceEl) priceEl.innerText = '₹0';
+        
+        if (window.showToast) window.showToast('Product not found or server error', 'error');
     }
 }
 

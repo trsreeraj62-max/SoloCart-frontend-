@@ -6,7 +6,10 @@ let banners = [];
 async function initAdminBanners() {
     const token = localStorage.getItem('auth_token');
     const user = JSON.parse(localStorage.getItem('user_data') || '{}');
-    if (!token || user.role !== 'admin') { window.location.href = '/login.html'; return; }
+    if (!token || !(user.role === 'admin' || user.role === 'Admin' || user.is_admin === true || user.is_admin === 1)) { 
+        window.location.href = '/login.html'; 
+        return; 
+    }
     
     await fetchBanners();
 }

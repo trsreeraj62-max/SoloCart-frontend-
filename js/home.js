@@ -141,7 +141,7 @@ function renderProducts(products, gridId) {
 
         return `
             <div class="group bg-white rounded-sm overflow-hidden transition-all duration-300 hover:shadow-xl relative flex flex-col h-full border border-transparent hover:border-slate-100 p-4">
-                <a href="/product-details.html?slug=${product.slug || product.id}" class="no-underline text-inherit flex flex-col h-full">
+                <a href="/product-details.html?slug=${product.id || product.slug}" class="no-underline text-inherit flex flex-col h-full">
                     <div class="relative w-full aspect-square mb-4 overflow-hidden flex items-center justify-center">
                         <img src="${imageUrl}" class="h-full object-contain group-hover:scale-105 transition-transform duration-700" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
                         ${discount > 0 ? `<span class="absolute top-0 right-0 text-[10px] font-black text-white bg-green-500 px-2 py-1 rounded-bl-lg uppercase">${discount}% OFF</span>` : ''}
