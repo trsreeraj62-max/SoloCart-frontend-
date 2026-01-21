@@ -113,7 +113,15 @@ async function fetchProducts(append = false) {
         let total = 0;
 
         if (data) {
-            products = data.products || data.data || (Array.isArray(data) ? data : []);
+            let extracted = data.products || data.data || (Array.isArray(data) ? data : []);
+            
+            // Handle case where 'products' key contains the paginator object (with a 'data' array inside)
+            if (extracted && !Array.isArray(extracted) && Array.isArray(extracted.data)) {
+                extracted = extracted.data;
+            }
+            
+            products = Array.isArray(extracted) ? extracted : [];
+            
             // Handle pagination metadata from both Laravel standard and resource formats
             pagination = data.pagination || data.meta || { current_page: data.current_page || 1, last_page: data.last_page || 1 };
             
@@ -123,7 +131,7 @@ async function fetchProducts(append = false) {
             } else if (data.meta && data.meta.total !== undefined) {
                 total = data.meta.total;
             } else {
-                total = products.length;
+                total = products.length || 0;
             }
         }
 
