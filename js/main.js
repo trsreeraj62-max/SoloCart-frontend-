@@ -45,18 +45,41 @@ export async function apiCall(endpoint, options = {}) {
         });
 
         const contentType = response.headers.get('content-type');
+        
+        // Parse JSON response (works for both success and error responses)
         if (contentType && contentType.includes('application/json')) {
-            return await response.json();
+            const data = await response.json();
+            
+            // If response is not OK (4xx, 5xx), but we have JSON data
+            // Return it so the caller can handle the error message
+            if (!response.ok) {
+                console.warn(`API Error (${response.status}):`, data);
+                // Return the error data with success: false flag
+                return { 
+                    success: false, 
+                    ...data,
+                    statusCode: response.status 
+                };
+            }
+            
+            // Success response
+            return data;
         }
         
+        // Non-JSON response
         const text = await response.text();
         console.warn('Non-JSON response received:', text);
-        return { success: false, message: 'Server error: Invalid format' };
+        return { 
+            success: false, 
+            message: 'Server error: Invalid format',
+            statusCode: response.status 
+        };
     } catch (error) {
         console.error('API Call Failed:', error);
         return { success: false, message: 'Network connection lost' };
     }
 }
+
 
 window.showToast = function(message, type = 'success') {
     const container = document.getElementById('toast-container');

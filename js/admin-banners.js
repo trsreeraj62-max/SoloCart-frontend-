@@ -14,6 +14,7 @@ async function initAdminBanners() {
     await fetchBanners();
 }
 
+async function fetchBanners() {
     try {
         const data = await apiCall('/banners');
         // Handle response structure: { success: true, data: [...] }
@@ -38,6 +39,8 @@ async function initAdminBanners() {
         renderBanners(banners);
         if (window.showToast) window.showToast('Backend endpoint disabled: Showing demo banners', 'error');
     }
+}
+
 
 function renderBanners(list) {
     const grid = document.getElementById('banners-grid');
@@ -76,7 +79,7 @@ function renderBanners(list) {
 async function deleteBanner(id) {
     if (!confirm('Abort banner projection?')) return;
     try {
-        const data = await apiCall(`/banners/${id}`, { method: 'DELETE' });
+        const data = await apiCall(`/admin/banners/${id}`, { method: 'DELETE' });
         if (data && data.success === true) {
             fetchBanners();
         } else {
@@ -116,7 +119,7 @@ document.getElementById('banner-form')?.addEventListener('submit', async (e) => 
         status: document.getElementById('b-status')?.value
     };
 
-    const endpoint = id ? `/banners/${id}` : '/banners';
+    const endpoint = id ? `/admin/banners/${id}` : '/admin/banners';
     const method = id ? 'PUT' : 'POST';
 
     try {

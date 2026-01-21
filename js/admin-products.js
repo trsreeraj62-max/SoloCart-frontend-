@@ -17,7 +17,7 @@ async function initAdminProducts() {
 
 async function fetchProducts() {
     try {
-        const data = await apiCall('/products');
+        const data = await apiCall('/admin/products');
         
         // Handle paginated response: { success: true, data: { data: [...] } }
         const productList = data.data?.data || data.data || data.products || (Array.isArray(data) ? data : []);
@@ -84,7 +84,7 @@ async function deleteProduct(id) {
     if (!confirm('Permanently delete this product?')) return;
     
     try {
-        const data = await apiCall(`/products/${id}`, { method: 'DELETE' });
+        const data = await apiCall(`/admin/products/${id}`, { method: 'DELETE' });
         if (data && data.success === true) {
             if (window.showToast) window.showToast('Product deleted successfully');
             fetchProducts();
@@ -138,7 +138,7 @@ async function saveProduct(e) {
         image_url: document.getElementById('p-image').value
     };
     
-    const endpoint = id ? `/products/${id}` : '/products';
+    const endpoint = id ? `/admin/products/${id}` : '/admin/products';
     const method = id ? 'PUT' : 'POST';
     
     try {

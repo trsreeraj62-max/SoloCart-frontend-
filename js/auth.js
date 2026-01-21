@@ -62,28 +62,21 @@ async function handleRegister(e) {
             body: JSON.stringify({ name, email, phone, password, password_confirmation })
         });
 
-        if (data && (data.success || data.message === 'User successfully registered')) {
+        console.log('Registration Response:', data); // Debug log
+
+        // Check for success (various formats)
+        const isSuccess = data.success === true || 
+                         data.message === 'User successfully registered' ||
+                         data.message?.includes('registered') ||
+                         (data.statusCode >= 200 && data.statusCode < 300);
+
+        if (isSuccess || (data && !data.errors && data.success !== false)) {
             if (window.showToast) window.showToast('Account Created! Sending OTP...');
             
-            // Trigger OTP email specifically for the new registration
-            try {
-                 const otpResponse = await apiCall('/otp/resend', {
-                    method: 'POST',
-                    body: JSON.stringify({ email })
-                });
-                
-                // Redirect to OTP Verification page
-                setTimeout(() => {
-                    window.location.href = `/verify-otp.html?email=${encodeURIComponent(email)}`;
-                }, 1000);
-                
-            } catch (otpError) {
-                console.warn('Failed to trigger OTP', otpError);
-                // Still redirect to allow user to try resending from the page
-                setTimeout(() => {
-                    window.location.href = `/verify-otp.html?email=${encodeURIComponent(email)}`;
-                }, 1000);
-            }
+            // Redirect to OTP page - backend should have sent OTP automatically
+            setTimeout(() => {
+                window.location.href = `/verify-otp.html?email=${encodeURIComponent(email)}`;
+            }, 1000);
             
         } else {
             console.error('Registration Error Data:', data);
@@ -94,7 +87,7 @@ async function handleRegister(e) {
             if (data?.errors) {
                 const errors = Object.values(data.errors).flat();
                 if (errors.length > 0) {
-                    errorMsg = errors[0]; // Show the first error usually works best for toasts
+                    errorMsg = errors[0]; // Show the first error
                 }
             }
             
@@ -123,10 +116,27 @@ async function handleVerifyOtp(e) {
             body: JSON.stringify({ email, otp })
         });
 
-        if (data && (data.token || data.access_token)) {
-            finalizeLogin(data);
+        console.log('OTP Verify Response:', data); // Debug log
+
+        // Check for token in various response structures
+        const responseData = data.data || data;
+        const token = responseData.token || responseData.access_token || data.token || data.access_token;
+        
+        if (token && (data.success !== false)) {
+            // Success - token found
+            finalizeLogin(responseData.user ? responseData : data);
+        } else if (data.success === false || data.statusCode >= 400) {
+            // Explicit failure
+            const errorMsg = data.message || 'Invalid OTP';
+            if (window.showToast) window.showToast(errorMsg, 'error');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'VERIFY OTP';
+            }
         } else {
-            if (window.showToast) window.showToast(data?.message || 'Invalid OTP', 'error');
+            // Unexpected response format
+            console.error('Unexpected OTP response:', data);
+            if (window.showToast) window.showToast('Verification failed. Please try again.', 'error');
             if (btn) {
                 btn.disabled = false;
                 btn.innerText = 'VERIFY OTP';
@@ -144,7 +154,10 @@ async function handleVerifyOtp(e) {
 
 async function handleResendOtp() {
     const email = document.getElementById('email').value.trim();
-    if (!email) return;
+    if (!email) {
+        if (window.showToast) window.showToast('Email is required', 'error');
+        return;
+    }
 
     try {
         const data = await apiCall('/otp/resend', {
@@ -152,13 +165,18 @@ async function handleResendOtp() {
             body: JSON.stringify({ email })
         });
         
-        if (data && data.success) {
-            if (window.showToast) window.showToast('OTP Resent Successfully');
+        console.log('Resend OTP Response:', data); // Debug log
+        
+        // Check for success
+        if (data && (data.success === true || data.message?.includes('sent') || data.message?.includes('OTP'))) {
+            if (window.showToast) window.showToast(data.message || 'OTP Resent Successfully');
         } else {
-            if (window.showToast) window.showToast(data?.message || 'Failed to resend OTP', 'error');
+            const errorMsg = data?.message || 'Failed to resend OTP';
+            if (window.showToast) window.showToast(errorMsg, 'error');
         }
     } catch (e) {
         console.error('Resend OTP failed', e);
+        if (window.showToast) window.showToast('Failed to resend OTP', 'error');
     }
 }
 
