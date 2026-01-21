@@ -1,6 +1,8 @@
 import CONFIG from './config.js';
 import { apiCall } from './main.js';
 
+let currentProducts = [];
+
 async function initAdminProducts() {
     const token = localStorage.getItem('auth_token');
     const user = JSON.parse(localStorage.getItem('user_data') || '{}');
@@ -10,6 +12,7 @@ async function initAdminProducts() {
     }
     
     await fetchProducts();
+    setupEventListeners();
 }
 
 async function fetchProducts() {
@@ -17,13 +20,15 @@ async function fetchProducts() {
         const data = await apiCall('/products');
         
         // Handle paginated response: { success: true, data: { data: [...] } }
-        const productList = data.data?.data || data.products || (Array.isArray(data) ? data : []);
+        const productList = data.data?.data || data.data || data.products || (Array.isArray(data) ? data : []);
         
         if (Array.isArray(productList)) {
-            renderProducts(productList);
+            currentProducts = productList;
+            renderProducts(currentProducts);
         }
     } catch (e) {
         console.error('Failed to load admin products', e);
+        if (window.showToast) window.showToast('Failed to load products', 'error');
     }
 }
 
@@ -55,12 +60,60 @@ function renderProducts(products) {
                 </span>
             </td>
             <td class="px-6 py-4 text-right space-x-2">
-                <button class="text-blue-500 hover:bg-blue-50 p-2 rounded-lg transition-colors"><i class="fas fa-edit"></i></button>
-                <button class="text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-colors"><i class="fas fa-trash"></i></button>
+                <button class="edit-btn text-blue-500 hover:bg-blue-50 p-2 rounded-lg transition-colors" data-id="${p.id}"><i class="fas fa-edit"></i></button>
+                <button class="delete-btn text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-colors" data-id="${p.id}"><i class="fas fa-trash"></i></button>
             </td>
         </tr>
     `;
     }).join('');
+
+    table.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => editProduct(btn.dataset.id)));
+    table.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => deleteProduct(btn.dataset.id)));
+}
+
+async function deleteProduct(id) {
+    if (!confirm('Permanently delete this product?')) return;
+    
+    // Simulate deletion for now since DELETE endpoint might not be available
+    if (window.showToast) window.showToast('Product successfully removed (Mock)', 'success');
+    currentProducts = currentProducts.filter(p => p.id != id);
+    renderProducts(currentProducts);
+
+    /* Real implementation would look like this:
+    try {
+        const result = await apiCall(`/products/${id}`, { method: 'DELETE' });
+        if (result.success) fetchProducts();
+    } catch (e) { console.error(e); }
+    */
+}
+
+function editProduct(id) {
+    const product = currentProducts.find(p => p.id == id);
+    if (product) {
+        // Since we don't have a modal in the HTML yet, we'll just alert
+        alert(`Edit feature coming soon for Product ID: ${product.id}`);
+    }
+}
+
+function setupEventListeners() {
+    // Add Product Button
+    const addBtn = document.querySelector('button .fa-plus')?.parentElement;
+    if (addBtn) {
+        addBtn.addEventListener('click', () => {
+             // Mock creation
+             const newProduct = {
+                 id: Date.now(),
+                 name: 'New Demo Product',
+                 price: 9999,
+                 stock: 100,
+                 category: { name: 'Demo Category' },
+                 image: null
+             };
+             currentProducts.unshift(newProduct);
+             renderProducts(currentProducts);
+             if (window.showToast) window.showToast('New product initialized (Mock)', 'success');
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', initAdminProducts);
