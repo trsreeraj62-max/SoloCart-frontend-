@@ -65,28 +65,24 @@ async function handleRegister(e) {
         if (data && (data.success || data.message === 'User successfully registered')) {
             if (window.showToast) window.showToast('Account Created! Sending OTP...');
             
-            // Auto-trigger Login to get OTP
+            // Trigger OTP email specifically for the new registration
             try {
-                 const loginData = await apiCall('/login', {
+                 const otpResponse = await apiCall('/otp/resend', {
                     method: 'POST',
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({ email })
                 });
                 
-                if (loginData && (loginData.message.includes('OTP') || loginData.temp_token)) {
-                    // Redirect to OTP Verification
-                    setTimeout(() => {
-                        window.location.href = `/verify-otp.html?email=${encodeURIComponent(email)}`;
-                    }, 1000);
-                } else if (loginData && (loginData.token || loginData.access_token)) {
-                    // Direct Login Success
-                     finalizeLogin(loginData);
-                } else {
-                   // Fallback to login page logic
-                   setTimeout(() => window.location.href = '/login.html', 1000);
-                }
-            } catch (loginError) {
-                console.warn('Auto-login failed', loginError);
-                setTimeout(() => window.location.href = '/login.html', 1000);
+                // Redirect to OTP Verification page
+                setTimeout(() => {
+                    window.location.href = `/verify-otp.html?email=${encodeURIComponent(email)}`;
+                }, 1000);
+                
+            } catch (otpError) {
+                console.warn('Failed to trigger OTP', otpError);
+                // Still redirect to allow user to try resending from the page
+                setTimeout(() => {
+                    window.location.href = `/verify-otp.html?email=${encodeURIComponent(email)}`;
+                }, 1000);
             }
             
         } else {
