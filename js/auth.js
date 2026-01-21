@@ -18,9 +18,12 @@ async function handleLogin(e) {
             body: JSON.stringify({ email, password })
         });
 
-        if (data && (data.token || data.access_token)) {
+        // Check for nested data structure (e.g. data.data.token)
+        const responseData = data.data || data; 
+        
+        if (responseData && (responseData.token || responseData.access_token)) {
             // Direct Login (if no OTP required)
-            finalizeLogin(data);
+            finalizeLogin(responseData);
         } else if (data && data.message && (data.message.includes('OTP') || data.temp_token)) {
             // OTP Required
             if (window.showToast) window.showToast('OTP sent to your email');
