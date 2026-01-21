@@ -1,0 +1,15 @@
+{
+  "name": "solocart-frontend",
+  "version": "1.0.0",
+  "description": "SoloCart Frontend - Static Website",
+  "scripts": {
+    "start": "serve .",
+    "build": "echo 'No build step required' && exit 0"
+  },
+  "dependencies": {
+    "serve": "^14.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
