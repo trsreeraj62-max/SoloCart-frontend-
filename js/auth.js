@@ -54,6 +54,7 @@ async function handleLogin(e) {
 async function handleRegister(e) {
     e.preventDefault();
     const name = document.getElementById('name').value;
+    const phone = document.getElementById('phone').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const password_confirmation = document.getElementById('password_confirmation').value;
@@ -61,7 +62,7 @@ async function handleRegister(e) {
     try {
         const data = await apiCall('/register', {
             method: 'POST',
-            body: JSON.stringify({ name, email, password, password_confirmation })
+            body: JSON.stringify({ name, email, phone, password, password_confirmation })
         });
 
         if (data && (data.success || data.message === 'User successfully registered')) {
