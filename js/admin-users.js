@@ -1,6 +1,8 @@
 import CONFIG from './config.js';
 import { apiCall } from './main.js';
 
+let currentUsers = [];
+
 async function initAdminUsers() {
     const token = localStorage.getItem('auth_token');
     const user = JSON.parse(localStorage.getItem('user_data') || '{}');
@@ -20,20 +22,22 @@ async function fetchUsers() {
     try {
         const data = await apiCall(`/admin/users?search=${search}`);
         if (data && (data.users || Array.isArray(data))) {
-            renderUsers(data.users || data);
+            currentUsers = data.users || data;
+            renderUsers(currentUsers);
         } else {
             throw new Error('Invalid response format');
         }
     } catch (e) {
         console.warn('Failed to load admin users (Using Mock Data)', e);
         // Fallback Mock Data so the page isn't empty
-        renderUsers([
-            { id: 1, name: 'Admin User', email: 'admin@store.com', role: 'admin', status: 'active', created_at: '2026-01-01T10:00:00Z' },
-            { id: 2, name: 'John Doe', email: 'john@example.com', role: 'user', status: 'active', created_at: '2026-01-15T14:30:00Z' },
-            { id: 3, name: 'Jane Smith', email: 'jane@test.com', role: 'user', status: 'suspended', created_at: '2026-01-20T09:15:00Z' },
-            { id: 4, name: 'Robert Brown', email: 'robert@demo.com', role: 'user', status: 'active', created_at: '2026-01-21T11:45:00Z' },
-            { id: 5, name: 'Alice Cooper', email: 'alice@rock.com', role: 'user', status: 'inactive', created_at: '2026-01-10T16:20:00Z' }
-        ]);
+        currentUsers = [
+            { id: 1, name: 'Admin User', email: 'admin@store.com', role: 'admin', status: 'active', created_at: '2026-01-01T10:00:00Z', phone: '1234567890', address: 'HQ' },
+            { id: 2, name: 'John Doe', email: 'john@example.com', role: 'user', status: 'active', created_at: '2026-01-15T14:30:00Z', phone: '9876543210', address: '123 Main St' },
+            { id: 3, name: 'Jane Smith', email: 'jane@test.com', role: 'user', status: 'suspended', created_at: '2026-01-20T09:15:00Z', phone: '5555555555', address: '456 Oak Ave' },
+            { id: 4, name: 'Robert Brown', email: 'robert@demo.com', role: 'user', status: 'active', created_at: '2026-01-21T11:45:00Z', phone: '1112223334', address: '789 Pine Ln' },
+            { id: 5, name: 'Alice Cooper', email: 'alice@rock.com', role: 'user', status: 'inactive', created_at: '2026-01-10T16:20:00Z', phone: '9998887776', address: '321 Elm St' }
+        ];
+        renderUsers(currentUsers);
         if (window.showToast) window.showToast('Backend endpoint disabled: Showing demo users', 'error');
     }
 }
@@ -67,12 +71,13 @@ function renderUsers(users) {
             </td>
             <td class="px-6 py-4 text-slate-400 text-xs">${u.created_at ? new Date(u.created_at).toLocaleDateString() : '--'}</td>
             <td class="px-6 py-4 text-right space-x-2">
+                <button class="view-btn text-blue-500 hover:bg-blue-50 p-2 rounded-lg transition-colors" data-id="${u.id}"><i class="fas fa-eye"></i></button>
                 ${u.role !== 'admin' ? `
                     <button class="status-btn text-yellow-500 hover:bg-yellow-50 p-2 rounded-lg transition-colors" data-id="${u.id}" data-status="${u.status}">
                         <i class="fas ${u.status === 'suspended' ? 'fa-check-circle' : 'fa-ban'}"></i>
                     </button>
                     <button class="delete-btn text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-colors" data-id="${u.id}"><i class="fas fa-trash-alt"></i></button>
-                ` : '<i class="fas fa-lock text-slate-300"></i>'}
+                ` : '<span class="inline-block w-8 text-center"><i class="fas fa-lock text-slate-300"></i></span>'}
             </td>
         </tr>
     `).join('');
@@ -84,6 +89,54 @@ function renderUsers(users) {
     table.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', () => deleteUser(btn.dataset.id));
     });
+    table.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', () => showUserDetails(btn.dataset.id));
+    });
+}
+
+function showUserDetails(id) {
+    const user = currentUsers.find(u => u.id == id);
+    if (!user) return;
+    
+    const content = document.getElementById('user-modal-content');
+    if (content) {
+        content.innerHTML = `
+            <div class="flex items-center gap-4 mb-6">
+                 <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center font-black text-2xl text-[#2874f0]">
+                        ${(user.name || 'U').charAt(0)}
+                 </div>
+                 <div>
+                     <h4 class="text-xl font-bold text-slate-800">${user.name}</h4>
+                     <p class="text-sm text-slate-500 font-mono">${user.email}</p>
+                 </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div class="p-3 bg-slate-50 rounded-lg">
+                    <p class="text-[10px] font-black uppercase text-slate-400 mb-1">Role</p>
+                    <p class="font-bold text-slate-700">${user.role}</p>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-lg">
+                    <p class="text-[10px] font-black uppercase text-slate-400 mb-1">Status</p>
+                    <p class="font-bold ${user.status === 'active' ? 'text-green-600' : 'text-rose-600'}">${user.status}</p>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-lg">
+                    <p class="text-[10px] font-black uppercase text-slate-400 mb-1">Mobile</p>
+                    <p class="font-bold text-slate-700">${user.phone || '--'}</p>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-lg">
+                    <p class="text-[10px] font-black uppercase text-slate-400 mb-1">Joined</p>
+                    <p class="font-bold text-slate-700">${user.created_at ? new Date(user.created_at).toLocaleDateString() : '--'}</p>
+                </div>
+                <div class="col-span-2 p-3 bg-slate-50 rounded-lg">
+                    <p class="text-[10px] font-black uppercase text-slate-400 mb-1">Address</p>
+                    <p class="font-bold text-slate-700">${user.address || 'No address provided'}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    document.getElementById('userModal').classList.remove('hidden');
 }
 
 async function toggleUserStatus(id, currentStatus) {
@@ -95,9 +148,18 @@ async function toggleUserStatus(id, currentStatus) {
         if (data && (data.success || !data.message?.includes('fail'))) {
             if (window.showToast) window.showToast('Signal Frequency Reset Successful');
             fetchUsers();
+        } else {
+             throw new Error('Endpoint missing');
         }
     } catch (e) {
-        console.error('Failed to toggle status', e);
+        console.warn('Failed to toggle status (Using Mock)', e);
+        // Fallback Mock
+        const user = currentUsers.find(u => u.id == id);
+        if (user) {
+            user.status = action === 'activate' ? 'active' : 'suspended';
+            renderUsers(currentUsers);
+            if (window.showToast) window.showToast(`User ${action}d (Mock)`, 'success');
+        }
     }
 }
 
@@ -108,9 +170,15 @@ async function deleteUser(id) {
         if (data && (data.success || !data.message?.includes('fail'))) {
             if (window.showToast) window.showToast('Identity Erased');
             fetchUsers();
+        } else {
+             throw new Error('Endpoint missing');
         }
     } catch (e) {
-        console.error('Failed to delete user', e);
+        console.warn('Failed to delete user (Using Mock)', e);
+        // Fallback Mock
+        currentUsers = currentUsers.filter(u => u.id != id);
+        renderUsers(currentUsers);
+        if (window.showToast) window.showToast('User deleted (Mock)', 'success');
     }
 }
 
