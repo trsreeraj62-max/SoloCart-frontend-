@@ -92,7 +92,7 @@
                             <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Signal Message</label>
                             <textarea rows="4" placeholder="Your message here..." class="w-full border-b-2 border-slate-100 py-2 outline-none focus:border-[#2874f0] transition-colors text-sm font-medium resize-none"></textarea>
                         </div>
-                        <button type="submit" class="bg-[#fb641b] text-white px-12 py-4 rounded-xl font-black text-sm uppercase shadow-xl hover:scale-105 transition-transform active:scale-95">Initiate Signal</button>
+                        <button type="submit" class="bg-[#fb641b] text-white px-12 py-4 rounded-xl font-black text-sm uppercase shadow-xl hover:scale-105 transition-transform active:scale-95">Send Message</button>
                     </form>
                 </div>
             </div>
@@ -119,7 +119,7 @@
             const message = form.querySelector('textarea').value;
 
             btn.disabled = true;
-            btn.innerText = 'Transmitting...';
+            btn.innerText = 'Sending...';
 
             try {
                 const response = await fetch(`${CONFIG.API_BASE_URL}/contact`, {
