@@ -14,20 +14,30 @@ async function initAdminBanners() {
     await fetchBanners();
 }
 
-async function fetchBanners() {
     try {
         const data = await apiCall('/banners');
         // Handle response structure: { success: true, data: [...] }
         const bannerList = data.data || data.banners || (Array.isArray(data) ? data : []);
         
-        if (Array.isArray(bannerList)) {
+        if (Array.isArray(bannerList) && bannerList.length > 0) {
             banners = bannerList;
             renderBanners(banners);
+        } else {
+             // If empty or invalid, maybe trigger mock if API seemed to fail (no success flag)
+             if (data && data.success === false) throw new Error('API reported failure');
+             // If it's just empty list, that's valid. But if 404/error, apiCall might return {success:false}
+             renderBanners([]); 
         }
     } catch (e) {
-        console.error('Failed to load admin banners', e);
+        console.warn('Failed to load admin banners (Using Mock Data)', e);
+        banners = [
+            { id: 1, title: 'Summer Sale', status: 'active', image_url: 'https://placehold.co/1200x400/orange/white?text=Summer+Sale' },
+            { id: 2, title: 'New Arrivals', status: 'active', image_url: 'https://placehold.co/1200x400/blue/white?text=New+Arrivals' },
+            { id: 3, title: 'Electronics', status: 'inactive', image_url: 'https://placehold.co/800x400/red/white?text=Electronics' }
+        ];
+        renderBanners(banners);
+        if (window.showToast) window.showToast('Backend endpoint disabled: Showing demo banners', 'error');
     }
-}
 
 function renderBanners(list) {
     const grid = document.getElementById('banners-grid');
@@ -67,7 +77,7 @@ async function deleteBanner(id) {
     if (!confirm('Abort banner projection?')) return;
     try {
         const data = await apiCall(`/banners/${id}`, { method: 'DELETE' });
-        if (data && (data.success || !data.message?.includes('fail'))) {
+        if (data && data.success === true) {
             fetchBanners();
         } else {
              throw new Error('API Error or Method Not Allowed');
@@ -115,7 +125,7 @@ document.getElementById('banner-form')?.addEventListener('submit', async (e) => 
             body: JSON.stringify(bodyData)
         });
 
-        if (data && (data.success || !data.message?.includes('fail'))) {
+        if (data && data.success === true) {
             if (window.closeModal) window.closeModal();
             else document.getElementById('bannerModal')?.classList.add('hidden');
             fetchBanners();
