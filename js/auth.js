@@ -90,7 +90,19 @@ async function handleRegister(e) {
             }
             
         } else {
-            if (window.showToast) window.showToast(data?.message || 'Registration failed', 'error');
+            console.error('Registration Error Data:', data);
+            
+            let errorMsg = data?.message || 'Registration failed';
+            
+            // Handle Laravel Validation Errors
+            if (data?.errors) {
+                const errors = Object.values(data.errors).flat();
+                if (errors.length > 0) {
+                    errorMsg = errors[0]; // Show the first error usually works best for toasts
+                }
+            }
+            
+            if (window.showToast) window.showToast(errorMsg, 'error');
         }
     } catch (e) {
         console.error('Registration failed', e);
