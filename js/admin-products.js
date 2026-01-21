@@ -14,9 +14,13 @@ async function initAdminProducts() {
 
 async function fetchProducts() {
     try {
-        const data = await apiCall('/admin/products');
-        if (data && (data.products || Array.isArray(data))) {
-            renderProducts(data.products || data);
+        const data = await apiCall('/products');
+        
+        // Handle paginated response: { success: true, data: { data: [...] } }
+        const productList = data.data?.data || data.products || (Array.isArray(data) ? data : []);
+        
+        if (Array.isArray(productList)) {
+            renderProducts(productList);
         }
     } catch (e) {
         console.error('Failed to load admin products', e);

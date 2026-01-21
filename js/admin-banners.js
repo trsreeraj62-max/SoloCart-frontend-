@@ -16,9 +16,12 @@ async function initAdminBanners() {
 
 async function fetchBanners() {
     try {
-        const data = await apiCall('/admin/banners');
-        if (data && (data.banners || Array.isArray(data))) {
-            banners = data.banners || data;
+        const data = await apiCall('/banners');
+        // Handle response structure: { success: true, data: [...] }
+        const bannerList = data.data || data.banners || (Array.isArray(data) ? data : []);
+        
+        if (Array.isArray(bannerList)) {
+            banners = bannerList;
             renderBanners(banners);
         }
     } catch (e) {
@@ -63,7 +66,7 @@ function renderBanners(list) {
 async function deleteBanner(id) {
     if (!confirm('Abort banner projection?')) return;
     try {
-        const data = await apiCall(`/admin/banners/${id}`, { method: 'DELETE' });
+        const data = await apiCall(`/banners/${id}`, { method: 'DELETE' });
         if (data && (data.success || !data.message?.includes('fail'))) {
             fetchBanners();
         }
@@ -97,7 +100,7 @@ document.getElementById('banner-form')?.addEventListener('submit', async (e) => 
         status: document.getElementById('b-status')?.value
     };
 
-    const endpoint = id ? `/admin/banners/${id}` : '/admin/banners';
+    const endpoint = id ? `/banners/${id}` : '/banners';
     const method = id ? 'PUT' : 'POST';
 
     try {

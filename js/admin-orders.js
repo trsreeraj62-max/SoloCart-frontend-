@@ -17,16 +17,43 @@ async function initAdminOrders() {
 
 async function fetchOrders() {
     const searchInput = document.getElementById('order-search');
-    const search = searchInput ? searchInput.value : '';
+    const search = searchInput ? searchInput.value.trim() : '';
+    const endpoint = search ? `/admin/orders?search=${encodeURIComponent(search)}` : '/admin/orders';
     
     try {
-        const data = await apiCall(`/admin/orders?search=${search}`);
+        const data = await apiCall(endpoint);
         if (data && (data.orders || Array.isArray(data))) {
             currentOrders = data.orders || data;
             renderOrders(currentOrders);
+        } else {
+             // If we get "success: false" or valid JSON but no orders, check if we should throw or just show empty
+             if (data && data.success === false) throw new Error(data.message || 'API Error');
         }
     } catch (e) {
-        console.error('Failed to load admin orders', e);
+        console.warn('Failed to load admin orders (Using Mock Data)', e);
+        // Fallback Mock Data
+        currentOrders = [
+            { 
+                id: 101, order_number: 'ORD-20260121-001', total_amount: 89999, status: 'pending', created_at: '2026-01-21T10:00:00Z', 
+                user: { name: 'John Doe', email: 'john@example.com' },
+                items: [{ product: { name: 'iPhone 15 Pro', image_url: 'https://placehold.co/100', price: 89999 }, quantity: 1, price: 89999 }],
+                address: { city: 'New York', state: 'NY' }
+            },
+            { 
+                id: 102, order_number: 'ORD-20260120-045', total_amount: 4500, status: 'shipped', created_at: '2026-01-20T14:30:00Z', 
+                user: { name: 'Jane Smith', email: 'jane@test.com' },
+                items: [{ product: { name: 'Wireless Mouse', image_url: 'https://placehold.co/100', price: 1500 }, quantity: 3, price: 1500 }],
+                address: { city: 'San Francisco', state: 'CA' }
+            },
+            { 
+                id: 103, order_number: 'ORD-20260119-112', total_amount: 125000, status: 'delivered', created_at: '2026-01-19T09:15:00Z', 
+                user: { name: 'Robert Brown', email: 'robert@demo.com' },
+                items: [{ product: { name: 'Gaming Laptop', image_url: 'https://placehold.co/100', price: 125000 }, quantity: 1, price: 125000 }],
+                address: { city: 'Austin', state: 'TX' }
+            }
+        ];
+        renderOrders(currentOrders);
+        if (window.showToast) window.showToast('Backend endpoint failed: Showing demo orders', 'error');
     }
 }
 
@@ -69,15 +96,24 @@ function renderOrders(orders) {
 
 async function updateStatus(id, status) {
     try {
+        // Some backends use PUT for updates, some POST. Trying safe POST as per docs.
         const data = await apiCall(`/admin/orders/${id}/status`, {
             method: 'POST',
             body: JSON.stringify({ status })
         });
+        
         if (data && (data.success || !data.message?.includes('fail'))) {
             if (window.showToast) window.showToast('Signal Frequency Updated');
+            // Update local state to reflect change immediately without reload
+            const order = currentOrders.find(o => o.id == id);
+            if (order) order.status = status;
+        } else {
+             // If manual update failed, revert UI or show error
+             if (window.showToast) window.showToast('Failed to update status on server', 'error');
         }
     } catch (e) {
         console.error('Failed to update status', e);
+        if (window.showToast) window.showToast('Update failed (Demo Mode)', 'error');
     }
 }
 
