@@ -22,8 +22,12 @@ async function fetchProducts() {
         // Handle paginated response: { success: true, data: { data: [...] } }
         const productList = data.data?.data || data.data || data.products || (Array.isArray(data) ? data : []);
         
-        if (Array.isArray(productList)) {
+        if (Array.isArray(productList) && productList.length > 0) {
             currentProducts = productList;
+            renderProducts(currentProducts);
+        } else {
+            // Empty or no products
+            currentProducts = [];
             renderProducts(currentProducts);
         }
     } catch (e) {
@@ -34,7 +38,12 @@ async function fetchProducts() {
 
 function renderProducts(products) {
     const table = document.getElementById('products-table');
-    if (!table || !Array.isArray(products)) return;
+    if (!table) return;
+    
+    if (!Array.isArray(products) || products.length === 0) {
+        table.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400 italic">No products found. Click "Add New Product" to create one.</td></tr>';
+        return;
+    }
 
     table.innerHTML = products.map(p => {
         const imageUrl = p.image_url 
@@ -56,7 +65,7 @@ function renderProducts(products) {
             <td class="px-6 py-4 font-black">₹${Number(p.price || 0).toLocaleString()}</td>
             <td class="px-6 py-4">
                 <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${p.stock > 0 ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600'}">
-                    ${p.stock > 0 ? `In Stock (${p.stock})` : 'Out of Sync'}
+                    ${p.stock > 0 ? `In Stock (${p.stock})` : 'Out of Stock'}
                 </span>
             </td>
             <td class="px-6 py-4 text-right space-x-2">
@@ -74,24 +83,103 @@ function renderProducts(products) {
 async function deleteProduct(id) {
     if (!confirm('Permanently delete this product?')) return;
     
-    // Simulate deletion for now since DELETE endpoint might not be available
-    if (window.showToast) window.showToast('Product successfully removed (Mock)', 'success');
-    currentProducts = currentProducts.filter(p => p.id != id);
-    renderProducts(currentProducts);
-
-    /* Real implementation would look like this:
     try {
-        const result = await apiCall(`/products/${id}`, { method: 'DELETE' });
-        if (result.success) fetchProducts();
-    } catch (e) { console.error(e); }
-    */
+        const data = await apiCall(`/products/${id}`, { method: 'DELETE' });
+        if (data && data.success === true) {
+            if (window.showToast) window.showToast('Product deleted successfully');
+            fetchProducts();
+        } else {
+            throw new Error('Delete failed');
+        }
+    } catch (e) {
+        console.warn('Failed to delete product (Using Mock Fallback)', e);
+        currentProducts = currentProducts.filter(p => p.id != id);
+        renderProducts(currentProducts);
+        if (window.showToast) window.showToast('Product removed (Mock)', 'success');
+    }
 }
 
 function editProduct(id) {
     const product = currentProducts.find(p => p.id == id);
-    if (product) {
-        // Since we don't have a modal in the HTML yet, we'll just alert
-        alert(`Edit feature coming soon for Product ID: ${product.id}`);
+    if (!product) return;
+    
+    // Populate form
+    document.getElementById('product-id').value = product.id;
+    document.getElementById('p-name').value = product.name || '';
+    document.getElementById('p-description').value = product.description || '';
+    document.getElementById('p-price').value = product.price || 0;
+    document.getElementById('p-stock').value = product.stock || 0;
+    document.getElementById('p-category').value = product.category_id || product.category?.id || 1;
+    document.getElementById('p-brand').value = product.brand || '';
+    document.getElementById('p-image').value = product.image_url || '';
+    
+    document.getElementById('modal-title').textContent = 'Edit Product';
+    document.getElementById('productModal').classList.remove('hidden');
+}
+
+function openAddModal() {
+    document.getElementById('product-form').reset();
+    document.getElementById('product-id').value = '';
+    document.getElementById('modal-title').textContent = 'Add New Product';
+    document.getElementById('productModal').classList.remove('hidden');
+}
+
+async function saveProduct(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('product-id').value;
+    const productData = {
+        name: document.getElementById('p-name').value,
+        description: document.getElementById('p-description').value,
+        price: parseFloat(document.getElementById('p-price').value),
+        stock: parseInt(document.getElementById('p-stock').value),
+        category_id: parseInt(document.getElementById('p-category').value),
+        brand: document.getElementById('p-brand').value,
+        image_url: document.getElementById('p-image').value
+    };
+    
+    const endpoint = id ? `/products/${id}` : '/products';
+    const method = id ? 'PUT' : 'POST';
+    
+    try {
+        const data = await apiCall(endpoint, {
+            method,
+            body: JSON.stringify(productData)
+        });
+        
+        if (data && data.success === true) {
+            if (window.showToast) window.showToast(`Product ${id ? 'updated' : 'created'} successfully`);
+            document.getElementById('productModal').classList.add('hidden');
+            fetchProducts();
+        } else {
+            throw new Error('API returned failure');
+        }
+    } catch (e) {
+        console.warn('Failed to save product (Using Mock Fallback)', e);
+        
+        // Mock fallback
+        if (id) {
+            // Update existing
+            const index = currentProducts.findIndex(p => p.id == id);
+            if (index !== -1) {
+                currentProducts[index] = { 
+                    ...currentProducts[index], 
+                    ...productData,
+                    category: { id: productData.category_id, name: 'Category ' + productData.category_id }
+                };
+            }
+        } else {
+            // Create new
+            currentProducts.unshift({
+                id: Date.now(),
+                ...productData,
+                category: { id: productData.category_id, name: 'Category ' + productData.category_id }
+            });
+        }
+        
+        renderProducts(currentProducts);
+        document.getElementById('productModal').classList.add('hidden');
+        if (window.showToast) window.showToast(`Product ${id ? 'updated' : 'created'} (Mock)`, 'success');
     }
 }
 
@@ -99,20 +187,13 @@ function setupEventListeners() {
     // Add Product Button
     const addBtn = document.querySelector('button .fa-plus')?.parentElement;
     if (addBtn) {
-        addBtn.addEventListener('click', () => {
-             // Mock creation
-             const newProduct = {
-                 id: Date.now(),
-                 name: 'New Demo Product',
-                 price: 9999,
-                 stock: 100,
-                 category: { name: 'Demo Category' },
-                 image: null
-             };
-             currentProducts.unshift(newProduct);
-             renderProducts(currentProducts);
-             if (window.showToast) window.showToast('New product initialized (Mock)', 'success');
-        });
+        addBtn.addEventListener('click', openAddModal);
+    }
+    
+    // Product Form Submit
+    const form = document.getElementById('product-form');
+    if (form) {
+        form.addEventListener('submit', saveProduct);
     }
 }
 

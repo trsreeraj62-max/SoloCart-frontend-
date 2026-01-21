@@ -84,6 +84,53 @@
         </div>
     </main>
 
+    <!-- Product Modal -->
+    <div id="productModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-[2000] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all scale-100">
+            <div class="p-6 border-b flex justify-between items-center bg-slate-50">
+                <h3 class="text-lg font-black italic text-slate-800" id="modal-title">Add New Product</h3>
+                <button onclick="document.getElementById('productModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 transition-colors"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="product-form" class="p-6">
+                <input type="hidden" id="product-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Product Name</label>
+                        <input type="text" id="p-name" required class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#2874f0]" placeholder="Enter product name">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Description</label>
+                        <textarea id="p-description" rows="3" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#2874f0]" placeholder="Enter product description"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Price (₹)</label>
+                        <input type="number" id="p-price" required min="0" step="0.01" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#2874f0]" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Stock Quantity</label>
+                        <input type="number" id="p-stock" required min="0" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#2874f0]" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Category ID</label>
+                        <input type="number" id="p-category" required min="1" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#2874f0]" placeholder="1">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Brand</label>
+                        <input type="text" id="p-brand" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#2874f0]" placeholder="Brand name">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Image URL</label>
+                        <input type="url" id="p-image" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#2874f0]" placeholder="https://example.com/image.jpg">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="document.getElementById('productModal').classList.add('hidden')" class="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-slate-300 transition-colors">Cancel</button>
+                    <button type="submit" class="px-6 py-2 bg-[#2874f0] text-white rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-[#2063d1] transition-colors">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script type="module" src="/js/admin-products.js"></script>
 </body>
 </html>
