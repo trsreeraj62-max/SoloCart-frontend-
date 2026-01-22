@@ -100,18 +100,21 @@
         </div>
         <div class="flex items-center gap-3">
           <button
+            type="button"
             id="open-add-product-btn"
             class="bg-[#2874f0] text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
           >
             <i class="fas fa-plus"></i> Add New Product
           </button>
           <button
+            type="button"
             id="open-add-category-btn"
             class="bg-green-600 text-white px-4 py-2.5 rounded-lg font-bold text-sm shadow-lg hover:bg-green-700 transition-all flex items-center gap-2"
           >
             <i class="fas fa-tags"></i> Add Category
           </button>
           <button
+            type="button"
             id="open-discount-btn"
             class="bg-amber-600 text-white px-4 py-2.5 rounded-lg font-bold text-sm shadow-lg hover:bg-amber-700 transition-all flex items-center gap-2"
           >
@@ -313,21 +316,7 @@
               >
                 <option value="">Select category</option>
               </select>
-              <div class="mt-2 flex gap-2 items-center">
-                <input
-                  id="new-category-name"
-                  type="text"
-                  placeholder="New category name"
-                  class="flex-grow px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#2874f0]"
-                />
-                <button
-                  id="add-category-btn"
-                  type="button"
-                  class="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors"
-                >
-                  Add
-                </button>
-              </div>
+              <!-- Category creation moved to separate modal -->
             </div>
 
             <!-- Discount Modal -->

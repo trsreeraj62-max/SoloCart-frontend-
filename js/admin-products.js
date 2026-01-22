@@ -314,6 +314,27 @@ function setupEventListeners() {
     });
   }
 
+  // Fallback delegated click handler in case direct listener wasn't attached
+  document.body.addEventListener("click", (e) => {
+    const btn = e.target.closest && e.target.closest("#open-discount-btn");
+    if (!btn) return;
+    const sel = document.getElementById("discount-category");
+    if (sel) {
+      sel.innerHTML =
+        `<option value="all">All Categories</option>` +
+        currentCategories
+          .map((c) => `<option value="${c.id}">${c.name}</option>`)
+          .join("");
+    }
+    const percentInput = document.getElementById("discount-percent");
+    const startInput = document.getElementById("discount-start");
+    const endInput = document.getElementById("discount-end");
+    if (percentInput) percentInput.value = "";
+    if (startInput) startInput.value = "";
+    if (endInput) endInput.value = "";
+    document.getElementById("discountModal").classList.remove("hidden");
+  });
+
   // Discount form submit
   const discForm = document.getElementById("discount-form");
   if (discForm) {
