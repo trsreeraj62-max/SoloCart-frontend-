@@ -42,9 +42,13 @@ async function fetchCategories() {
     window.__solocart_admin_categories_ok = false;
     const openProductBtn = document.getElementById("open-add-product-btn");
     if (openProductBtn) openProductBtn.disabled = true;
-    if (window.showToast) window.showToast('Failed to load categories (server unreachable)', 'error');
+    if (window.showToast)
+      window.showToast(
+        "Failed to load categories (server unreachable)",
+        "error",
+      );
     // surface raw error if available
-    if (e && e.rawError) console.error('Category fetch raw error:', e.rawError);
+    if (e && e.rawError) console.error("Category fetch raw error:", e.rawError);
   }
 }
 
@@ -80,7 +84,7 @@ async function fetchProducts() {
   } catch (e) {
     console.error("Failed to load admin products", e);
     if (window.showToast) window.showToast("Failed to load products", "error");
-    if (e && e.rawError) console.error('Products fetch raw error:', e.rawError);
+    if (e && e.rawError) console.error("Products fetch raw error:", e.rawError);
   }
 }
 
@@ -277,218 +281,28 @@ async function saveProduct(e) {
       let errorMessage = data?.message || "Failed to save product";
 
       // Handle Laravel Validation Errors (if returned as errors object)
-      try {
-        const data = await apiCall(endpoint, {
-          method,
-          body: JSON.stringify(productData),
-        });
-
-        // If apiCall returned a network-level failure object
-        if (data && data.success === false) {
-          console.error('Save Product API failure:', data);
-          const msg = data.message || 'Failed to save product';
-          if (window.showToast) window.showToast(msg + (data.rawError ? ' — ' + data.rawError : ''), 'error');
-          if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = id ? 'Update' : 'Save Product'; }
-          return;
-        }
-
-        if (data && data.success === true) {
-          if (window.showToast)
-            window.showToast(`Product ${id ? 'updated' : 'created'} successfully`);
-          document.getElementById('productModal').classList.add('hidden');
-          fetchProducts();
-          try { localStorage.setItem('solocart_content_updated_at', Date.now().toString()); } catch (e) {}
-          if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = id ? 'Update' : 'Save Product'; }
-          return;
-        }
-
-        // If we reach here, the API returned an unexpected structure. Try to extract errors.
-        console.error('Unexpected save product response:', data);
-        let errorMessage = data?.message || 'Failed to save product';
-        if (data?.errors) {
-          const firstError = Object.values(data.errors).flat()[0];
-          if (firstError) errorMessage = firstError;
-        }
-        if (window.showToast) window.showToast(errorMessage, 'error');
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = id ? 'Update' : 'Save Product'; }
-      } catch (e) {
-        console.error('Failed to save product (exception):', e);
-        const msg = (e && e.message) ? e.message : 'Failed to save product';
-        if (window.showToast) window.showToast(msg, 'error');
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = id ? 'Update' : 'Save Product'; }
-      }
-  if (openCatBtn) {
-    openCatBtn.addEventListener("click", () => {
-      const catName = document.getElementById("category-name");
-      if (catName) catName.value = "";
-      document.getElementById("categoryModal").classList.remove("hidden");
-    });
-  }
-
-  // Category form submit
-  const catForm = document.getElementById("category-form");
-  if (catForm) {
-    catForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const name = (
-        document.getElementById("category-name").value || ""
-      ).trim();
-      if (!name) {
-        if (window.showToast) window.showToast("Enter category name", "error");
-        return;
+      if (data?.errors) {
+        const firstError = Object.values(data.errors).flat()[0];
+        if (firstError) errorMessage = firstError;
       }
 
-      try {
-        let res = await apiCall("/admin/categories", {
-          method: "POST",
-          body: JSON.stringify({ name }),
-        });
-
-        if ((!res || res.success === false) && res && res.statusCode === 405) {
-          res = await apiCall("/categories", {
-            method: "POST",
-            body: JSON.stringify({ name }),
-          });
-        }
-
-        if (res && (res.success || res.id || res.data)) {
-          if (window.showToast) window.showToast("Category added successfully");
-          document.getElementById("categoryModal").classList.add("hidden");
-          await fetchCategories();
-          const newId = res.id || (res.data && res.data.id) || null;
-          if (newId) document.getElementById("p-category").value = newId;
-        } else {
-          throw new Error(res?.message || "Failed to add category");
-        }
-      } catch (err) {
-        console.error("Failed to add category", err);
-        if (window.showToast)
-          window.showToast(err.message || "Failed to add category", "error");
+      if (window.showToast) window.showToast(errorMessage, "error");
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = id ? "Update" : "Save Product";
       }
-    });
-  }
-
-  // Open Discount modal button
-  const openDiscBtn = document.getElementById("open-discount-btn");
-  if (openDiscBtn) {
-    openDiscBtn.addEventListener("click", () => {
-      const sel = document.getElementById("discount-category");
-      if (sel) {
-        sel.innerHTML =
-          `<option value="all">All Categories</option>` +
-          currentCategories
-            .map((c) => `<option value="${c.id}">${c.name}</option>`)
-            .join("");
-      }
-      const percentInput = document.getElementById("discount-percent");
-      const startInput = document.getElementById("discount-start");
-      const endInput = document.getElementById("discount-end");
-      if (percentInput) percentInput.value = "";
-      if (startInput) startInput.value = "";
-      if (endInput) endInput.value = "";
-      document.getElementById("discountModal").classList.remove("hidden");
-    });
-  }
-
-  // Fallback delegated click handler in case direct listener wasn't attached
-  document.body.addEventListener("click", (e) => {
-    const btn = e.target.closest && e.target.closest("#open-discount-btn");
-    if (!btn) return;
-    const sel = document.getElementById("discount-category");
-    if (sel) {
-      sel.innerHTML =
-        `<option value="all">All Categories</option>` +
-        currentCategories
-          .map((c) => `<option value="${c.id}">${c.name}</option>`)
-          .join("");
     }
-    const percentInput = document.getElementById("discount-percent");
-    const startInput = document.getElementById("discount-start");
-    const endInput = document.getElementById("discount-end");
-    if (percentInput) percentInput.value = "";
-    if (startInput) startInput.value = "";
-    if (endInput) endInput.value = "";
-    document.getElementById("discountModal").classList.remove("hidden");
-  });
-
-  // Discount form submit
-  const discForm = document.getElementById("discount-form");
-  if (discForm) {
-    discForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const sel = document.getElementById("discount-category");
-      const percent = parseFloat(
-        document.getElementById("discount-percent").value,
-      );
-      const startVal = (
-        document.getElementById("discount-start").value || ""
-      ).trim();
-      const endVal = (
-        document.getElementById("discount-end").value || ""
-      ).trim();
-      if (isNaN(percent) || percent <= 0) {
-        if (window.showToast)
-          window.showToast("Enter valid discount percent", "error");
-        return;
-      }
-
-      const category = sel ? sel.value : "all";
-      const payload = { percent };
-      if (category !== "all") payload.category_id = parseInt(category);
-
-      // Validate and attach start/end datetimes if provided
-      try {
-        if (startVal) {
-          const s = new Date(startVal);
-          if (isNaN(s.getTime())) throw new Error("Invalid start date");
-          payload.start_at = s.toISOString();
-        }
-        if (endVal) {
-          const e = new Date(endVal);
-          if (isNaN(e.getTime())) throw new Error("Invalid end date");
-          payload.end_at = e.toISOString();
-        }
-        if (payload.start_at && payload.end_at) {
-          if (new Date(payload.start_at) >= new Date(payload.end_at)) {
-            if (window.showToast)
-              window.showToast("Start must be before End", "error");
-            return;
-          }
-        }
-      } catch (dateErr) {
-        if (window.showToast)
-          window.showToast(dateErr.message || "Invalid date", "error");
-        return;
-      }
-
-      try {
-        let res = await apiCall("/admin/discounts/apply", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-
-        if ((!res || res.success === false) && res && res.statusCode === 405) {
-          res = await apiCall("/discounts/apply", {
-            method: "POST",
-            body: JSON.stringify(payload),
-          });
-        }
-
-        if (res && (res.success || res.applied)) {
-          if (window.showToast)
-            window.showToast("Discount applied successfully");
-          document.getElementById("discountModal").classList.add("hidden");
-          await fetchProducts();
-        } else {
-          throw new Error(res?.message || "Failed to apply discount");
-        }
-      } catch (err) {
-        console.error("Apply discount failed", err);
-        if (window.showToast)
-          window.showToast(err.message || "Apply discount failed", "error");
-      }
-    });
+  } catch (e) {
+    console.error("Failed to save product (exception):", e);
+    const msg = e && e.message ? e.message : "Failed to save product";
+    if (window.showToast) window.showToast(msg, "error");
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerText = id ? "Update" : "Save Product";
+    }
   }
 }
+
+// Ensure all blocks are properly closed
 
 document.addEventListener("DOMContentLoaded", initAdminProducts);
