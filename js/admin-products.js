@@ -169,6 +169,8 @@ function openAddModal() {
   document.getElementById("product-form").reset();
   document.getElementById("product-id").value = "";
   document.getElementById("p-category").value = "";
+  const newCatInput = document.getElementById("new-category-name");
+  if (newCatInput) newCatInput.value = "";
   document.getElementById("modal-title").textContent = "Add New Product";
   document.getElementById("productModal").classList.remove("hidden");
 }
@@ -236,6 +238,54 @@ function setupEventListeners() {
   const form = document.getElementById("product-form");
   if (form) {
     form.addEventListener("submit", saveProduct);
+  }
+
+  // Add Category Button (inline in modal)
+  const addCatBtn = document.getElementById("add-category-btn");
+  if (addCatBtn) {
+    addCatBtn.addEventListener("click", async () => {
+      const input = document.getElementById("new-category-name");
+      if (!input) return;
+      const name = (input.value || "").trim();
+      if (!name) {
+        if (window.showToast)
+          window.showToast("Enter a category name", "error");
+        return;
+      }
+
+      try {
+        // Try admin create endpoint first
+        let res = await apiCall("/admin/categories", {
+          method: "POST",
+          body: JSON.stringify({ name }),
+        });
+
+        // Fallback to public endpoint if admin route not available
+        if ((!res || res.success === false) && res && res.statusCode === 405) {
+          res = await apiCall("/categories", {
+            method: "POST",
+            body: JSON.stringify({ name }),
+          });
+        }
+
+        if (res && (res.success || res.id || res.data)) {
+          if (window.showToast) window.showToast("Category added successfully");
+          input.value = "";
+          // Refresh categories and select the new one if possible
+          await fetchCategories();
+          // Try to select the created category ID if returned
+          const newId = res.id || (res.data && res.data.id) || null;
+          if (newId) document.getElementById("p-category").value = newId;
+        } else {
+          const msg = res?.message || "Failed to add category";
+          throw new Error(msg);
+        }
+      } catch (e) {
+        console.error("Failed to add category", e);
+        if (window.showToast)
+          window.showToast(e.message || "Failed to add category", "error");
+      }
+    });
   }
 }
 
