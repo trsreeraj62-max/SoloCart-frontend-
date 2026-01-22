@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apply Discounts — SoloCart Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        --fk-blue: #2874f0;
+        --fk-bg: #f8fafc;
+      }
+      body {
+        background-color: var(--fk-bg);
+        font-family: "Inter", sans-serif;
+      }
+      .sidebar {
+        width: 260px;
+        height: 100vh;
+        position: fixed;
+        left: 0;
+        top: 0;
+        background: #1e293b;
+        color: white;
+      }
+      .main-content {
+        margin-left: 260px;
+        padding: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="toast-container"
+      class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"
+    ></div>
+
+    <aside class="sidebar p-6 flex flex-col">
+      <div class="mb-10">
+        <h1 class="text-2xl font-black italic tracking-tighter text-white">
+          SoloCart <span class="text-[#2874f0]">Admin</span>
+        </h1>
+      </div>
+      <nav class="flex-grow space-y-2">
+        <a
+          href="/admin/dashboard.html"
+          class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline"
+        >
+          <i class="fas fa-chart-line"></i> Dashboard
+        </a>
+        <a
+          href="/admin/products.html"
+          class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline"
+        >
+          <i class="fas fa-box-open"></i> Products
+        </a>
+        <a
+          href="/admin/orders.html"
+          class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline transition-all"
+        >
+          <i class="fas fa-shopping-bag"></i> Orders
+        </a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <div class="flex justify-between items-center mb-8">
+        <div>
+          <h2 class="text-2xl font-black text-slate-800 tracking-tighter">
+            Apply Discounts
+          </h2>
+          <p
+            class="text-sm font-medium text-slate-400 uppercase tracking-widest"
+          >
+            Apply a percent discount to all products or a category
+          </p>
+        </div>
+        <a href="/admin/products.html" class="px-4 py-2 bg-slate-200 rounded-lg"
+          >Back to Products</a
+        >
+      </div>
+
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 max-w-2xl"
+      >
+        <form id="discount-page-form" class="space-y-4">
+          <label class="block text-xs font-black uppercase text-slate-400"
+            >Apply To</label
+          >
+          <select
+            id="page-discount-category"
+            class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#2874f0]"
+          >
+            <option value="all">All Categories</option>
+          </select>
+
+          <div>
+            <label class="block text-xs font-black uppercase text-slate-400"
+              >Discount Percent</label
+            >
+            <input
+              id="page-discount-percent"
+              type="number"
+              min="0"
+              max="100"
+              required
+              class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg"
+              placeholder="e.g. 10"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-black uppercase text-slate-400"
+              >Start Date & Time</label
+            >
+            <input
+              id="page-discount-start"
+              type="datetime-local"
+              class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-black uppercase text-slate-400"
+              >End Date & Time</label
+            >
+            <input
+              id="page-discount-end"
+              type="datetime-local"
+              class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg"
+            />
+          </div>
+
+          <div class="flex justify-end gap-3">
+            <button
+              type="button"
+              id="page-discount-cancel"
+              class="px-4 py-2 bg-slate-200 rounded-lg"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-amber-600 text-white rounded-lg"
+            >
+              Apply Discount
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <script type="module" src="/js/admin-discounts.js"></script>
+  </body>
+</html>
