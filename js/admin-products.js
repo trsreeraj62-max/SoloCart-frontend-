@@ -166,7 +166,14 @@ function editProduct(id) {
   document.getElementById("productModal").classList.remove("hidden");
 }
 
-function openAddModal() {
+async function openAddModal() {
+  // Ensure categories are fresh before showing modal so required select isn't empty
+  try {
+    await fetchCategories();
+  } catch (e) {
+    // ignore
+  }
+
   document.getElementById("product-form").reset();
   document.getElementById("product-id").value = "";
   document.getElementById("p-category").value = "";
@@ -233,6 +240,10 @@ function setupEventListeners() {
   if (addBtn) {
     addBtn.addEventListener("click", openAddModal);
   }
+
+  // Also attach to explicit ID button if present
+  const openProductBtn = document.getElementById("open-add-product-btn");
+  if (openProductBtn) openProductBtn.addEventListener("click", openAddModal);
 
   // Product Form Submit
   const form = document.getElementById("product-form");
