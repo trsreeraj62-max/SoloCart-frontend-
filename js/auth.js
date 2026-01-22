@@ -112,11 +112,17 @@ async function handleRegister(e) {
 
       let errorMsg = data?.message || "Registration failed";
 
-      // Handle Laravel Validation Errors
+      // Handle Laravel Validation Errors (priority: specific field errors > general message)
       if (data?.errors) {
-        const errors = Object.values(data.errors).flat();
-        if (errors.length > 0) {
-          errorMsg = errors[0]; // Show the first error
+        // Check for email-specific error first (most common duplicate case)
+        if (data.errors.email && Array.isArray(data.errors.email)) {
+          errorMsg = data.errors.email[0];
+        } else {
+          // Otherwise, show the first validation error
+          const errors = Object.values(data.errors).flat();
+          if (errors.length > 0) {
+            errorMsg = errors[0];
+          }
         }
       }
 
