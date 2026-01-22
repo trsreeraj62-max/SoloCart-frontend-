@@ -1,122 +1,135 @@
-import CONFIG from './config.js';
+import CONFIG from "./config.js";
 
 /**
  * Safely parses a JSON string with a fallback.
  * Prevents "undefined is not valid JSON" crashes.
  */
 export function safeJSONParse(str, fallback = {}) {
-    if (!str || str === "undefined" || str === "null") return fallback;
-    try {
-        return JSON.parse(str);
-    } catch (e) {
-        console.error("JSON Parse Error:", e, "for string:", str);
-        return fallback;
-    }
+  if (!str || str === "undefined" || str === "null") return fallback;
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    console.error("JSON Parse Error:", e, "for string:", str);
+    return fallback;
+  }
 }
 
 /**
  * Global API call helper to enforce HTTPS and handle common response patterns.
  */
 export async function apiCall(endpoint, options = {}) {
-    let url;
-    if (endpoint.startsWith('http')) {
-        url = endpoint;
-    } else {
-        const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-        url = `${CONFIG.API_BASE_URL}${path}`;
-    }
-    // Enforce HTTPS to prevent mixed-content errors
-    const secureUrl = url.replace(/^http:/, 'https:');
-    
-    const token = getAuthToken();
-    const defaultHeaders = {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-    };
-    
-    if (token) {
-        defaultHeaders['Authorization'] = `Bearer ${token}`;
-    }
+  let url;
+  if (endpoint.startsWith("http")) {
+    url = endpoint;
+  } else {
+    const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+    url = `${CONFIG.API_BASE_URL}${path}`;
+  }
+  // Enforce HTTPS to prevent mixed-content errors
+  const secureUrl = url.replace(/^http:/, "https:");
+
+  const token = getAuthToken();
+  const defaultHeaders = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    defaultHeaders["Authorization"] = `Bearer ${token}`;
+  }
+
+  // If caller provided a FormData body, do not set Content-Type header
+  if (options.body instanceof FormData) {
+    delete defaultHeaders["Content-Type"];
+  }
+
+  try {
+    const response = await fetch(secureUrl, {
+      ...options,
+      cache: "no-store",
+      headers: { ...defaultHeaders, ...options.headers },
+    });
+
+    // Problem 1 Fix: Always read text first to avoid "Unexpected non-whitespace" on HTML responses
+    const text = await response.text();
+    let data;
 
     try {
-        const response = await fetch(secureUrl, {
-            ...options,
-            cache: 'no-store',
-            headers: { ...defaultHeaders, ...options.headers }
-        });
-
-        // Problem 1 Fix: Always read text first to avoid "Unexpected non-whitespace" on HTML responses
-        const text = await response.text();
-        let data;
-
-        try {
-            data = JSON.parse(text);
-        } catch (e) {
-            // If JSON parse fails, it's likely an HTML 500 header or empty body
-            console.warn(`Non-JSON response (${response.status}):`, text.substring(0, 500));
-            return {
-                success: false,
-                message: `Server Error (${response.status}): Invalid Response Format`,
-                statusCode: response.status,
-                raw: text
-            };
-        }
-
-        // If response is not OK (4xx, 5xx)
-        if (!response.ok) {
-            console.warn(`API Error (${response.status}):`, data);
-            
-            if (response.status === 405) {
-                return { success: false, message: 'Method Not Allowed (Check API Route)', statusCode: 405 };
-            }
-            
-            return { 
-                success: false, 
-                ...data,
-                statusCode: response.status 
-            };
-        }
-        
-        // Success
-        return data;
-
-    } catch (error) {
-        console.error('API Call Failed:', error);
-        return { success: false, message: 'Network connection lost or server unreachable' };
+      data = JSON.parse(text);
+    } catch (e) {
+      // If JSON parse fails, it's likely an HTML 500 header or empty body
+      console.warn(
+        `Non-JSON response (${response.status}):`,
+        text.substring(0, 500),
+      );
+      return {
+        success: false,
+        message: `Server Error (${response.status}): Invalid Response Format`,
+        statusCode: response.status,
+        raw: text,
+      };
     }
+
+    // If response is not OK (4xx, 5xx)
+    if (!response.ok) {
+      console.warn(`API Error (${response.status}):`, data);
+
+      if (response.status === 405) {
+        return {
+          success: false,
+          message: "Method Not Allowed (Check API Route)",
+          statusCode: 405,
+        };
+      }
+
+      return {
+        success: false,
+        ...data,
+        statusCode: response.status,
+      };
+    }
+
+    // Success
+    return data;
+  } catch (error) {
+    console.error("API Call Failed:", error);
+    return {
+      success: false,
+      message: "Network connection lost or server unreachable",
+    };
+  }
 }
 
+window.showToast = function (message, type = "success") {
+  const container = document.getElementById("toast-container");
+  if (!container) return;
 
-window.showToast = function(message, type = 'success') {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-    
-    const toast = document.createElement('div');
-    toast.className = `p-4 rounded-md shadow-lg text-white font-bold text-sm transform transition-all duration-300 translate-y-0 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
-    toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i> ${message}`;
-    container.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-y-2');
-        setTimeout(() => toast.remove(), 300);
-    }, 4000);
+  const toast = document.createElement("div");
+  toast.className = `p-4 rounded-md shadow-lg text-white font-bold text-sm transform transition-all duration-300 translate-y-0 ${type === "success" ? "bg-green-600" : "bg-red-600"}`;
+  toast.innerHTML = `<i class="fas ${type === "success" ? "fa-check-circle" : "fa-exclamation-circle"} mr-2"></i> ${message}`;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add("opacity-0", "translate-y-2");
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
 };
 
 export function getAuthToken() {
-    const token = localStorage.getItem('auth_token');
-    if (!token || token === 'undefined' || token === 'null') return null;
-    return token;
+  const token = localStorage.getItem("auth_token");
+  if (!token || token === "undefined" || token === "null") return null;
+  return token;
 }
 
 export function updateAuthUI() {
-    const authActions = document.getElementById('auth-actions');
-    if (!authActions) return;
+  const authActions = document.getElementById("auth-actions");
+  if (!authActions) return;
 
-    const token = getAuthToken();
-    const user = safeJSONParse(localStorage.getItem('user_data'), null);
+  const token = getAuthToken();
+  const user = safeJSONParse(localStorage.getItem("user_data"), null);
 
-    if (token && user && user.name) {
-        authActions.innerHTML = `
+  if (token && user && user.name) {
+    authActions.innerHTML = `
             <div class="relative group">
                 <button class="flex items-center gap-2 focus:outline-none">
                     <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center border border-white/20">
@@ -133,86 +146,88 @@ export function updateAuthUI() {
                 </div>
             </div>
         `;
-        document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
-    } else {
-        // Fallback if not logged in
-        authActions.innerHTML = `<a href="/login.html" class="bg-white text-[#2874f0] px-8 py-1.5 rounded-sm font-bold text-sm shadow-sm transition-all hover:bg-[#f1f3f6] no-underline">Login</a>`;
-    }
+    document
+      .getElementById("logout-btn")
+      ?.addEventListener("click", handleLogout);
+  } else {
+    // Fallback if not logged in
+    authActions.innerHTML = `<a href="/login.html" class="bg-white text-[#2874f0] px-8 py-1.5 rounded-sm font-bold text-sm shadow-sm transition-all hover:bg-[#f1f3f6] no-underline">Login</a>`;
+  }
 }
 
 async function handleLogout() {
-    const token = getAuthToken();
-    if (token) {
-        try {
-            await fetch(`${CONFIG.API_BASE_URL}/logout`, {
-                method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                }
-            });
-        } catch (e) {
-            console.warn('Logout request failed', e);
-        }
+  const token = getAuthToken();
+  if (token) {
+    try {
+      await fetch(`${CONFIG.API_BASE_URL}/logout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+    } catch (e) {
+      console.warn("Logout request failed", e);
     }
+  }
 
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
-    showToast('Logged out successfully');
-    setTimeout(() => {
-        window.location.href = '/index.html';
-    }, 500);
+  localStorage.removeItem("auth_token");
+  localStorage.removeItem("user_data");
+  showToast("Logged out successfully");
+  setTimeout(() => {
+    window.location.href = "/index.html";
+  }, 500);
 }
 
 export async function updateCartBadge() {
-    const badge = document.getElementById('cart-count-badge');
-    if (!badge) return;
+  const badge = document.getElementById("cart-count-badge");
+  if (!badge) return;
 
-    const token = getAuthToken();
-    if (!token) {
-        badge.classList.add('hidden');
-        return;
-    }
+  const token = getAuthToken();
+  if (!token) {
+    badge.classList.add("hidden");
+    return;
+  }
 
-    try {
-        const data = await apiCall('/cart');
-        if (data) {
-            const count = data.total_items || (Array.isArray(data.items) ? data.items.length : 0);
-            if (count > 0) {
-                badge.innerText = count;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
-        }
-    } catch (e) { 
-        console.error('Cart badge update failed'); 
+  try {
+    const data = await apiCall("/cart");
+    if (data) {
+      const count =
+        data.total_items || (Array.isArray(data.items) ? data.items.length : 0);
+      if (count > 0) {
+        badge.innerText = count;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
     }
+  } catch (e) {
+    console.error("Cart badge update failed");
+  }
 }
 
-window.addToCart = async function(productId, quantity = 1) {
-    const token = getAuthToken();
-    if (!token) {
-        showToast('Please login to add to cart', 'error');
-        window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.href)}`;
-        return;
-    }
+window.addToCart = async function (productId, quantity = 1) {
+  const token = getAuthToken();
+  if (!token) {
+    showToast("Please login to add to cart", "error");
+    window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.href)}`;
+    return;
+  }
 
-    const data = await apiCall('/cart/add', {
-        method: 'POST',
-        body: JSON.stringify({ product_id: productId, quantity: quantity })
-    });
+  const data = await apiCall("/cart/add", {
+    method: "POST",
+    body: JSON.stringify({ product_id: productId, quantity: quantity }),
+  });
 
-    if (data && (data.success || data.id)) {
-        showToast('Added to Cart Successfully');
-        updateCartBadge();
-    } else {
-        showToast(data?.message || 'Failed to add to cart', 'error');
-    }
+  if (data && (data.success || data.id)) {
+    showToast("Added to Cart Successfully");
+    updateCartBadge();
+  } else {
+    showToast(data?.message || "Failed to add to cart", "error");
+  }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    updateAuthUI();
-    updateCartBadge();
+document.addEventListener("DOMContentLoaded", () => {
+  updateAuthUI();
+  updateCartBadge();
 });
-
