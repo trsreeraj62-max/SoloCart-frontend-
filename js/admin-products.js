@@ -20,6 +20,7 @@ async function initAdminProducts() {
     return;
   }
 
+  await fetchCategories();
   await fetchProducts();
   setupEventListeners();
 }
@@ -169,8 +170,7 @@ function openAddModal() {
   document.getElementById("product-form").reset();
   document.getElementById("product-id").value = "";
   document.getElementById("p-category").value = "";
-  const newCatInput = document.getElementById("new-category-name");
-  if (newCatInput) newCatInput.value = "";
+  document.getElementById("p-image").value = "";
   document.getElementById("modal-title").textContent = "Add New Product";
   document.getElementById("productModal").classList.remove("hidden");
 }
@@ -239,28 +239,35 @@ function setupEventListeners() {
   if (form) {
     form.addEventListener("submit", saveProduct);
   }
+  // Open Add Category modal button
+  const openCatBtn = document.getElementById("open-add-category-btn");
+  if (openCatBtn) {
+    openCatBtn.addEventListener("click", () => {
+      const catName = document.getElementById("category-name");
+      if (catName) catName.value = "";
+      document.getElementById("categoryModal").classList.remove("hidden");
+    });
+  }
 
-  // Add Category Button (inline in modal)
-  const addCatBtn = document.getElementById("add-category-btn");
-  if (addCatBtn) {
-    addCatBtn.addEventListener("click", async () => {
-      const input = document.getElementById("new-category-name");
-      if (!input) return;
-      const name = (input.value || "").trim();
+  // Category form submit
+  const catForm = document.getElementById("category-form");
+  if (catForm) {
+    catForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = (
+        document.getElementById("category-name").value || ""
+      ).trim();
       if (!name) {
-        if (window.showToast)
-          window.showToast("Enter a category name", "error");
+        if (window.showToast) window.showToast("Enter category name", "error");
         return;
       }
 
       try {
-        // Try admin create endpoint first
         let res = await apiCall("/admin/categories", {
           method: "POST",
           body: JSON.stringify({ name }),
         });
 
-        // Fallback to public endpoint if admin route not available
         if ((!res || res.success === false) && res && res.statusCode === 405) {
           res = await apiCall("/categories", {
             method: "POST",
@@ -270,20 +277,118 @@ function setupEventListeners() {
 
         if (res && (res.success || res.id || res.data)) {
           if (window.showToast) window.showToast("Category added successfully");
-          input.value = "";
-          // Refresh categories and select the new one if possible
+          document.getElementById("categoryModal").classList.add("hidden");
           await fetchCategories();
-          // Try to select the created category ID if returned
           const newId = res.id || (res.data && res.data.id) || null;
           if (newId) document.getElementById("p-category").value = newId;
         } else {
-          const msg = res?.message || "Failed to add category";
-          throw new Error(msg);
+          throw new Error(res?.message || "Failed to add category");
         }
-      } catch (e) {
-        console.error("Failed to add category", e);
+      } catch (err) {
+        console.error("Failed to add category", err);
         if (window.showToast)
-          window.showToast(e.message || "Failed to add category", "error");
+          window.showToast(err.message || "Failed to add category", "error");
+      }
+    });
+  }
+
+  // Open Discount modal button
+  const openDiscBtn = document.getElementById("open-discount-btn");
+  if (openDiscBtn) {
+    openDiscBtn.addEventListener("click", () => {
+      const sel = document.getElementById("discount-category");
+      if (sel) {
+        sel.innerHTML =
+          `<option value="all">All Categories</option>` +
+          currentCategories
+            .map((c) => `<option value="${c.id}">${c.name}</option>`)
+            .join("");
+      }
+      const percentInput = document.getElementById("discount-percent");
+      const startInput = document.getElementById("discount-start");
+      const endInput = document.getElementById("discount-end");
+      if (percentInput) percentInput.value = "";
+      if (startInput) startInput.value = "";
+      if (endInput) endInput.value = "";
+      document.getElementById("discountModal").classList.remove("hidden");
+    });
+  }
+
+  // Discount form submit
+  const discForm = document.getElementById("discount-form");
+  if (discForm) {
+    discForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const sel = document.getElementById("discount-category");
+      const percent = parseFloat(
+        document.getElementById("discount-percent").value,
+      );
+      const startVal = (
+        document.getElementById("discount-start").value || ""
+      ).trim();
+      const endVal = (
+        document.getElementById("discount-end").value || ""
+      ).trim();
+      if (isNaN(percent) || percent <= 0) {
+        if (window.showToast)
+          window.showToast("Enter valid discount percent", "error");
+        return;
+      }
+
+      const category = sel ? sel.value : "all";
+      const payload = { percent };
+      if (category !== "all") payload.category_id = parseInt(category);
+
+      // Validate and attach start/end datetimes if provided
+      try {
+        if (startVal) {
+          const s = new Date(startVal);
+          if (isNaN(s.getTime())) throw new Error("Invalid start date");
+          payload.start_at = s.toISOString();
+        }
+        if (endVal) {
+          const e = new Date(endVal);
+          if (isNaN(e.getTime())) throw new Error("Invalid end date");
+          payload.end_at = e.toISOString();
+        }
+        if (payload.start_at && payload.end_at) {
+          if (new Date(payload.start_at) >= new Date(payload.end_at)) {
+            if (window.showToast)
+              window.showToast("Start must be before End", "error");
+            return;
+          }
+        }
+      } catch (dateErr) {
+        if (window.showToast)
+          window.showToast(dateErr.message || "Invalid date", "error");
+        return;
+      }
+
+      try {
+        let res = await apiCall("/admin/discounts/apply", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+
+        if ((!res || res.success === false) && res && res.statusCode === 405) {
+          res = await apiCall("/discounts/apply", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+        }
+
+        if (res && (res.success || res.applied)) {
+          if (window.showToast)
+            window.showToast("Discount applied successfully");
+          document.getElementById("discountModal").classList.add("hidden");
+          await fetchProducts();
+        } else {
+          throw new Error(res?.message || "Failed to apply discount");
+        }
+      } catch (err) {
+        console.error("Apply discount failed", err);
+        if (window.showToast)
+          window.showToast(err.message || "Apply discount failed", "error");
       }
     });
   }
