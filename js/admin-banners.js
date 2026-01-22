@@ -98,6 +98,13 @@ async function deleteBanner(id) {
     const data = await apiCall(`/admin/banners/${id}`, { method: "DELETE" });
     if (data && data.success === true) {
       fetchBanners();
+      // Signal buyer pages to refresh banners
+      try {
+        localStorage.setItem(
+          "solocart_content_updated_at",
+          Date.now().toString(),
+        );
+      } catch (e) {}
     } else {
       throw new Error("API Error or Method Not Allowed");
     }
@@ -171,6 +178,13 @@ document
         if (window.closeModal) window.closeModal();
         else document.getElementById("bannerModal")?.classList.add("hidden");
         fetchBanners();
+        // Signal buyer pages to refresh banners
+        try {
+          localStorage.setItem(
+            "solocart_content_updated_at",
+            Date.now().toString(),
+          );
+        } catch (e) {}
       } else {
         // Handle Validation Errors
         let errorMessage = data?.message || "Failed to save banner";

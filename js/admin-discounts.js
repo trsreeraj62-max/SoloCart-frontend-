@@ -87,22 +87,60 @@ function setupListeners() {
     }
 
     try {
-      let res = await apiCall("/admin/discounts/apply", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-      if ((!res || res.success === false) && res && res.statusCode === 405) {
-        res = await apiCall("/discounts/apply", {
+      // helper to send payload and return response
+      async function sendApply(payloadToSend) {
+        let r = await apiCall("/admin/discounts/apply", {
           method: "POST",
-          body: JSON.stringify(payload),
+          body: JSON.stringify(payloadToSend),
         });
+        if ((!r || r.success === false) && r && r.statusCode === 405) {
+          r = await apiCall("/discounts/apply", {
+            method: "POST",
+            body: JSON.stringify(payloadToSend),
+          });
+        }
+        return r;
       }
+
+      // Try primary payload first
+      console.groupCollapsed("Discount apply: request");
+      console.log("Primary payload", payload);
+      console.groupEnd();
+
+      let res = await sendApply(payload);
+
+      // If server failed with 500 or returned failure, try an alternate payload shape that some backends expect
+      if (
+        !res ||
+        res.statusCode === 500 ||
+        (res.success === false && /category discount/i.test(res.message || ""))
+      ) {
+        const alt = {
+          discount_percent: percent,
+          apply_to_all: category === "all",
+        };
+        if (category !== "all") alt.category_id = parseInt(category);
+        if (payload.start_at) alt.start_date = payload.start_at;
+        if (payload.end_at) alt.end_date = payload.end_at;
+
+        console.groupCollapsed("Discount apply: fallback request");
+        console.log("Fallback payload", alt);
+        console.groupEnd();
+
+        res = await sendApply(alt);
+      }
+
+      console.groupCollapsed("Discount apply: response");
+      console.log(res);
+      console.groupEnd();
 
       if (res && (res.success || res.applied)) {
         if (window.showToast) window.showToast("Discount applied successfully");
         setTimeout(() => (window.location.href = "/admin/products.html"), 800);
       } else {
-        throw new Error(res?.message || "Failed to apply discount");
+        // show server message if available
+        const msg = res?.message || "Failed to apply discount";
+        throw new Error(msg);
       }
     } catch (err) {
       console.error("Apply discount failed", err);

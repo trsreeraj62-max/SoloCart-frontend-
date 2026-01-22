@@ -137,6 +137,12 @@ async function deleteProduct(id) {
     if (data && data.success === true) {
       if (window.showToast) window.showToast("Product deleted successfully");
       fetchProducts();
+      try {
+        localStorage.setItem(
+          "solocart_content_updated_at",
+          Date.now().toString(),
+        );
+      } catch (e) {}
     } else {
       throw new Error(data?.message || "Delete failed");
     }
@@ -215,6 +221,15 @@ async function saveProduct(e) {
         window.showToast(`Product ${id ? "updated" : "created"} successfully`);
       document.getElementById("productModal").classList.add("hidden");
       fetchProducts();
+      // Signal buyer pages to refresh their content
+      try {
+        localStorage.setItem(
+          "solocart_content_updated_at",
+          Date.now().toString(),
+        );
+      } catch (e) {
+        /* ignore */
+      }
     } else {
       console.error("Save Product Failed:", data);
       let errorMessage = data?.message || "Failed to save product";
