@@ -202,6 +202,32 @@ async function saveProduct(e) {
     image_url: document.getElementById("p-image").value,
   };
 
+  // Basic client-side validation
+  if (
+    !productData.name ||
+    isNaN(productData.price) ||
+    isNaN(productData.stock)
+  ) {
+    if (window.showToast)
+      window.showToast(
+        "Please fill required fields (name, price, stock)",
+        "error",
+      );
+    return;
+  }
+  if (!productData.category_id || isNaN(productData.category_id)) {
+    if (window.showToast) window.showToast("Please select a category", "error");
+    return;
+  }
+
+  // Disable submit button to prevent duplicate clicks
+  const form = document.getElementById("product-form");
+  const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerText = id ? "Updating..." : "Saving...";
+  }
+
   const endpoint = id ? `/admin/products/${id}` : "/admin/products";
 
   // Use POST for both, but add _method='PUT' for updates to avoid 405 Method Not Allowed on some server configs
@@ -230,6 +256,10 @@ async function saveProduct(e) {
       } catch (e) {
         /* ignore */
       }
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = id ? "Update" : "Save Product";
+      }
     } else {
       console.error("Save Product Failed:", data);
       let errorMessage = data?.message || "Failed to save product";
@@ -244,8 +274,21 @@ async function saveProduct(e) {
     }
   } catch (e) {
     console.error("Failed to save product", e);
-    if (window.showToast)
-      window.showToast(e.message || "Failed to save product", "error");
+    const msg = e && e.message ? e.message : "Failed to save product";
+    if (window.showToast) {
+      if (e && e.rawError && e.rawError.includes("Network")) {
+        window.showToast(
+          msg + ". Server unreachable — check backend or try again.",
+          "error",
+        );
+      } else {
+        window.showToast(msg, "error");
+      }
+    }
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerText = id ? "Update" : "Save Product";
+    }
   }
 }
 

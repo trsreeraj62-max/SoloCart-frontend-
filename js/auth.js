@@ -30,6 +30,9 @@ async function handleLogin(e) {
     if (token) {
       // Direct Login (if no OTP required) - normalize payload
       const user = responseData.user || data.user || {};
+      try {
+        localStorage.removeItem("solocart_pending_email");
+      } catch (e) {}
       finalizeLogin({ token, access_token: token, user });
     } else if (
       data &&
@@ -38,6 +41,9 @@ async function handleLogin(e) {
     ) {
       // OTP Required
       if (window.showToast) window.showToast("OTP sent to your email");
+      try {
+        localStorage.setItem("solocart_pending_email", email);
+      } catch (e) {}
       setTimeout(() => {
         window.location.href = `/verify-otp.html?email=${encodeURIComponent(email)}`;
       }, 1000);
@@ -95,6 +101,9 @@ async function handleRegister(e) {
       if (window.showToast) window.showToast("Account Created! Sending OTP...");
 
       // Redirect to OTP page - backend should have sent OTP automatically
+      try {
+        localStorage.setItem("solocart_pending_email", email);
+      } catch (e) {}
       setTimeout(() => {
         window.location.href = `/verify-otp.html?email=${encodeURIComponent(email)}`;
       }, 1000);
@@ -150,6 +159,9 @@ async function handleVerifyOtp(e) {
     if (token && data.success !== false) {
       // Success - token found. Normalize payload for finalizeLogin
       const user = responseData.user || data.user || {};
+      try {
+        localStorage.removeItem("solocart_pending_email");
+      } catch (e) {}
       finalizeLogin({ token, access_token: token, user });
     } else if (data.success === false || data.statusCode >= 400) {
       // Explicit failure

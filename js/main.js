@@ -96,6 +96,7 @@ export async function apiCall(endpoint, options = {}) {
     return {
       success: false,
       message: "Network connection lost or server unreachable",
+      rawError: error && error.message ? error.message : String(error),
     };
   }
 }
