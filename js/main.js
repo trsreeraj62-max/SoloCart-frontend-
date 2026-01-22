@@ -45,42 +45,41 @@ export async function apiCall(endpoint, options = {}) {
             headers: { ...defaultHeaders, ...options.headers }
         });
 
-        const contentType = response.headers.get('content-type');
-        
-        // Parse JSON response (works for both success and error responses)
-        if (contentType && contentType.includes('application/json')) {
-            const data = await response.json();
+        // Problem 1 Fix: Always read text first to avoid "Unexpected non-whitespace" on HTML responses
+        const text = await response.text();
+        let data;
+
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            // If JSON parse fails, it's likely an HTML 500 header or empty body
+            console.warn(`Non-JSON response (${response.status}):`, text.substring(0, 500));
+            return {
+                success: false,
+                message: `Server Error (${response.status}): Invalid Response Format`,
+                statusCode: response.status,
+                raw: text
+            };
+        }
+
+        // If response is not OK (4xx, 5xx)
+        if (!response.ok) {
+            console.warn(`API Error (${response.status}):`, data);
             
-            // If response is not OK (4xx, 5xx), but we have JSON data
-            if (!response.ok) {
-                console.warn(`API Error (${response.status}):`, data);
-                
-                // For 405 Method Not Allowed, it often means the route is missing or method is wrong
-                if (response.status === 405) {
-                    return { success: false, message: 'Method Not Allowed (Check API Route)', statusCode: 405 };
-                }
-                
-                // Return the error data with success: false flag
-                return { 
-                    success: false, 
-                    ...data,
-                    statusCode: response.status 
-                };
+            if (response.status === 405) {
+                return { success: false, message: 'Method Not Allowed (Check API Route)', statusCode: 405 };
             }
             
-            // Success response
-            return data;
+            return { 
+                success: false, 
+                ...data,
+                statusCode: response.status 
+            };
         }
         
-        // Non-JSON response (likely an HTML error page or empty 204)
-        const text = await response.text();
-        console.warn(`Non-JSON response received (${response.status}):`, text.substring(0, 500)); // Log first 500 chars
-        
-        return { 
-            success: false, 
-            message: `Server Error (${response.status}): Invalid Response Format`,
-            statusCode: response.status 
-        };
+        // Success
+        return data;
+
     } catch (error) {
         console.error('API Call Failed:', error);
         return { success: false, message: 'Network connection lost or server unreachable' };
