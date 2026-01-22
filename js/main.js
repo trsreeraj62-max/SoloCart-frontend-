@@ -52,9 +52,14 @@ export async function apiCall(endpoint, options = {}) {
             const data = await response.json();
             
             // If response is not OK (4xx, 5xx), but we have JSON data
-            // Return it so the caller can handle the error message
             if (!response.ok) {
                 console.warn(`API Error (${response.status}):`, data);
+                
+                // For 405 Method Not Allowed, it often means the route is missing or method is wrong
+                if (response.status === 405) {
+                    return { success: false, message: 'Method Not Allowed (Check API Route)', statusCode: 405 };
+                }
+                
                 // Return the error data with success: false flag
                 return { 
                     success: false, 
@@ -67,17 +72,18 @@ export async function apiCall(endpoint, options = {}) {
             return data;
         }
         
-        // Non-JSON response
+        // Non-JSON response (likely an HTML error page or empty 204)
         const text = await response.text();
-        console.warn('Non-JSON response received:', text);
+        console.warn(`Non-JSON response received (${response.status}):`, text.substring(0, 500)); // Log first 500 chars
+        
         return { 
             success: false, 
-            message: 'Server error: Invalid format',
+            message: `Server Error (${response.status}): Invalid Response Format`,
             statusCode: response.status 
         };
     } catch (error) {
         console.error('API Call Failed:', error);
-        return { success: false, message: 'Network connection lost' };
+        return { success: false, message: 'Network connection lost or server unreachable' };
     }
 }
 

@@ -124,11 +124,17 @@ document.getElementById('banner-form')?.addEventListener('submit', async (e) => 
             else document.getElementById('bannerModal')?.classList.add('hidden');
             fetchBanners();
         } else {
-            throw new Error('API Error or Method Not Allowed');
+             // Handle Validation Errors
+             let errorMessage = data?.message || 'Failed to save banner';
+             if (data?.errors) {
+                const firstError = Object.values(data.errors).flat()[0];
+                if (firstError) errorMessage = firstError;
+             }
+             throw new Error(errorMessage);
         }
     } catch (e) {
         console.error('Failed to save banner', e);
-        if (window.showToast) window.showToast('Failed to save banner', 'error');
+        if (window.showToast) window.showToast(e.message || 'Failed to save banner', 'error');
     }
 });
 

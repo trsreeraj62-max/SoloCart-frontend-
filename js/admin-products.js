@@ -89,11 +89,11 @@ async function deleteProduct(id) {
             if (window.showToast) window.showToast('Product deleted successfully');
             fetchProducts();
         } else {
-            throw new Error('Delete failed');
+            throw new Error(data?.message || 'Delete failed');
         }
     } catch (e) {
         console.error('Failed to delete product', e);
-        if (window.showToast) window.showToast('Failed to delete product', 'error');
+        if (window.showToast) window.showToast(e.message || 'Failed to delete product', 'error');
     }
 }
 
@@ -137,7 +137,12 @@ async function saveProduct(e) {
     };
     
     const endpoint = id ? `/admin/products/${id}` : '/admin/products';
-    const method = id ? 'PUT' : 'POST';
+    
+    // Use POST for both, but add _method='PUT' for updates to avoid 405 Method Not Allowed on some server configs
+    const method = 'POST';
+    if (id) {
+        productData._method = 'PUT';
+    }
     
     try {
         const data = await apiCall(endpoint, {
@@ -150,11 +155,20 @@ async function saveProduct(e) {
             document.getElementById('productModal').classList.add('hidden');
             fetchProducts();
         } else {
-            throw new Error('API returned failure');
+            console.error('Save Product Failed:', data);
+            let errorMessage = data?.message || 'Failed to save product';
+            
+            // Handle Laravel Validation Errors (if returned as errors object)
+            if (data?.errors) {
+                const firstError = Object.values(data.errors).flat()[0];
+                if (firstError) errorMessage = firstError;
+            }
+            
+            throw new Error(errorMessage);
         }
     } catch (e) {
         console.error('Failed to save product', e);
-        if (window.showToast) window.showToast('Failed to save product', 'error');
+        if (window.showToast) window.showToast(e.message || 'Failed to save product', 'error');
     }
 }
 
