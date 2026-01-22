@@ -32,8 +32,19 @@ async function fetchCategories() {
       data.categories || data.data || (Array.isArray(data) ? data : []);
     currentCategories = Array.isArray(categories) ? categories : [];
     populateCategorySelect(currentCategories);
+    // mark categories as available
+    window.__solocart_admin_categories_ok = true;
+    // ensure add button enabled
+    const openProductBtn = document.getElementById("open-add-product-btn");
+    if (openProductBtn) openProductBtn.disabled = false;
   } catch (e) {
     console.error("Failed to load categories", e);
+    window.__solocart_admin_categories_ok = false;
+    const openProductBtn = document.getElementById("open-add-product-btn");
+    if (openProductBtn) openProductBtn.disabled = true;
+    if (window.showToast) window.showToast('Failed to load categories (server unreachable)', 'error');
+    // surface raw error if available
+    if (e && e.rawError) console.error('Category fetch raw error:', e.rawError);
   }
 }
 
@@ -69,6 +80,7 @@ async function fetchProducts() {
   } catch (e) {
     console.error("Failed to load admin products", e);
     if (window.showToast) window.showToast("Failed to load products", "error");
+    if (e && e.rawError) console.error('Products fetch raw error:', e.rawError);
   }
 }
 
@@ -265,51 +277,46 @@ async function saveProduct(e) {
       let errorMessage = data?.message || "Failed to save product";
 
       // Handle Laravel Validation Errors (if returned as errors object)
-      if (data?.errors) {
-        const firstError = Object.values(data.errors).flat()[0];
-        if (firstError) errorMessage = firstError;
+      try {
+        const data = await apiCall(endpoint, {
+          method,
+          body: JSON.stringify(productData),
+        });
+
+        // If apiCall returned a network-level failure object
+        if (data && data.success === false) {
+          console.error('Save Product API failure:', data);
+          const msg = data.message || 'Failed to save product';
+          if (window.showToast) window.showToast(msg + (data.rawError ? ' — ' + data.rawError : ''), 'error');
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = id ? 'Update' : 'Save Product'; }
+          return;
+        }
+
+        if (data && data.success === true) {
+          if (window.showToast)
+            window.showToast(`Product ${id ? 'updated' : 'created'} successfully`);
+          document.getElementById('productModal').classList.add('hidden');
+          fetchProducts();
+          try { localStorage.setItem('solocart_content_updated_at', Date.now().toString()); } catch (e) {}
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = id ? 'Update' : 'Save Product'; }
+          return;
+        }
+
+        // If we reach here, the API returned an unexpected structure. Try to extract errors.
+        console.error('Unexpected save product response:', data);
+        let errorMessage = data?.message || 'Failed to save product';
+        if (data?.errors) {
+          const firstError = Object.values(data.errors).flat()[0];
+          if (firstError) errorMessage = firstError;
+        }
+        if (window.showToast) window.showToast(errorMessage, 'error');
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = id ? 'Update' : 'Save Product'; }
+      } catch (e) {
+        console.error('Failed to save product (exception):', e);
+        const msg = (e && e.message) ? e.message : 'Failed to save product';
+        if (window.showToast) window.showToast(msg, 'error');
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = id ? 'Update' : 'Save Product'; }
       }
-
-      throw new Error(errorMessage);
-    }
-  } catch (e) {
-    console.error("Failed to save product", e);
-    const msg = e && e.message ? e.message : "Failed to save product";
-    if (window.showToast) {
-      if (e && e.rawError && e.rawError.includes("Network")) {
-        window.showToast(
-          msg + ". Server unreachable — check backend or try again.",
-          "error",
-        );
-      } else {
-        window.showToast(msg, "error");
-      }
-    }
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.innerText = id ? "Update" : "Save Product";
-    }
-  }
-}
-
-function setupEventListeners() {
-  // Add Product Button
-  const addBtn = document.querySelector("button .fa-plus")?.parentElement;
-  if (addBtn) {
-    addBtn.addEventListener("click", openAddModal);
-  }
-
-  // Also attach to explicit ID button if present
-  const openProductBtn = document.getElementById("open-add-product-btn");
-  if (openProductBtn) openProductBtn.addEventListener("click", openAddModal);
-
-  // Product Form Submit
-  const form = document.getElementById("product-form");
-  if (form) {
-    form.addEventListener("submit", saveProduct);
-  }
-  // Open Add Category modal button
-  const openCatBtn = document.getElementById("open-add-category-btn");
   if (openCatBtn) {
     openCatBtn.addEventListener("click", () => {
       const catName = document.getElementById("category-name");
