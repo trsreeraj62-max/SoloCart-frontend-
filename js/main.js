@@ -41,6 +41,7 @@ export async function apiCall(endpoint, options = {}) {
     try {
         const response = await fetch(secureUrl, {
             ...options,
+            cache: 'no-store',
             headers: { ...defaultHeaders, ...options.headers }
         });
 

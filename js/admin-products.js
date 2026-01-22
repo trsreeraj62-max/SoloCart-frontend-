@@ -92,10 +92,8 @@ async function deleteProduct(id) {
             throw new Error('Delete failed');
         }
     } catch (e) {
-        console.warn('Failed to delete product (Using Mock Fallback)', e);
-        currentProducts = currentProducts.filter(p => p.id != id);
-        renderProducts(currentProducts);
-        if (window.showToast) window.showToast('Product removed (Mock)', 'success');
+        console.error('Failed to delete product', e);
+        if (window.showToast) window.showToast('Failed to delete product', 'error');
     }
 }
 
@@ -155,31 +153,8 @@ async function saveProduct(e) {
             throw new Error('API returned failure');
         }
     } catch (e) {
-        console.warn('Failed to save product (Using Mock Fallback)', e);
-        
-        // Mock fallback
-        if (id) {
-            // Update existing
-            const index = currentProducts.findIndex(p => p.id == id);
-            if (index !== -1) {
-                currentProducts[index] = { 
-                    ...currentProducts[index], 
-                    ...productData,
-                    category: { id: productData.category_id, name: 'Category ' + productData.category_id }
-                };
-            }
-        } else {
-            // Create new
-            currentProducts.unshift({
-                id: Date.now(),
-                ...productData,
-                category: { id: productData.category_id, name: 'Category ' + productData.category_id }
-            });
-        }
-        
-        renderProducts(currentProducts);
-        document.getElementById('productModal').classList.add('hidden');
-        if (window.showToast) window.showToast(`Product ${id ? 'updated' : 'created'} (Mock)`, 'success');
+        console.error('Failed to save product', e);
+        if (window.showToast) window.showToast('Failed to save product', 'error');
     }
 }
 

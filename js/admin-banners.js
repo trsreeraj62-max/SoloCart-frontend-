@@ -30,14 +30,8 @@ async function fetchBanners() {
              renderBanners([]); 
         }
     } catch (e) {
-        console.warn('Failed to load admin banners (Using Mock Data)', e);
-        banners = [
-            { id: 1, title: 'Summer Sale', status: 'active', image_url: 'https://placehold.co/1200x400/orange/white?text=Summer+Sale' },
-            { id: 2, title: 'New Arrivals', status: 'active', image_url: 'https://placehold.co/1200x400/blue/white?text=New+Arrivals' },
-            { id: 3, title: 'Electronics', status: 'inactive', image_url: 'https://placehold.co/800x400/red/white?text=Electronics' }
-        ];
-        renderBanners(banners);
-        if (window.showToast) window.showToast('Backend endpoint disabled: Showing demo banners', 'error');
+        console.error('Failed to load admin banners', e);
+        if (window.showToast) window.showToast('Failed to load banners from server', 'error');
     }
 }
 
@@ -86,11 +80,8 @@ async function deleteBanner(id) {
              throw new Error('API Error or Method Not Allowed');
         }
     } catch (e) {
-        console.warn('Failed to delete banner (Using Mock Fallback)', e);
-        // Fallback Mock Logic
-        banners = banners.filter(b => b.id != id);
-        renderBanners(banners);
-        if (window.showToast) window.showToast('Banner signal terminated (Mock)', 'success');
+        console.error('Failed to delete banner', e);
+        if (window.showToast) window.showToast('Failed to delete banner', 'error');
     }
 }
 
@@ -136,30 +127,8 @@ document.getElementById('banner-form')?.addEventListener('submit', async (e) => 
             throw new Error('API Error or Method Not Allowed');
         }
     } catch (e) {
-        console.warn('Failed to save banner (Using Mock Fallback)', e);
-        
-        // Fallback Mock Logic
-        if (id) {
-            // Update existing
-            const index = banners.findIndex(b => b.id == id);
-            if (index !== -1) {
-                banners[index] = { ...banners[index], ...bodyData };
-            }
-        } else {
-            // Create new
-            banners.push({
-                id: Date.now(),
-                ...bodyData,
-                created_at: new Date().toISOString()
-            });
-        }
-        
-        renderBanners(banners);
-        
-        if (window.closeModal) window.closeModal();
-        else document.getElementById('bannerModal')?.classList.add('hidden');
-        
-        if (window.showToast) window.showToast('Banner signal configured (Mock)', 'success');
+        console.error('Failed to save banner', e);
+        if (window.showToast) window.showToast('Failed to save banner', 'error');
     }
 });
 

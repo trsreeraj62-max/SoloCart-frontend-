@@ -15,28 +15,38 @@ async function initAdminDashboard() {
     if (nameEl) nameEl.innerText = user.name || 'Admin';
     
     await fetchDashboardStats();
-    if (window.Chart) {
-        initCharts();
-    }
 }
 
 async function fetchDashboardStats() {
     try {
         const data = await apiCall('/admin/dashboard-stats');
-        if (!data) return;
+        
+        // Allow rendering if data is partial, but data must exist
+        if (!data || data.success === false) {
+             console.warn('Dashboard stats failed/empty:', data?.message);
+             // Use 0 values if failed
+        }
+        
+        const validData = data || {};
 
         const revEl = document.getElementById('stat-revenue');
         const ordEl = document.getElementById('stat-orders');
         const usrEl = document.getElementById('stat-users');
         const prdEl = document.getElementById('stat-products');
 
-        if (revEl) revEl.innerText = `₹${Number(data.total_revenue || 0).toLocaleString()}`;
-        if (ordEl) ordEl.innerText = data.total_orders || 0;
-        if (usrEl) usrEl.innerText = data.total_users || 0;
-        if (prdEl) prdEl.innerText = data.total_products || 0;
+        if (revEl) revEl.innerText = `₹${Number(validData.total_revenue || 0).toLocaleString()}`;
+        if (ordEl) ordEl.innerText = validData.total_orders || 0;
+        if (usrEl) usrEl.innerText = validData.total_users || 0;
+        if (prdEl) prdEl.innerText = validData.total_products || 0;
 
-        if (data.recent_orders) {
-            renderRecentOrders(data.recent_orders);
+        if (validData.recent_orders) {
+            renderRecentOrders(validData.recent_orders);
+        }
+        
+        // Pass real data to charts. 
+        // Expecting { revenue_chart: { labels:[], data:[] }, category_chart: { labels:[], data:[] } }
+        if (window.Chart) {
+            initCharts(validData);
         }
     } catch (e) {
         console.error('Stats fetch error', e);
@@ -46,6 +56,11 @@ async function fetchDashboardStats() {
 function renderRecentOrders(orders) {
     const table = document.getElementById('recent-orders-table');
     if (!table || !Array.isArray(orders)) return;
+
+    if (orders.length === 0) {
+        table.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-400">No recent orders found</td></tr>';
+        return;
+    }
 
     table.innerHTML = orders.map(o => `
         <tr class="hover:bg-slate-50 transition-colors">
@@ -66,20 +81,28 @@ function getStatusStyle(status) {
     const s = (status || '').toLowerCase();
     if (s === 'delivered') return 'bg-green-100 text-green-600';
     if (s === 'pending') return 'bg-orange-100 text-orange-600';
+    if (s === 'cancelled') return 'bg-red-100 text-red-600';
     return 'bg-blue-100 text-blue-600';
 }
 
-function initCharts() {
+function initCharts(data) {
     const revCtx = document.getElementById('revenueChart');
     if (revCtx) {
+        const chartData = data.revenue_chart || {};
+        const labels = chartData.labels || [];
+        const values = chartData.data || [];
+
+        const existingChart = Chart.getChart(revCtx);
+        if (existingChart) existingChart.destroy();
+
         const ctx = revCtx.getContext('2d');
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                labels: labels.length ? labels : ['No Data'],
                 datasets: [{
                     label: 'Revenue Growth',
-                    data: [12000, 19000, 3000, 5000, 2000, 30000],
+                    data: values.length ? values : [0], // Default 0 to show empty graph instead of mock
                     borderColor: '#2874f0',
                     backgroundColor: 'rgba(40, 116, 240, 0.1)',
                     fill: true,
@@ -95,14 +118,23 @@ function initCharts() {
 
     const catCtx = document.getElementById('categoryChart');
     if (catCtx) {
+        const chartData = data.category_chart || {};
+        const labels = chartData.labels || [];
+        const values = chartData.data || [];
+        
+        const existingChart = Chart.getChart(catCtx);
+        if (existingChart) existingChart.destroy();
+
         const ctx2 = catCtx.getContext('2d');
         new Chart(ctx2, {
             type: 'doughnut',
             data: {
-                labels: ['Electronics', 'Fashion', 'Home', 'Beauty'],
+                labels: labels.length ? labels : ['No Data'],
                 datasets: [{
-                    data: [45, 25, 20, 10],
-                    backgroundColor: ['#2874f0', '#fb641b', '#ff9f00', '#eee']
+                    data: values.length ? values : [1], // Default 1 so ring appears but gray
+                    backgroundColor: values.length 
+                        ? ['#2874f0', '#fb641b', '#ff9f00', '#eee', '#333'] 
+                        : ['#e2e8f0']
                 }]
             }
         });

@@ -28,17 +28,9 @@ async function fetchUsers() {
             throw new Error('Invalid response format');
         }
     } catch (e) {
-        console.warn('Failed to load admin users (Using Mock Data)', e);
-        // Fallback Mock Data so the page isn't empty
-        currentUsers = [
-            { id: 1, name: 'Admin User', email: 'admin@store.com', role: 'admin', status: 'active', created_at: '2026-01-01T10:00:00Z', phone: '1234567890', address: 'HQ' },
-            { id: 2, name: 'John Doe', email: 'john@example.com', role: 'user', status: 'active', created_at: '2026-01-15T14:30:00Z', phone: '9876543210', address: '123 Main St' },
-            { id: 3, name: 'Jane Smith', email: 'jane@test.com', role: 'user', status: 'suspended', created_at: '2026-01-20T09:15:00Z', phone: '5555555555', address: '456 Oak Ave' },
-            { id: 4, name: 'Robert Brown', email: 'robert@demo.com', role: 'user', status: 'active', created_at: '2026-01-21T11:45:00Z', phone: '1112223334', address: '789 Pine Ln' },
-            { id: 5, name: 'Alice Cooper', email: 'alice@rock.com', role: 'user', status: 'inactive', created_at: '2026-01-10T16:20:00Z', phone: '9998887776', address: '321 Elm St' }
-        ];
-        renderUsers(currentUsers);
-        if (window.showToast) window.showToast('Backend endpoint disabled: Showing demo users', 'error');
+        console.error('Failed to load admin users', e);
+        if (window.showToast) window.showToast('Failed to load users from server', 'error');
+        // No mock fallback
     }
 }
 
@@ -152,14 +144,8 @@ async function toggleUserStatus(id, currentStatus) {
              throw new Error('Endpoint missing');
         }
     } catch (e) {
-        console.warn('Failed to toggle status (Using Mock)', e);
-        // Fallback Mock
-        const user = currentUsers.find(u => u.id == id);
-        if (user) {
-            user.status = action === 'activate' ? 'active' : 'suspended';
-            renderUsers(currentUsers);
-            if (window.showToast) window.showToast(`User ${action}d (Mock)`, 'success');
-        }
+        console.error('Failed to toggle status', e);
+        if (window.showToast) window.showToast('Failed to update status', 'error');
     }
 }
 
@@ -174,11 +160,8 @@ async function deleteUser(id) {
              throw new Error('Endpoint missing');
         }
     } catch (e) {
-        console.warn('Failed to delete user (Using Mock)', e);
-        // Fallback Mock
-        currentUsers = currentUsers.filter(u => u.id != id);
-        renderUsers(currentUsers);
-        if (window.showToast) window.showToast('User deleted (Mock)', 'success');
+        console.error('Failed to delete user', e);
+        if (window.showToast) window.showToast('Failed to delete user', 'error');
     }
 }
 
