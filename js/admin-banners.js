@@ -146,19 +146,25 @@ document
     try {
       let data;
       if (file) {
-        const fd = new FormData();
-        if (title) fd.append("title", title);
-        fd.append("image", file);
-        if (status) fd.append("status", status);
-        // if updating existing banner, include _method override for PUT if backend expects POST with _method
-        // but here we call PUT directly; apiCall will forward the method.
+        // Some backends expect 'image' as a string (path/URL). Convert file to base64 string
+        // and send as the 'image' field so it validates as a string. If backend supports
+        // multipart upload, switch back to FormData approach.
+        const toBase64 = (f) =>
+          new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(f);
+          });
 
+        const base64 = await toBase64(file);
+        const bodyData = { title, image: base64, status };
         data = await apiCall(endpoint, {
           method,
-          body: fd,
+          body: JSON.stringify(bodyData),
         });
       } else {
-        // No file selected: send JSON with image_url (backend may still require 'image')
+        // No file selected: send JSON with image_url (backend may require image field name 'image')
         const bodyData = { title, image_url: imageUrl, status };
         data = await apiCall(endpoint, {
           method,
