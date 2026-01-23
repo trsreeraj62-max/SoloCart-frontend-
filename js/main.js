@@ -29,12 +29,16 @@ export async function apiCall(endpoint, options = {}) {
   const secureUrl = url.replace(/^http:/, "https:");
 
   const token = getAuthToken();
+  // Allow pages to opt-out of sending Authorization (admin -> buyer view)
+  const urlParams = new URLSearchParams(window.location.search);
+  const skipAuth =
+    urlParams.get("as_buyer") === "1" || urlParams.get("view_as_buyer") === "1";
   const defaultHeaders = {
     Accept: "application/json",
     "Content-Type": "application/json",
   };
 
-  if (token) {
+  if (token && !skipAuth) {
     defaultHeaders["Authorization"] = `Bearer ${token}`;
   }
 
@@ -47,6 +51,11 @@ export async function apiCall(endpoint, options = {}) {
     console.log("[API] Request ->", secureUrl, {
       method: options.method || "GET",
       headers: Object.keys(defaultHeaders),
+      tokenPresent: !!token,
+      skipAuth: !!skipAuth,
+      authHeader: defaultHeaders["Authorization"]
+        ? `${String(defaultHeaders["Authorization"]).slice(0, 20)}...`
+        : null,
     });
 
     const response = await fetch(secureUrl, {
@@ -78,6 +87,22 @@ export async function apiCall(endpoint, options = {}) {
     // If response is not OK (4xx, 5xx)
     if (!response.ok) {
       console.warn(`API Error (${response.status}):`, data);
+
+      // If Unauthorized, clear local auth and redirect to login (unless we're intentionally skipping auth)
+      if (response.status === 401) {
+        console.error(
+          "API returned 401 Unauthorized. Clearing stored credentials and redirecting to login.",
+        );
+        try {
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("user_data");
+        } catch (e) {}
+        if (!skipAuth) {
+          const redirectTo = `/login.html?redirect=${encodeURIComponent(window.location.href)}`;
+          setTimeout(() => (window.location.href = redirectTo), 500);
+        }
+        return { success: false, message: "Unauthorized", statusCode: 401 };
+      }
 
       if (response.status === 405) {
         return {
@@ -220,6 +245,12 @@ window.addToCart = async function (productId, quantity = 1) {
     return;
   }
 
+  console.log(
+    "[AddToCart] Token present:",
+    !!token,
+    "tokenMasked:",
+    token ? `${String(token).slice(0, 12)}...` : null,
+  );
   const data = await apiCall("/cart/add", {
     method: "POST",
     body: JSON.stringify({ product_id: productId, quantity: quantity }),

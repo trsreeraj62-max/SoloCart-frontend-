@@ -14,6 +14,13 @@ async function initCart() {
 
 async function fetchCartItems() {
   try {
+    const token = getAuthToken();
+    console.log(
+      "[Cart] Fetching cart. Token present:",
+      !!token,
+      "tokenMasked:",
+      token ? `${String(token).slice(0, 12)}...` : null,
+    );
     const data = await apiCall("/cart");
 
     const items = data?.items || [];
