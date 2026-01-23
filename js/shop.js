@@ -14,6 +14,7 @@ let isLoading = false;
 let hasMore = true;
 
 async function initShop() {
+  console.log("[SHOP] 🔍 Initializing shop...");
   // Parse URL parameters
   const params = new URLSearchParams(window.location.search);
   currentFilters.category = params.get("category") || "";
@@ -22,6 +23,8 @@ async function initShop() {
   currentFilters.page = parseInt(params.get("page")) || 1;
   currentFilters.min_price = params.get("min_price") || "";
   currentFilters.max_price = params.get("max_price") || "";
+
+  console.log("[SHOP] Filters from URL:", currentFilters);
 
   // Initialize UI states
   if (currentFilters.search) {
@@ -35,11 +38,15 @@ async function initShop() {
   updateSortButtons();
 
   // Initial fetch
+  console.log("[SHOP] Fetching categories...");
   await fetchCategories();
+  console.log("[SHOP] Fetching products...");
   await fetchProducts();
 
   // Bind Event Listeners
+  console.log("[SHOP] Setting up event listeners...");
   setupEventListeners();
+  console.log("[SHOP] ✅ Shop initialization complete");
 }
 
 async function fetchCategories() {
@@ -117,7 +124,13 @@ async function fetchProducts(append = false) {
       page: currentFilters.page,
     }).toString();
 
-    const data = await apiCall(`/products?${query}`);
+    const apiEndpoint = `/products?${query}`;
+    console.log(
+      "[SHOP] 🔗 Fetching products from:",
+      CONFIG.API_BASE_URL + apiEndpoint,
+    );
+    const data = await apiCall(apiEndpoint);
+    console.log("[SHOP] ✅ Products API response:", data);
 
     // Handle various response structures
     let products = [];
@@ -182,10 +195,24 @@ async function fetchProducts(append = false) {
 
 function renderProducts(products, append = false) {
   const grid = document.getElementById("shop-products-grid");
-  if (!grid || !Array.isArray(products)) return;
+  if (!grid || !Array.isArray(products)) {
+    console.warn(
+      "[SHOP] renderProducts: grid found?",
+      !!grid,
+      "products array?",
+      Array.isArray(products),
+    );
+    return;
+  }
 
   const html = products
     .map((p) => {
+      console.log(
+        "[SHOP] Rendering product:",
+        p.id || p.slug || p.name,
+        "image:",
+        p.image_url || p.image,
+      );
       const imageUrl = p.image_url
         ? p.image_url.replace(/^http:/, "https:")
         : p.image

@@ -7,8 +7,16 @@ import { apiCall } from "./main.js";
  */
 async function fetchHomeData() {
   try {
+    console.log("[HOME] 🔍 Starting fetchHomeData...");
+    console.log("[HOME] API URL:", CONFIG.API_BASE_URL + "/home-data");
+
     const data = await apiCall("/home-data");
-    console.log("HOME DATA:", data);
+    console.log("[HOME] ✅ API Response received:", data);
+    console.log("[HOME] Response type:", typeof data);
+    console.log("[HOME] Is array?", Array.isArray(data));
+    console.log("[HOME] Has 'data' key?", !!data?.data);
+    console.log("[HOME] Has 'banners' key?", !!data?.banners);
+    console.log("[HOME] Has 'products' key?", !!data?.products);
 
     if (!data) {
       showNoProductsPopup();
@@ -16,21 +24,38 @@ async function fetchHomeData() {
     }
 
     // Handle Banners if present
-    const banners = data.banners || data.data?.banners || [];
+    console.log("[HOME] 🖼️ Processing banners...");
+    let banners = data.banners || data.data?.banners || [];
+    console.log("[HOME] Banners found:", banners.length, banners);
+
     if (Array.isArray(banners) && banners.length > 0) {
+      console.log("[HOME] Rendering", banners.length, "banners");
       renderBanners(banners);
     } else {
+      console.log(
+        "[HOME] ⚠️ No banners in /home-data, trying /banners endpoint...",
+      );
       // Fallback: try fetching banners from dedicated endpoint
       const bannerData = await apiCall("/banners");
+      console.log("[HOME] /banners response:", bannerData);
       const fallbackBanners =
         bannerData?.banners ||
         bannerData?.data ||
         (Array.isArray(bannerData) ? bannerData : []);
-      if (fallbackBanners.length > 0) renderBanners(fallbackBanners);
+      console.log(
+        "[HOME] Fallback banners:",
+        fallbackBanners.length,
+        fallbackBanners,
+      );
+      if (fallbackBanners.length > 0) {
+        console.log("[HOME] Rendering fallback banners");
+        renderBanners(fallbackBanners);
+      }
     }
 
     // Handle Products - extract from data.products or data.data or data itself
     // Robust Product Extraction
+    console.log("[HOME] 📦 Processing products...");
     let featured = [];
     let latest = [];
     let products = [];
@@ -38,8 +63,20 @@ async function fetchHomeData() {
     // Helper to find array in possible locations
     const findArray = (keys) => {
       for (const key of keys) {
-        if (Array.isArray(data[key])) return data[key];
-        if (data.data && Array.isArray(data.data[key])) return data.data[key];
+        if (Array.isArray(data[key])) {
+          console.log("[HOME] Found", key, ":", data[key].length, "items");
+          return data[key];
+        }
+        if (data.data && Array.isArray(data.data[key])) {
+          console.log(
+            "[HOME] Found data.",
+            key,
+            ":",
+            data.data[key].length,
+            "items",
+          );
+          return data.data[key];
+        }
       }
       return null;
     };
@@ -49,17 +86,45 @@ async function fetchHomeData() {
     latest = findArray(["latest_products", "latest"]) || [];
 
     // Try generic products list
-    if (Array.isArray(data.products)) products = data.products;
-    else if (data.data && Array.isArray(data.data.products))
+    if (Array.isArray(data.products)) {
+      console.log("[HOME] Using data.products:", data.products.length);
+      products = data.products;
+    } else if (data.data && Array.isArray(data.data.products)) {
+      console.log(
+        "[HOME] Using data.data.products:",
+        data.data.products.length,
+      );
       products = data.data.products;
-    else if (data.data && Array.isArray(data.data)) products = data.data;
-    else if (Array.isArray(data)) products = data;
+    } else if (data.data && Array.isArray(data.data)) {
+      console.log("[HOME] Using data.data directly:", data.data.length);
+      products = data.data;
+    } else if (Array.isArray(data)) {
+      console.log("[HOME] Using data directly (array):", data.length);
+      products = data;
+    }
+
+    console.log(
+      "[HOME] Extracted counts - Featured:",
+      featured.length,
+      "Latest:",
+      latest.length,
+      "Products:",
+      products.length,
+    );
 
     // Fallback: If specific lists are empty, use generic products
     if (featured.length === 0) featured = products;
     if (latest.length === 0) latest = products;
 
+    console.log(
+      "[HOME] Final counts after fallback - Featured:",
+      featured.length,
+      "Latest:",
+      latest.length,
+    );
+
     if (featured.length > 0 || latest.length > 0) {
+      console.log("[HOME] ✅ Rendering products...");
       renderProducts(
         featured.length > 0 ? featured : latest,
         "featured-products-grid",
@@ -68,9 +133,10 @@ async function fetchHomeData() {
         latest.length > 0 ? latest : featured,
         "latest-products-grid",
       );
+      console.log("[HOME] ✅ Products rendered successfully");
       hideNoProductsPopup();
     } else {
-      console.warn("Products missing or empty array", data);
+      console.error("[HOME] ❌ No products found! Response:", data);
       showNoProductsPopup();
     }
 
@@ -80,10 +146,14 @@ async function fetchHomeData() {
       categorySection.style.display = "none";
     }
   } catch (err) {
-    console.error("Home fetch failed:", err);
+    console.error("[HOME] ❌ Home fetch failed:", err);
+    console.error("[HOME] Error details:", err.message, err.stack);
     showNoProductsPopup();
     if (window.showToast) {
-      window.showToast("Failed to sync content", "error");
+      window.showToast(
+        "Failed to sync content: " + (err.message || err),
+        "error",
+      );
     }
   }
 }
@@ -106,7 +176,23 @@ function hideNoProductsPopup() {
  */
 function renderBanners(banners) {
   const container = document.getElementById("hero-slider-content");
-  if (!container || !Array.isArray(banners) || banners.length === 0) return;
+  console.log(
+    "[HOME] renderBanners called - Container:",
+    container ? "found" : "NOT FOUND",
+    "Banners:",
+    banners.length,
+  );
+  if (!container || !Array.isArray(banners) || banners.length === 0) {
+    console.warn(
+      "[HOME] ❌ renderBanners exit - container:",
+      !!container,
+      "isArray:",
+      Array.isArray(banners),
+      "length:",
+      banners?.length,
+    );
+    return;
+  }
 
   container.innerHTML = banners
     .map((b, i) => {
@@ -116,6 +202,8 @@ function renderBanners(banners) {
         : b.image
           ? `https://solocart-backend.onrender.com/storage/${b.image}`
           : "https://placehold.co/1600x400?text=Banner";
+
+      console.log("[HOME] Banner:", b.title || "untitled", "Image:", imageUrl);
 
       return `
             <div class="carousel-item ${i === 0 ? "active" : ""}">
@@ -139,15 +227,28 @@ function renderBanners(banners) {
  * Renders products into a Specified grid container.
  */
 function renderProducts(products, gridId) {
+  console.log(
+    "[HOME] renderProducts called - GridId:",
+    gridId,
+    "Products:",
+    products.length,
+  );
   if (!Array.isArray(products)) {
-    console.error("renderProducts expects an array");
+    console.error(
+      "[HOME] ❌ renderProducts: products is not array",
+      typeof products,
+    );
     return;
   }
 
   const grid = document.getElementById(gridId);
-  if (!grid) return;
+  console.log("[HOME] Grid element found:", !!grid, "for", gridId);
+  if (!grid) {
+    console.error("[HOME] ❌ Grid element not found:", gridId);
+    return;
+  }
 
-  grid.innerHTML = products
+  const renderedHtml = products
     .map((product) => {
       // Use full URL if provided by backend (image_url), else construct it
       const imageUrl = product.image_url
@@ -155,6 +256,8 @@ function renderProducts(products, gridId) {
         : product.image
           ? `https://solocart-backend.onrender.com/storage/${product.image}`
           : "https://placehold.co/400x400?text=No+Image";
+
+      console.log("[HOME] Product:", product.name, "Image:", imageUrl);
 
       const price = Number(product.price) || 0;
       const discount = Number(product.discount_percent) || 0;
@@ -188,17 +291,28 @@ function renderProducts(products, gridId) {
         `;
     })
     .join("");
+
+  console.log("[HOME] ✅ Generated HTML for", products.length, "products");
+  grid.innerHTML = renderedHtml;
 }
 
 // Initialize on load
-document.addEventListener("DOMContentLoaded", fetchHomeData);
+console.log("[HOME] 📄 home.js loaded, waiting for DOMContentLoaded");
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("[HOME] 🚀 DOMContentLoaded fired, calling fetchHomeData");
+  fetchHomeData();
+});
 
 // Listen for content updates signaled by admin actions in other tabs
 window.addEventListener("storage", (e) => {
   if (e.key === "solocart_content_updated_at") {
     try {
+      console.log("[HOME] 🔄 Content update signal received");
       // Debounce rapid updates
-      if (window.__solocart_refresh_pending) return;
+      if (window.__solocart_refresh_pending) {
+        console.log("[HOME] ⏸️ Update debounced (already pending)");
+        return;
+      }
       window.__solocart_refresh_pending = true;
       setTimeout(() => {
         window.__solocart_refresh_pending = false;
@@ -207,7 +321,10 @@ window.addEventListener("storage", (e) => {
         window.showToast("Content updated — refreshing", "info");
       fetchHomeData();
     } catch (err) {
-      console.error("Failed to refresh home after update signal", err);
+      console.error(
+        "[HOME] ❌ Failed to refresh home after update signal",
+        err,
+      );
     }
   }
 });

@@ -44,6 +44,11 @@ export async function apiCall(endpoint, options = {}) {
   }
 
   try {
+    console.log("[API] Request ->", secureUrl, {
+      method: options.method || "GET",
+      headers: Object.keys(defaultHeaders),
+    });
+
     const response = await fetch(secureUrl, {
       ...options,
       cache: "no-store",
