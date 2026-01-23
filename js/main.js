@@ -179,23 +179,39 @@ export function updateAuthUI() {
   const user = safeJSONParse(localStorage.getItem("user_data"), null);
 
   if (token && user && user.name) {
+    // build avatar URL if available
+    const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
+    let avatarUrl = null;
+    if (user.profile_image) avatarUrl = String(user.profile_image);
+    else if (user.avatar) avatarUrl = String(user.avatar);
+    else if (user.image_url) avatarUrl = String(user.image_url);
+
+    if (avatarUrl) {
+      // make absolute if relative
+      if (!/^https?:\/\//i.test(avatarUrl)) {
+        avatarUrl = `${backendBase}/${avatarUrl.replace(/^\//, "")}`;
+      }
+      // ensure https
+      avatarUrl = avatarUrl.replace(/^http:/, "https:");
+    }
+
     authActions.innerHTML = `
-            <div class="relative group">
-                <button class="flex items-center gap-2 focus:outline-none">
-                    <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center border border-white/20">
-                        <i class="fas fa-user-circle"></i>
-                    </div>
-                    <span class="text-sm font-bold truncate max-w-[100px]">${user.name}</span>
-                </button>
-                <div class="absolute right-0 top-full pt-2 hidden group-hover:block z-[1001]">
-                    <div class="bg-white rounded-sm shadow-2xl border border-slate-100 py-2 w-48 text-slate-800">
-                        <a href="/profile.html" class="block px-4 py-2 hover:bg-slate-50 text-xs font-black uppercase tracking-widest no-underline text-inherit">My Profile</a>
-                        <a href="/orders.html" class="block px-4 py-2 hover:bg-slate-50 text-xs font-black uppercase tracking-widest no-underline text-inherit">My Orders</a>
-                        <button id="logout-btn" class="w-full text-left px-4 py-2 hover:bg-rose-50 text-rose-500 text-xs font-black uppercase tracking-widest border-0 bg-transparent">Logout</button>
-                    </div>
-                </div>
-            </div>
-        `;
+      <div class="relative group">
+        <button class="flex items-center gap-2 focus:outline-none">
+          <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center border border-white/20 overflow-hidden">
+            ${avatarUrl ? `<img src="${avatarUrl}" alt="avatar" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/64x64?text=User'">` : `<i class="fas fa-user-circle"></i>`}
+          </div>
+          <span class="text-sm font-bold truncate max-w-[100px]">${user.name}</span>
+        </button>
+        <div class="absolute right-0 top-full pt-2 hidden group-hover:block z-[1001]">
+          <div class="bg-white rounded-sm shadow-2xl border border-slate-100 py-2 w-48 text-slate-800">
+            <a href="/profile.html" class="block px-4 py-2 hover:bg-slate-50 text-xs font-black uppercase tracking-widest no-underline text-inherit">My Profile</a>
+            <a href="/orders.html" class="block px-4 py-2 hover:bg-slate-50 text-xs font-black uppercase tracking-widest no-underline text-inherit">My Orders</a>
+            <button id="logout-btn" class="w-full text-left px-4 py-2 hover:bg-rose-50 text-rose-500 text-xs font-black uppercase tracking-widest border-0 bg-transparent">Logout</button>
+          </div>
+        </div>
+      </div>
+    `;
     document
       .getElementById("logout-btn")
       ?.addEventListener("click", handleLogout);

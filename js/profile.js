@@ -28,7 +28,10 @@ async function initProfile() {
   if (profileImg)
     profileImg.src =
       userData.profile_image || userData.avatar || profileImg.src;
-  // Preview change handler
+  // Load fresh profile from API (do not rely solely on localStorage)
+  await loadProfile();
+
+  // Preview change handler (local preview before upload)
   const fileInput = document.getElementById("p-image-file");
   if (fileInput) {
     fileInput.addEventListener("change", (e) => {
@@ -43,6 +46,80 @@ async function initProfile() {
   }
 
   setupEventListeners();
+}
+
+// Fetch fresh profile from backend and populate DOM
+export async function loadProfile() {
+  try {
+    const token = getAuthToken();
+    console.log(
+      "[Profile] Token present:",
+      !!token,
+      token ? `${String(token).slice(0, 12)}...` : null,
+    );
+
+    const data = await apiCall("/profile", { requireAuth: true });
+    console.log("[Profile] GET /profile response:", data);
+
+    // Normalize response to user object
+    let user = null;
+    if (!data) user = null;
+    else if (data.user) user = data.user;
+    else if (data.data && data.data.user) user = data.data.user;
+    else if (data.profile) user = data.profile;
+    else if (
+      data.data &&
+      typeof data.data === "object" &&
+      (data.data.name || data.data.email)
+    )
+      user = data.data;
+    else user = data;
+
+    if (!user) return;
+
+    // Save to localStorage for other parts of app
+    try {
+      localStorage.setItem("user_data", JSON.stringify(user));
+    } catch (e) {}
+
+    // Update DOM fields
+    const displayName = document.getElementById("user-display-name");
+    const initials = document.getElementById("user-initials");
+    if (displayName)
+      displayName.innerText = user.name || user.full_name || "User";
+    if (initials && (user.name || user.full_name))
+      initials.innerText = (user.name || user.full_name)
+        .charAt(0)
+        .toUpperCase();
+
+    if (document.getElementById("p-name"))
+      document.getElementById("p-name").value = user.name || "";
+    if (document.getElementById("p-email"))
+      document.getElementById("p-email").value = user.email || "";
+    if (document.getElementById("p-bio"))
+      document.getElementById("p-bio").value = user.bio || "";
+    if (document.getElementById("p-phone"))
+      document.getElementById("p-phone").value = user.phone || "";
+
+    // Handle profile image URL
+    const profileImg = document.getElementById("p-image-preview");
+    let avatarUrl = user.profile_image || user.avatar || user.image_url || null;
+    if (avatarUrl) {
+      // Make absolute if relative
+      const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
+      if (!/^https?:\/\//i.test(avatarUrl))
+        avatarUrl = `${backendBase}/${String(avatarUrl).replace(/^\//, "")}`;
+      avatarUrl = String(avatarUrl).replace(/^http:/, "https:");
+      console.log("[Profile] Using avatar URL:", avatarUrl);
+      if (profileImg) profileImg.src = avatarUrl;
+    } else {
+      if (profileImg)
+        profileImg.src =
+          profileImg.src || "https://placehold.co/80x80?text=Preview";
+    }
+  } catch (e) {
+    console.error("[Profile] Failed to load profile", e);
+  }
 }
 
 function setupEventListeners() {
