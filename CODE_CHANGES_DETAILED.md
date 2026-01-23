@@ -1,193 +1,22 @@
-import CONFIG from "./config.js";
-import { apiCall } from "./main.js";
+# EXACT CODE CHANGES - BEFORE & AFTER
 
-let currentCategories = [];
-let currentProducts = [];
+## File: `js/admin-products.js`
 
-async function initAdminProducts() {
-  const token = localStorage.getItem("auth_token");
-  const user = JSON.parse(localStorage.getItem("user_data") || "{}");
-  if (
-    !token ||
-    !(
-      user.role === "admin" ||
-      user.role === "Admin" ||
-      user.is_admin === true ||
-      user.is_admin === 1
-    )
-  ) {
-    window.location.href = "/login.html";
-    return;
-  }
+---
 
-  await fetchCategories();
-  await fetchProducts();
-  setupEventListeners();
-}
+## CHANGE 1: Added Missing `setupEventListeners()` Function
 
-async function fetchCategories() {
-  try {
-    const data = await apiCall("/categories");
-    const categories =
-      data.categories || data.data || (Array.isArray(data) ? data : []);
-    currentCategories = Array.isArray(categories) ? categories : [];
-    populateCategorySelect(currentCategories);
-    // mark categories as available
-    window.__solocart_admin_categories_ok = true;
-    // ensure add button enabled
-    const openProductBtn = document.getElementById("open-add-product-btn");
-    if (openProductBtn) openProductBtn.disabled = false;
-  } catch (e) {
-    console.error("Failed to load categories", e);
-    window.__solocart_admin_categories_ok = false;
-    const openProductBtn = document.getElementById("open-add-product-btn");
-    if (openProductBtn) openProductBtn.disabled = true;
-    if (window.showToast)
-      window.showToast(
-        "Failed to load categories (server unreachable)",
-        "error",
-      );
-    // surface raw error if available
-    if (e && e.rawError) console.error("Category fetch raw error:", e.rawError);
-  }
-}
+### BEFORE (Line 25):
 
-function populateCategorySelect(categories) {
-  const sel = document.getElementById("p-category");
-  if (!sel) return;
-  // Clear and add default
-  sel.innerHTML =
-    `<option value="">Select category</option>` +
-    categories
-      .map((c) => `<option value="${c.id}">${c.name}</option>`)
-      .join("");
-}
-async function fetchProducts() {
-  try {
-    const data = await apiCall("/admin/products");
+```javascript
+await fetchCategories();
+await fetchProducts();
+setupEventListeners(); // ← CALLED BUT NOT DEFINED!
+```
 
-    // Handle paginated response: { success: true, data: { data: [...] } }
-    const productList =
-      data.data?.data ||
-      data.data ||
-      data.products ||
-      (Array.isArray(data) ? data : []);
+### AFTER (Lines 174-225):
 
-    if (Array.isArray(productList) && productList.length > 0) {
-      currentProducts = productList;
-      renderProducts(currentProducts);
-    } else {
-      // Empty or no products
-      currentProducts = [];
-      renderProducts(currentProducts);
-    }
-  } catch (e) {
-    console.error("Failed to load admin products", e);
-    if (window.showToast) window.showToast("Failed to load products", "error");
-    if (e && e.rawError) console.error("Products fetch raw error:", e.rawError);
-  }
-}
-
-function renderProducts(products) {
-  const table = document.getElementById("products-table");
-  if (!table) return;
-
-  if (!Array.isArray(products) || products.length === 0) {
-    table.innerHTML =
-      '<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400 italic">No products found. Click "Add New Product" to create one.</td></tr>';
-    return;
-  }
-
-  table.innerHTML = products
-    .map((p) => {
-      const imageUrl = p.image_url
-        ? p.image_url
-        : p.image
-          ? `https://solocart-backend.onrender.com/storage/${p.image}`
-          : "https://placehold.co/400x400?text=No+Image";
-
-      return `
-        <tr class="hover:bg-slate-50 transition-colors">
-            <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                    <img src="${imageUrl}" class="w-10 h-10 object-contain rounded border" onerror="this.src='https://placehold.co/400x400?text=No+Image'">
-                    <div>
-                        <span class="block font-bold text-slate-800">${p.name || "Unavailable"}</span>
-                        <span class="text-[10px] text-slate-400 font-bold uppercase">ID: ${p.id}</span>
-                    </div>
-                </div>
-            </td>
-            <td class="px-6 py-4 text-slate-500">${p.category ? p.category.name : "N/A"}</td>
-            <td class="px-6 py-4 font-black">₹${Number(p.price || 0).toLocaleString()}</td>
-            <td class="px-6 py-4">
-                <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${p.stock > 0 ? "bg-green-100 text-green-600" : "bg-rose-100 text-rose-600"}">
-                    ${p.stock > 0 ? `In Stock (${p.stock})` : "Out of Stock"}
-                </span>
-            </td>
-            <td class="px-6 py-4 text-right space-x-2">
-                <button class="edit-btn text-blue-500 hover:bg-blue-50 p-2 rounded-lg transition-colors" data-id="${p.id}"><i class="fas fa-edit"></i></button>
-                <button class="delete-btn text-rose-500 hover:bg-rose-50 p-2 rounded-lg transition-colors" data-id="${p.id}"><i class="fas fa-trash"></i></button>
-            </td>
-        </tr>
-    `;
-    })
-    .join("");
-
-  table
-    .querySelectorAll(".edit-btn")
-    .forEach((btn) =>
-      btn.addEventListener("click", () => editProduct(btn.dataset.id)),
-    );
-  table
-    .querySelectorAll(".delete-btn")
-    .forEach((btn) =>
-      btn.addEventListener("click", () => deleteProduct(btn.dataset.id)),
-    );
-}
-
-async function deleteProduct(id) {
-  if (!confirm("Permanently delete this product?")) return;
-
-  try {
-    const data = await apiCall(`/admin/products/${id}`, { method: "DELETE" });
-    if (data && data.success === true) {
-      if (window.showToast) window.showToast("Product deleted successfully");
-      fetchProducts();
-      try {
-        localStorage.setItem(
-          "solocart_content_updated_at",
-          Date.now().toString(),
-        );
-      } catch (e) {}
-    } else {
-      throw new Error(data?.message || "Delete failed");
-    }
-  } catch (e) {
-    console.error("Failed to delete product", e);
-    if (window.showToast)
-      window.showToast(e.message || "Failed to delete product", "error");
-  }
-}
-
-function editProduct(id) {
-  const product = currentProducts.find((p) => p.id == id);
-  if (!product) return;
-
-  // Populate form
-  document.getElementById("product-id").value = product.id;
-  document.getElementById("p-name").value = product.name || "";
-  document.getElementById("p-description").value = product.description || "";
-  document.getElementById("p-price").value = product.price || 0;
-  document.getElementById("p-stock").value = product.stock || 0;
-  document.getElementById("p-category").value =
-    product.category_id || product.category?.id || "";
-  document.getElementById("p-brand").value = product.brand || "";
-  document.getElementById("p-image").value = product.image_url || "";
-
-  document.getElementById("modal-title").textContent = "Edit Product";
-  document.getElementById("productModal").classList.remove("hidden");
-}
-
+```javascript
 function setupEventListeners() {
   // Wire form submit to saveProduct handler
   const productForm = document.getElementById("product-form");
@@ -222,7 +51,23 @@ function setupEventListeners() {
     console.log("✓ Category form submit listener attached");
   }
 }
+```
 
+**What this does:**
+
+- ✓ Attaches submit event to `product-form` → calls `saveProduct()`
+- ✓ Attaches click event to "Add New Product" button → calls `openAddModal()`
+- ✓ Attaches click event to "Add Category" button → opens modal
+- ✓ Attaches submit event to `category-form` → calls `saveCategory()`
+- ✓ Logs each attachment to console for debugging
+
+---
+
+## CHANGE 2: Moved & Enhanced `openAddModal()` Function
+
+### AFTER (Lines 227-242):
+
+```javascript
 async function openAddModal() {
   // Ensure categories are fresh before showing modal so required select isn't empty
   try {
@@ -239,7 +84,41 @@ async function openAddModal() {
   document.getElementById("productModal").classList.remove("hidden");
   console.log("✓ Add Product modal opened");
 }
+```
 
+**Added:**
+
+- ✓ Console log when modal opens
+
+---
+
+## CHANGE 3: Enhanced `saveProduct()` Function with Logging & HTTP Fix
+
+### BEFORE (Lines 207-256):
+
+```javascript
+async function saveProduct(e) {
+  e.preventDefault();
+  // ... no logging ...
+
+  const endpoint = id ? `/admin/products/${id}` : "/admin/products";
+
+  // Use POST for both, but add _method='PUT' for updates
+  const method = "POST";  // ← ALWAYS POST!
+  if (id) {
+    productData._method = "PUT";  // ← WORKAROUND
+  }
+
+  try {
+    const data = await apiCall(endpoint, {
+      method,  // ← Always "POST"
+      body: JSON.stringify(productData),
+    });
+```
+
+### AFTER (Lines 244-337):
+
+```javascript
 async function saveProduct(e) {
   e.preventDefault();
   console.log("🔹 saveProduct() called - form submitted");
@@ -288,12 +167,12 @@ async function saveProduct(e) {
   const endpoint = id ? `/admin/products/${id}` : "/admin/products";
 
   // Use PUT for updates, POST for creation
-  const method = id ? "PUT" : "POST";
+  const method = id ? "PUT" : "POST"; // ← FIXED!
   console.log(`🚀 Sending ${method} request to: ${endpoint}`);
 
   try {
     const data = await apiCall(endpoint, {
-      method,
+      method, // ← Now correct: POST or PUT
       body: JSON.stringify(productData),
     });
 
@@ -345,7 +224,28 @@ async function saveProduct(e) {
     }
   }
 }
+```
 
+**Key Changes:**
+
+1. ✓ Removed `_method = "PUT"` workaround
+2. ✓ Use correct HTTP method: `const method = id ? "PUT" : "POST"`
+3. ✓ Added console logging at every step:
+   - `🔹` = Function entry
+   - `📦` = Data collected
+   - `⚠️` = Validation errors
+   - `✓` = Success
+   - `🚀` = Request sent
+   - `📡` = Response received
+   - `❌` = Errors
+
+---
+
+## CHANGE 4: Created Missing `saveCategory()` Function
+
+### ADDED (Lines 339-375):
+
+```javascript
 async function saveCategory(e) {
   e.preventDefault();
   console.log("🔹 saveCategory() called - form submitted");
@@ -391,7 +291,46 @@ async function saveCategory(e) {
     if (window.showToast) window.showToast(msg, "error");
   }
 }
+```
 
-// Ensure all blocks are properly closed
+**What this does:**
 
-document.addEventListener("DOMContentLoaded", initAdminProducts);
+- ✓ Handles category creation
+- ✓ Was referenced in `setupEventListeners()` but didn't exist
+- ✓ Includes same logging pattern as `saveProduct()`
+- ✓ Refreshes category dropdown after creation
+
+---
+
+## SUMMARY OF CHANGES
+
+| Function                | Action                         | Lines   |
+| ----------------------- | ------------------------------ | ------- |
+| `setupEventListeners()` | **CREATED**                    | 174-225 |
+| `openAddModal()`        | Enhanced (added console log)   | 227-242 |
+| `saveProduct()`         | **FIXED** (HTTP method + logs) | 244-337 |
+| `saveCategory()`        | **CREATED**                    | 339-375 |
+
+---
+
+## HTML FILE - NO CHANGES NEEDED
+
+`admin/products.html` is perfectly fine. The form already has:
+
+- ✓ `id="product-form"`
+- ✓ `type="submit"` button
+- ✓ All required input fields
+
+The HTML just needed the JavaScript to attach event listeners.
+
+---
+
+## TOTAL CHANGES
+
+- ✓ **1 function created** (`setupEventListeners`)
+- ✓ **1 function fixed** (`saveProduct` - HTTP method + logging)
+- ✓ **1 function created** (`saveCategory`)
+- ✓ **1 function enhanced** (`openAddModal` - added logging)
+- ✓ **0 HTML changes needed**
+- ✓ **Lines added:** ~160
+- ✓ **Breaking changes:** None
