@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Payment — SoloCart</title>
+    <link rel="stylesheet" href="/css/app.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></script>
+    <style>
+      body {
+        background: #f1f3f6;
+        font-family: Inter, sans-serif;
+      }
+      .container-max {
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="bg-[#2874f0] text-white py-3">
+      <div class="container container-max flex items-center gap-4">
+        <a href="/" class="text-white font-black text-2xl">SoloCart</a>
+        <div class="flex-1"></div>
+      </div>
+    </nav>
+
+    <main class="container container-max py-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white rounded-sm p-6 shadow-sm">
+          <h2 class="font-black text-lg mb-4">Payment</h2>
+          <div id="payment-order-list">
+            <!-- Order summary rendered here -->
+          </div>
+          <div class="mt-6">
+            <h3 class="font-bold mb-2">Select Payment Method</h3>
+            <label class="block p-3 border rounded mb-2"
+              ><input type="radio" name="payment_method" value="cod" checked />
+              Cash on Delivery</label
+            >
+            <label class="block p-3 border rounded mb-2"
+              ><input type="radio" name="payment_method" value="online" />
+              Online Payment (UI only)</label
+            >
+          </div>
+          <div class="mt-6 flex justify-end">
+            <button
+              id="pay-now-btn"
+              class="bg-[#fb641b] text-white px-6 py-2 rounded-sm font-black"
+            >
+              Pay / Confirm
+            </button>
+          </div>
+        </div>
+        <aside class="bg-white rounded-sm p-6 shadow-sm">
+          <h4 class="font-black">Amount</h4>
+          <div class="text-2xl font-black mt-4" id="payment-total-amount">
+            ₹0
+          </div>
+          <div class="text-sm text-slate-500 mt-2" id="payment-address">
+            Address will appear here
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <script type="module" src="/js/payment.js"></script>
+  </body>
+</html>

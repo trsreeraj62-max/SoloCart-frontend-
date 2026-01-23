@@ -122,17 +122,18 @@ function renderCartItems(items) {
 
   container.innerHTML = items
     .map((item) => {
-      const product = item.product || {};
+      const product = item.product || item.product_data || item;
+      const qty = Number(item.quantity || item.qty || 1);
+      const price = Number(product.price || product.unit_price || 0);
+      const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
       const imageUrl = product.image_url
-        ? product.image_url.replace(/^http:/, "https:")
+        ? String(product.image_url).replace(/^http:/, "https:")
         : product.image
-          ? `${CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "")}/storage/${product.image}`
+          ? `${backendBase}/storage/${product.image}`
           : "https://placehold.co/400x400?text=No+Image";
 
-      const price = Number(product.price) || 0;
-
       return `
-        <div class="p-4 flex gap-4 hover:bg-slate-50 transition-colors" data-id="${item.id}">
+        <div class="p-4 flex gap-4 hover:bg-slate-50 transition-colors cart-row" data-product-id="${product.id}">
             <div class="w-24 h-24 flex-shrink-0 border p-2 rounded-sm bg-white">
           <img src="${imageUrl}" class="h-full w-full object-contain" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
             </div>
@@ -149,19 +150,20 @@ function renderCartItems(items) {
                 
                 <div class="flex items-center gap-4 mt-3">
                     <div class="flex items-center gap-3">
-                        <span class="text-lg font-black text-slate-900">₹${(price * item.quantity).toLocaleString()}</span>
-                        <span class="text-xs text-slate-400 line-through font-bold">₹${(price * 1.25 * item.quantity).toFixed(0)}</span>
+                        <span class="text-lg font-black text-slate-900">₹${(price * qty).toLocaleString()}</span>
+                        <span class="text-xs text-slate-400 line-through font-bold">₹${(price * 1.25 * qty).toFixed(0)}</span>
                         <span class="text-[10px] text-green-600 font-black">20% Off</span>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-6 mt-6">
                     <div class="flex items-center border rounded-sm overflow-hidden">
-                        <button class="qty-btn minus px-2.5 py-1 text-slate-400 hover:bg-slate-100 font-black" data-id="${item.id}">-</button>
-                        <input type="text" value="${item.quantity}" readonly class="w-8 text-center text-xs font-black outline-none border-x">
-                        <button class="qty-btn plus px-2.5 py-1 text-slate-600 hover:bg-slate-100 font-black" data-id="${item.id}">+</button>
+                        <button class="qty-btn minus px-2.5 py-1 text-slate-400 hover:bg-slate-100 font-black" data-product-id="${product.id}">-</button>
+                        <input type="text" value="${qty}" readonly class="w-8 text-center text-xs font-black outline-none border-x qty-input" data-product-id="${product.id}">
+                        <button class="qty-btn plus px-2.5 py-1 text-slate-600 hover:bg-slate-100 font-black" data-product-id="${product.id}">+</button>
                     </div>
-                    <button class="remove-btn text-xs font-black uppercase tracking-widest text-[#212121] hover:text-[#2874f0]" data-id="${item.id}">Remove</button>
+                    <button class="remove-btn text-xs font-black uppercase tracking-widest text-[#212121] hover:text-[#2874f0]" data-product-id="${product.id}">Remove</button>
+                    <button class="buy-this-btn text-xs bg-[#2874f0] text-white px-3 py-1 rounded-sm" data-product-id="${product.id}">Buy This Item</button>
                 </div>
             </div>
         </div>
@@ -169,51 +171,95 @@ function renderCartItems(items) {
     })
     .join("");
 
+  // Ensure a Buy All Items button exists above the list
+  const parent = container.parentElement;
+  if (parent) {
+    let buyAll = document.getElementById("buy-all-btn");
+    if (!buyAll) {
+      buyAll = document.createElement("div");
+      buyAll.id = "buy-all-btn";
+      buyAll.className = "p-4 flex justify-end";
+      buyAll.innerHTML = `<button class="bg-[#fb641b] text-white px-6 py-2 rounded-sm font-black" id="buy-all-now">Buy All Items</button>`;
+      parent.insertBefore(buyAll, container);
+    }
+    document.getElementById("buy-all-now")?.addEventListener("click", () => {
+      initiateCheckoutSelection("all", null);
+    });
+  }
+
+  // Attach buy-this handlers
+  container.querySelectorAll(".buy-this-btn").forEach((b) => {
+    b.addEventListener("click", (e) => {
+      const pid = b.dataset.productId;
+      initiateCheckoutSelection("single", pid);
+    });
+  });
+
   // Re-bind buttons
   container.querySelectorAll(".qty-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
-      const id = btn.dataset.id;
+      const pid = btn.dataset.productId;
       const isPlus = btn.classList.contains("plus");
-      updateQuantity(id, isPlus);
+      const input = container.querySelector(
+        `.qty-input[data-product-id="${pid}"]`,
+      );
+      const current = Number(input?.value || 1);
+      const newQty = isPlus ? current + 1 : Math.max(1, current - 1);
+      setQuantity(pid, newQty);
     });
   });
 
   container.querySelectorAll(".remove-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
-      removeItem(btn.dataset.id);
+      removeItem(btn.dataset.productId);
     });
   });
 }
 
-async function updateQuantity(itemId, isPlus) {
-  const data = await apiCall("/cart/update", {
-    method: "POST",
-    body: JSON.stringify({
-      item_id: itemId,
-      increment: isPlus,
-    }),
-    requireAuth: true,
-  });
+async function setQuantity(productId, quantity) {
+  try {
+    const data = await apiCall("/cart/update", {
+      method: "POST",
+      body: JSON.stringify({ product_id: productId, quantity }),
+      requireAuth: true,
+    });
 
-  if (data && (data.success || data.items)) {
-    await fetchCartItems();
-    await updateCartBadge();
+    if (data && (data.success || data.items)) {
+      await fetchCartItems();
+      await updateCartBadge();
+    }
+  } catch (e) {
+    console.error("Failed to set quantity", e);
   }
 }
 
-async function removeItem(itemId) {
+async function removeItem(productId) {
   if (!confirm("Are you sure you want to remove this item?")) return;
 
-  const data = await apiCall(`/cart/remove/${itemId}`, {
-    method: "DELETE",
-    requireAuth: true,
-  });
+  try {
+    const data = await apiCall(`/cart/remove`, {
+      method: "POST",
+      body: JSON.stringify({ product_id: productId }),
+      requireAuth: true,
+    });
 
-  if (data && (data.success || data.message)) {
-    if (window.showToast) window.showToast("Item ejected from arsenal");
-    await fetchCartItems();
-    await updateCartBadge();
+    if (data && (data.success || data.message)) {
+      if (window.showToast) window.showToast("Item removed from cart");
+      await fetchCartItems();
+      await updateCartBadge();
+    }
+  } catch (e) {
+    console.error("Remove failed", e);
   }
+}
+
+function initiateCheckoutSelection(type, productId) {
+  const sel = {
+    type: type === "single" ? "single" : "all",
+    product_id: productId || null,
+  };
+  sessionStorage.setItem("checkout_selection", JSON.stringify(sel));
+  window.location.href = "/checkout.html";
 }
 
 function updatePriceDetails(data) {

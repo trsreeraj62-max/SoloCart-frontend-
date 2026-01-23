@@ -40,6 +40,25 @@ async function fetchCartData() {
 
     cartData = data;
 
+    // Apply checkout selection (single item) if present
+    const rawSel = sessionStorage.getItem("checkout_selection");
+    let selection = null;
+    try {
+      selection = rawSel ? JSON.parse(rawSel) : null;
+    } catch (e) {
+      selection = null;
+    }
+
+    if (selection && selection.type === "single" && selection.product_id) {
+      items = items.filter((it) => {
+        const product = it.product || it.product_data || it;
+        return (
+          String(product.id) === String(selection.product_id) ||
+          String(it.product_id) === String(selection.product_id)
+        );
+      });
+    }
+
     if (!items || items.length === 0) {
       window.location.href = "/cart.html";
       return;
@@ -89,7 +108,7 @@ function renderOrderSummary(items) {
           : "https://placehold.co/400x400?text=No+Image";
 
       return `
-        <div class="py-4 flex gap-4 border-b last:border-0 checkout-item" data-id="${item.id}">
+        <div class="py-4 flex gap-4 border-b last:border-0 checkout-item" data-product-id="${product.id}">
             <div class="w-16 h-16 border rounded-sm p-1">
                 <img src="${imageUrl}" class="h-full w-full object-contain" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
             </div>
@@ -101,9 +120,9 @@ function renderOrderSummary(items) {
                   </div>
                   <div class="text-right">
                     <div class="flex items-center gap-2">
-                      <button class="qty-btn minus px-2 py-1 text-slate-400 border" data-id="${item.id}">-</button>
-                      <input class="qty-input w-10 text-center" data-id="${item.id}" value="${qty}" readonly>
-                      <button class="qty-btn plus px-2 py-1 text-slate-400 border" data-id="${item.id}">+</button>
+                      <button class="qty-btn minus px-2 py-1 text-slate-400 border" data-product-id="${product.id}">-</button>
+                      <input class="qty-input w-10 text-center" data-product-id="${product.id}" value="${qty}" readonly>
+                      <button class="qty-btn plus px-2 py-1 text-slate-400 border" data-product-id="${product.id}">+</button>
                     </div>
                     <div class="text-sm font-black mt-2">Subtotal: ₹<span class="item-subtotal">${subtotal.toLocaleString()}</span></div>
                   </div>
@@ -114,22 +133,37 @@ function renderOrderSummary(items) {
     })
     .join("");
 
-  // Attach qty handlers
+  // Attach qty handlers (send product_id + quantity)
   container.querySelectorAll(".qty-btn").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
-      const id = btn.dataset.id;
+      const pid = btn.dataset.productId;
       const isPlus = btn.classList.contains("plus");
+      const input = container.querySelector(
+        `.qty-input[data-product-id="${pid}"]`,
+      );
+      const current = Number(input?.value || 1);
+      const newQty = isPlus ? current + 1 : Math.max(1, current - 1);
       try {
         await apiCall("/cart/update", {
           method: "POST",
-          body: JSON.stringify({ item_id: id, increment: isPlus }),
+          body: JSON.stringify({ product_id: pid, quantity: newQty }),
           requireAuth: true,
         });
-        // Re-fetch to get canonical data and re-render
         await fetchCartData();
       } catch (err) {
         console.error("Failed to update quantity", err);
       }
+    });
+  });
+
+  // Attach buy-this handlers
+  container.querySelectorAll(".buy-this-btn").forEach((b) => {
+    b.addEventListener("click", (e) => {
+      const pid = b.dataset.productId || b.dataset.productid || b.dataset.id;
+      sessionStorage.setItem(
+        "checkout_selection",
+        JSON.stringify({ type: "single", product_id: pid }),
+      );
     });
   });
 }
@@ -148,6 +182,11 @@ function setupEventListeners() {
       state: document.getElementById("state").value,
     };
 
+    // Persist address for payment page
+    try {
+      sessionStorage.setItem("checkout_address", JSON.stringify(savedAddress));
+    } catch (e) {}
+
     // Move to next step
     document.getElementById("step-address")?.classList.add("step-inactive");
     document.getElementById("step-summary")?.classList.remove("step-inactive");
@@ -158,16 +197,20 @@ function setupEventListeners() {
   document
     .getElementById("confirm-summary-btn")
     ?.addEventListener("click", () => {
-      document.getElementById("step-summary")?.classList.add("step-inactive");
-      document
-        .getElementById("step-payment")
-        ?.classList.remove("step-inactive");
+      // Move to payment page; payment selection happens there.
+      const selRaw = sessionStorage.getItem("checkout_selection");
+      if (!selRaw) {
+        // default to all
+        sessionStorage.setItem(
+          "checkout_selection",
+          JSON.stringify({ type: "all", product_id: null }),
+        );
+      }
+      window.location.href = "/payment.html";
     });
 
   // Complete Order
-  document
-    .getElementById("complete-order-btn")
-    ?.addEventListener("click", completeOrder);
+  // complete-order handled on payment page; no-op here
 }
 
 async function completeOrder() {
