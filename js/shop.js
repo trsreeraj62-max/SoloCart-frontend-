@@ -213,10 +213,11 @@ function renderProducts(products, append = false) {
         "image:",
         p.image_url || p.image,
       );
+      const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
       const imageUrl = p.image_url
         ? p.image_url.replace(/^http:/, "https:")
         : p.image
-          ? `https://solocart-backend.onrender.com/storage/${p.image}`
+          ? `${backendBase}/storage/${p.image}`
           : "https://placehold.co/400x400?text=No+Image";
 
       const price = Number(p.price) || 0;

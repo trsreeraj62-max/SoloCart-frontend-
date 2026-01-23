@@ -100,10 +100,11 @@ function renderProducts(products) {
 
   table.innerHTML = products
     .map((p) => {
+      const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
       const imageUrl = p.image_url
         ? p.image_url
         : p.image
-          ? `https://solocart-backend.onrender.com/storage/${p.image}`
+          ? `${backendBase}/storage/${p.image}`
           : "https://placehold.co/400x400?text=No+Image";
 
       return `
@@ -182,7 +183,21 @@ function editProduct(id) {
   document.getElementById("p-category").value =
     product.category_id || product.category?.id || "";
   document.getElementById("p-brand").value = product.brand || "";
-  document.getElementById("p-image").value = product.image_url || "";
+  // Set existing image URL (hidden) and update preview; clear file input
+  const imageUrlInput = document.getElementById("p-image-url");
+  const imageFileInput = document.getElementById("p-image-file");
+  const previewImg = document.getElementById("p-image-preview");
+  const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
+  const existingImageUrl = product.image_url
+    ? product.image_url
+    : product.image
+      ? `${backendBase}/storage/${product.image}`
+      : "";
+  if (imageUrlInput) imageUrlInput.value = existingImageUrl;
+  if (imageFileInput) imageFileInput.value = "";
+  if (previewImg)
+    previewImg.src =
+      existingImageUrl || "https://placehold.co/160x160?text=Preview";
 
   document.getElementById("modal-title").textContent = "Edit Product";
   document.getElementById("productModal").classList.remove("hidden");
@@ -221,6 +236,30 @@ function setupEventListeners() {
     categoryForm.addEventListener("submit", saveCategory);
     console.log("✓ Category form submit listener attached");
   }
+  // Image file preview handler
+  const imageFileInput = document.getElementById("p-image-file");
+  if (imageFileInput) {
+    imageFileInput.addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      const preview = document.getElementById("p-image-preview");
+      if (!preview) return;
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          preview.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // If cleared, fallback to hidden URL or placeholder
+        const hidden = document.getElementById("p-image-url");
+        preview.src =
+          hidden && hidden.value
+            ? hidden.value
+            : "https://placehold.co/160x160?text=Preview";
+      }
+    });
+    console.log("✓ Image file input preview listener attached");
+  }
 }
 
 async function openAddModal() {
@@ -234,7 +273,12 @@ async function openAddModal() {
   document.getElementById("product-form").reset();
   document.getElementById("product-id").value = "";
   document.getElementById("p-category").value = "";
-  document.getElementById("p-image").value = "";
+  const imageUrlInput = document.getElementById("p-image-url");
+  const imageFileInput = document.getElementById("p-image-file");
+  const previewImg = document.getElementById("p-image-preview");
+  if (imageUrlInput) imageUrlInput.value = "";
+  if (imageFileInput) imageFileInput.value = "";
+  if (previewImg) previewImg.src = "https://placehold.co/160x160?text=Preview";
   document.getElementById("modal-title").textContent = "Add New Product";
   document.getElementById("productModal").classList.remove("hidden");
   console.log("✓ Add Product modal opened");
@@ -244,31 +288,26 @@ async function saveProduct(e) {
   e.preventDefault();
   console.log("🔹 saveProduct() called - form submitted");
 
-  const id = document.getElementById("product-id").value;
-  const productData = {
-    name: document.getElementById("p-name").value,
-    description: document.getElementById("p-description").value,
-    price: parseFloat(document.getElementById("p-price").value),
-    stock: parseInt(document.getElementById("p-stock").value),
-    category_id: parseInt(document.getElementById("p-category").value),
-    brand: document.getElementById("p-brand").value,
-    image_url: document.getElementById("p-image").value,
-  };
+  const id = (document.getElementById("product-id").value || "").toString();
+  const name = (document.getElementById("p-name").value || "").trim();
+  const description = (
+    document.getElementById("p-description").value || ""
+  ).trim();
+  const price = parseFloat(document.getElementById("p-price").value);
+  const stock = parseInt(document.getElementById("p-stock").value);
+  const category_id = parseInt(document.getElementById("p-category").value);
+  const brand = (document.getElementById("p-brand").value || "").trim();
 
-  console.log("📦 Product Data:", productData);
+  console.log("📦 Product Fields:", { name, price, stock, category_id, brand });
 
   // Basic client-side validation
-  if (
-    !productData.name ||
-    isNaN(productData.price) ||
-    isNaN(productData.stock)
-  ) {
+  if (!name || isNaN(price) || isNaN(stock)) {
     const msg = "Please fill required fields (name, price, stock)";
     console.warn("⚠️  Validation failed:", msg);
     if (window.showToast) window.showToast(msg, "error");
     return;
   }
-  if (!productData.category_id || isNaN(productData.category_id)) {
+  if (!category_id || isNaN(category_id)) {
     const msg = "Please select a category";
     console.warn("⚠️  Validation failed:", msg);
     if (window.showToast) window.showToast(msg, "error");
@@ -285,16 +324,35 @@ async function saveProduct(e) {
     submitBtn.innerText = id ? "Updating..." : "Saving...";
   }
 
-  const endpoint = id ? `/admin/products/${id}` : "/admin/products";
+  // Build FormData for multipart upload
+  const formData = new FormData();
+  formData.append("name", name);
+  formData.append("description", description);
+  formData.append("price", String(price));
+  formData.append("stock", String(stock));
+  formData.append("category_id", String(category_id));
+  formData.append("brand", brand);
 
-  // Use PUT for updates, POST for creation
-  const method = id ? "PUT" : "POST";
-  console.log(`🚀 Sending ${method} request to: ${endpoint}`);
+  const fileInput = document.getElementById("p-image-file");
+  const hiddenImageUrl = document.getElementById("p-image-url")?.value || "";
+  if (fileInput && fileInput.files && fileInput.files[0]) {
+    formData.append("image", fileInput.files[0]);
+    console.log("[ADMIN] Image file appended:", fileInput.files[0].name);
+  } else if (hiddenImageUrl) {
+    formData.append("image_url", hiddenImageUrl);
+    console.log("[ADMIN] Preserving existing image_url:", hiddenImageUrl);
+  }
+
+  const endpoint = id ? `/admin/products/${id}` : "/admin/products";
+  if (id) formData.append("_method", "PUT");
 
   try {
+    console.log(
+      `🚀 Sending multipart request to: ${endpoint} (id: ${id || "new"})`,
+    );
     const data = await apiCall(endpoint, {
-      method,
-      body: JSON.stringify(productData),
+      method: "POST",
+      body: formData,
     });
 
     console.log("📡 API Response:", data);
@@ -304,8 +362,7 @@ async function saveProduct(e) {
       console.log("✓ " + msg);
       if (window.showToast) window.showToast(msg);
       document.getElementById("productModal").classList.add("hidden");
-      fetchProducts();
-      // Signal buyer pages to refresh their content
+      await fetchProducts();
       try {
         localStorage.setItem(
           "solocart_content_updated_at",
@@ -314,31 +371,21 @@ async function saveProduct(e) {
       } catch (e) {
         /* ignore */
       }
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerText = id ? "Update" : "Save Product";
-      }
     } else {
       console.error("❌ Save Product Failed:", data);
       let errorMessage = data?.message || "Failed to save product";
-
-      // Handle Laravel Validation Errors (if returned as errors object)
       if (data?.errors) {
         const firstError = Object.values(data.errors).flat()[0];
         if (firstError) errorMessage = firstError;
       }
-
       console.error("Error message:", errorMessage);
       if (window.showToast) window.showToast(errorMessage, "error");
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerText = id ? "Update" : "Save Product";
-      }
     }
   } catch (e) {
     console.error("❌ Failed to save product (exception):", e);
     const msg = e && e.message ? e.message : "Failed to save product";
     if (window.showToast) window.showToast(msg, "error");
+  } finally {
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.innerText = id ? "Update" : "Save Product";

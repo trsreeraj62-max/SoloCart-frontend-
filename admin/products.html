@@ -430,14 +430,32 @@
             <div class="col-span-2">
               <label
                 class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2"
-                >Image URL</label
+                >Product Image</label
               >
-              <input
-                type="url"
-                id="p-image"
-                class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#2874f0]"
-                placeholder="https://example.com/image.jpg"
-              />
+              <div class="flex items-center gap-4">
+                <div class="flex-grow">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="p-image-file"
+                    class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#2874f0]"
+                  />
+                  <input type="hidden" id="p-image-url" />
+                  <p class="text-xs text-slate-400 mt-2">
+                    Choose an image file to upload (preview shown)
+                  </p>
+                </div>
+                <div
+                  class="w-28 h-28 bg-white border border-slate-200 rounded overflow-hidden flex items-center justify-center"
+                >
+                  <img
+                    id="p-image-preview"
+                    src="https://placehold.co/160x160?text=Preview"
+                    alt="Preview"
+                    class="w-full h-full object-contain"
+                  />
+                </div>
+              </div>
             </div>
           </div>
           <div class="flex justify-end gap-3 mt-6">
