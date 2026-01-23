@@ -197,10 +197,11 @@ function renderBanners(banners) {
   container.innerHTML = banners
     .map((b, i) => {
       // Use full URL if provided by backend, else construct it
+      const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
       const imageUrl = b.image_url
         ? b.image_url.replace(/^http:/, "https:")
         : b.image
-          ? `https://solocart-backend.onrender.com/storage/${b.image}`
+          ? `${backendBase}/storage/${b.image}`
           : "https://placehold.co/1600x400?text=Banner";
 
       console.log("[HOME] Banner:", b.title || "untitled", "Image:", imageUrl);
@@ -251,10 +252,11 @@ function renderProducts(products, gridId) {
   const renderedHtml = products
     .map((product) => {
       // Use full URL if provided by backend (image_url), else construct it
+      const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
       const imageUrl = product.image_url
         ? product.image_url.replace(/^http:/, "https:")
         : product.image
-          ? `https://solocart-backend.onrender.com/storage/${product.image}`
+          ? `${backendBase}/storage/${product.image}`
           : "https://placehold.co/400x400?text=No+Image";
 
       console.log("[HOME] Product:", product.name, "Image:", imageUrl);

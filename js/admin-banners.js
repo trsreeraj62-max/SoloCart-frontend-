@@ -52,10 +52,11 @@ function renderBanners(list) {
 
   grid.innerHTML = list
     .map((b) => {
+      const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
       const imageUrl = b.image_url
         ? b.image_url.replace(/^http:/, "https:")
         : b.image
-          ? `https://solocart-backend.onrender.com/storage/${b.image}`
+          ? `${backendBase}/storage/${b.image}`
           : "https://placehold.co/1600x400?text=Banner";
 
       return `
