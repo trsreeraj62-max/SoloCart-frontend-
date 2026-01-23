@@ -24,15 +24,33 @@ async function initCheckout() {
 async function fetchCartData() {
   try {
     const data = await apiCall("/cart", { requireAuth: true });
+    console.log("[Checkout] Raw cart response:", data);
+
+    // Normalize items similar to cart.js
+    let items = [];
+    if (!data) items = [];
+    else if (Array.isArray(data)) items = data;
+    else if (Array.isArray(data.items)) items = data.items;
+    else if (data.data && Array.isArray(data.data.items))
+      items = data.data.items;
+    else if (data.cart && Array.isArray(data.cart.items))
+      items = data.cart.items;
+    else if (Array.isArray(data.data)) items = data.data;
+    else items = data.items || data.data || [];
+
     cartData = data;
 
-    if (!cartData || !cartData.items || cartData.items.length === 0) {
+    if (!items || items.length === 0) {
       window.location.href = "/cart.html";
       return;
     }
 
-    renderPriceDetails(cartData);
-    renderOrderSummary(cartData.items);
+    renderPriceDetails({
+      total_price: data.total_price || data.cart?.total_price || null,
+      total_mrp: data.total_mrp || data.cart?.total_mrp || null,
+      items,
+    });
+    renderOrderSummary(items);
   } catch (e) {
     console.error("Failed to fetch cart data", e);
   }
@@ -56,32 +74,64 @@ function renderPriceDetails(data) {
 function renderOrderSummary(items) {
   const container = document.getElementById("checkout-items-list");
   if (!container || !Array.isArray(items)) return;
-
+  // Render with editable qty controls
   container.innerHTML = items
     .map((item) => {
-      const product = item.product || {};
+      const product = item.product || item.product_data || item;
+      const qty = Number(item.quantity || item.qty || 1);
+      const price = Number(product.price || product.unit_price || 0);
+      const subtotal = price * qty;
+      const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
       const imageUrl = product.image_url
-        ? product.image_url.replace(/^http:/, "https:")
+        ? String(product.image_url).replace(/^http:/, "https:")
         : product.image
-          ? `${CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "")}/storage/${product.image}`
+          ? `${backendBase}/storage/${product.image}`
           : "https://placehold.co/400x400?text=No+Image";
 
       return `
-        <div class="py-4 flex gap-4 border-b last:border-0">
+        <div class="py-4 flex gap-4 border-b last:border-0 checkout-item" data-id="${item.id}">
             <div class="w-16 h-16 border rounded-sm p-1">
-                <img src="${imageUrl}" class="h-full w-full object-contain">
+                <img src="${imageUrl}" class="h-full w-full object-contain" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
             </div>
-            <div>
-                <h4 class="text-xs font-bold text-slate-800 line-clamp-1">${product.name || "Unavailable"}</h4>
-                <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">Qty: ${item.quantity}</p>
-                <div class="flex items-center gap-2 mt-1">
-                    <span class="text-sm font-black text-slate-900">₹${Number((product.price || 0) * item.quantity).toLocaleString()}</span>
+            <div class="flex-grow">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="text-xs font-bold text-slate-800 line-clamp-1">${product.name || product.title || "Unavailable"}</h4>
+                    <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">₹${price.toLocaleString()}</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="flex items-center gap-2">
+                      <button class="qty-btn minus px-2 py-1 text-slate-400 border" data-id="${item.id}">-</button>
+                      <input class="qty-input w-10 text-center" data-id="${item.id}" value="${qty}" readonly>
+                      <button class="qty-btn plus px-2 py-1 text-slate-400 border" data-id="${item.id}">+</button>
+                    </div>
+                    <div class="text-sm font-black mt-2">Subtotal: ₹<span class="item-subtotal">${subtotal.toLocaleString()}</span></div>
+                  </div>
                 </div>
             </div>
         </div>
-    `;
+      `;
     })
     .join("");
+
+  // Attach qty handlers
+  container.querySelectorAll(".qty-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      const id = btn.dataset.id;
+      const isPlus = btn.classList.contains("plus");
+      try {
+        await apiCall("/cart/update", {
+          method: "POST",
+          body: JSON.stringify({ item_id: id, increment: isPlus }),
+          requireAuth: true,
+        });
+        // Re-fetch to get canonical data and re-render
+        await fetchCartData();
+      } catch (err) {
+        console.error("Failed to update quantity", err);
+      }
+    });
+  });
 }
 
 function setupEventListeners() {

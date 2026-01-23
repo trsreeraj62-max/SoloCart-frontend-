@@ -23,18 +23,86 @@ async function fetchCartItems() {
     );
     const data = await apiCall("/cart", { requireAuth: true });
 
-    const items = data?.items || [];
+    console.log("[Cart] Raw API response:", data);
+
+    // Robustly extract items array from multiple possible response shapes
+    let items = [];
+    let totals = {};
+
+    if (!data) {
+      items = [];
+    } else if (Array.isArray(data)) {
+      items = data;
+    } else if (Array.isArray(data.items)) {
+      items = data.items;
+      totals = {
+        total_price: data.total_price,
+        total_mrp: data.total_mrp,
+        total_items: data.total_items,
+      };
+    } else if (data.data && Array.isArray(data.data.items)) {
+      items = data.data.items;
+      totals = {
+        total_price: data.data.total_price,
+        total_mrp: data.data.total_mrp,
+        total_items: data.data.total_items,
+      };
+    } else if (data.data && Array.isArray(data.data)) {
+      items = data.data;
+    } else if (data.cart && Array.isArray(data.cart.items)) {
+      items = data.cart.items;
+      totals = {
+        total_price: data.cart.total_price,
+        total_mrp: data.cart.total_mrp,
+        total_items: data.cart.total_items,
+      };
+    } else if (Array.isArray(data.items?.data)) {
+      items = data.items.data;
+    } else {
+      // Try common fallbacks
+      items = data.items || data.data || data.cart || [];
+      if (!Array.isArray(items)) items = [];
+    }
     const container = document.getElementById("cart-items-list");
 
-    if (items.length === 0) {
+    if (!items || items.length === 0) {
       document.querySelector(".lg\\:w-8\\/12")?.classList.add("hidden");
       document.querySelector(".lg\\:w-4\\/12")?.classList.add("hidden");
       document.getElementById("empty-cart")?.classList.remove("hidden");
+      // clear price details
+      updatePriceDetails({ total_price: 0, total_mrp: 0, items: [] });
       return;
     }
 
     renderCartItems(items);
-    updatePriceDetails(data);
+
+    // Prefer explicit totals if provided, otherwise compute from items
+    if (
+      totals &&
+      (totals.total_price || totals.total_mrp || totals.total_items)
+    ) {
+      updatePriceDetails({
+        total_price: totals.total_price,
+        total_mrp: totals.total_mrp,
+        items: items,
+      });
+    } else {
+      // compute totals
+      const computed = items.reduce((acc, it) => {
+        const product = it.product || it.product_data || it;
+        const price = Number(product.price || product.unit_price || 0);
+        const qty = Number(it.quantity || it.qty || 1);
+        acc.total_price = (acc.total_price || 0) + price * qty;
+        acc.total_mrp =
+          (acc.total_mrp || 0) + Number(product.mrp || price) * qty;
+        return acc;
+      }, {});
+      updatePriceDetails({
+        total_price: computed.total_price || 0,
+        total_mrp: computed.total_mrp || 0,
+        items: items,
+      });
+    }
   } catch (e) {
     console.error("Failed to load cart", e);
     if (window.showToast)
@@ -66,7 +134,7 @@ function renderCartItems(items) {
       return `
         <div class="p-4 flex gap-4 hover:bg-slate-50 transition-colors" data-id="${item.id}">
             <div class="w-24 h-24 flex-shrink-0 border p-2 rounded-sm bg-white">
-                <img src="${imageUrl}" class="h-full w-full object-contain">
+          <img src="${imageUrl}" class="h-full w-full object-contain" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
             </div>
             <div class="flex-grow">
                 <div class="flex justify-between items-start">
