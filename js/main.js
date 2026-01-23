@@ -278,21 +278,49 @@ window.addToCart = async function (productId, quantity = 1) {
     "tokenMasked:",
     token ? `${String(token).slice(0, 12)}...` : null,
   );
-  const data = await apiCall("/cart/add", {
-    method: "POST",
-    body: JSON.stringify({ product_id: productId, quantity: quantity }),
-    requireAuth: true,
-  });
+  try {
+    const data = await apiCall("/cart/add", {
+      method: "POST",
+      body: JSON.stringify({ product_id: productId, quantity: quantity }),
+      requireAuth: true,
+    });
 
-  if (data && (data.success || data.id)) {
-    showToast("Added to Cart Successfully");
-    updateCartBadge();
-  } else {
-    showToast(data?.message || "Failed to add to cart", "error");
+    console.log("[AddToCart] response:", data);
+
+    // Handle common success shapes
+    if (data && (data.success || data.id || data.item || data.added)) {
+      showToast("Added to Cart Successfully");
+      await updateCartBadge();
+      return { success: true, data };
+    }
+
+    // If response contains message, show it
+    if (data && data.message) {
+      showToast(data.message, "error");
+      return { success: false, data };
+    }
+
+    showToast("Failed to add to cart", "error");
+    return { success: false, data };
+  } catch (err) {
+    console.error("addToCart error:", err);
+    showToast("Network error while adding to cart", "error");
+    return { success: false, error: err };
   }
 };
 
 document.addEventListener("DOMContentLoaded", () => {
   updateAuthUI();
   updateCartBadge();
+  // Delegate add-to-cart clicks for elements using data-add-to-cart
+  document.body.addEventListener("click", async (e) => {
+    const el = e.target.closest && e.target.closest("[data-add-to-cart]");
+    if (!el) return;
+    e.preventDefault();
+    const pid =
+      el.dataset.addToCart || el.dataset.productId || el.dataset.productid;
+    const qty = Number(el.dataset.quantity || 1);
+    if (!pid) return console.warn("add-to-cart element missing product id");
+    await window.addToCart(pid, qty);
+  });
 });

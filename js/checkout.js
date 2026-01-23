@@ -108,7 +108,7 @@ function renderOrderSummary(items) {
           : "https://placehold.co/400x400?text=No+Image";
 
       return `
-        <div class="py-4 flex gap-4 border-b last:border-0 checkout-item" data-product-id="${product.id}">
+        <div class="py-4 flex gap-4 border-b last:border-0 checkout-item" data-product-id="${product.id}" data-item-id="${item.id}">
             <div class="w-16 h-16 border rounded-sm p-1">
                 <img src="${imageUrl}" class="h-full w-full object-contain" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
             </div>
@@ -120,9 +120,9 @@ function renderOrderSummary(items) {
                   </div>
                   <div class="text-right">
                     <div class="flex items-center gap-2">
-                      <button class="qty-btn minus px-2 py-1 text-slate-400 border" data-product-id="${product.id}">-</button>
-                      <input class="qty-input w-10 text-center" data-product-id="${product.id}" value="${qty}" readonly>
-                      <button class="qty-btn plus px-2 py-1 text-slate-400 border" data-product-id="${product.id}">+</button>
+                      <button class="qty-btn minus px-2 py-1 text-slate-400 border" data-product-id="${product.id}" data-item-id="${item.id}">-</button>
+                      <input class="qty-input w-10 text-center" data-product-id="${product.id}" data-item-id="${item.id}" value="${qty}" readonly>
+                      <button class="qty-btn plus px-2 py-1 text-slate-400 border" data-product-id="${product.id}" data-item-id="${item.id}">+</button>
                     </div>
                     <div class="text-sm font-black mt-2">Subtotal: ₹<span class="item-subtotal">${subtotal.toLocaleString()}</span></div>
                   </div>
@@ -137,6 +137,7 @@ function renderOrderSummary(items) {
   container.querySelectorAll(".qty-btn").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       const pid = btn.dataset.productId;
+      const itemId = btn.dataset.itemId;
       const isPlus = btn.classList.contains("plus");
       const input = container.querySelector(
         `.qty-input[data-product-id="${pid}"]`,
@@ -144,9 +145,11 @@ function renderOrderSummary(items) {
       const current = Number(input?.value || 1);
       const newQty = isPlus ? current + 1 : Math.max(1, current - 1);
       try {
+        const payload = { product_id: pid, quantity: newQty };
+        if (itemId) payload.item_id = itemId;
         await apiCall("/cart/update", {
           method: "POST",
-          body: JSON.stringify({ product_id: pid, quantity: newQty }),
+          body: JSON.stringify(payload),
           requireAuth: true,
         });
         await fetchCartData();

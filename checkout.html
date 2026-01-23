@@ -1,153 +1,250 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Checkout — SoloCart Secure</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/app.css" />
     <style>
-        :root { --fk-blue: #2874f0; --fk-yellow: #ffe500; --fk-bg: #f1f3f6; }
-        body { background-color: var(--fk-bg); font-family: 'Inter', sans-serif; }
-        .container-max { max-width: 1200px; }
-        .step-inactive { opacity: 0.5; pointer-events: none; }
-        .step-content { display: none; }
-        .step-active .step-content { display: block; }
+      :root {
+        --fk-blue: #2874f0;
+        --fk-yellow: #ffe500;
+        --fk-bg: #f1f3f6;
+      }
+      body {
+        background-color: var(--fk-bg);
+        font-family: "Inter", sans-serif;
+      }
+      .container-max {
+        max-width: 1200px;
+      }
+      .step-inactive {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+      .step-content {
+        display: none;
+      }
+      .step-active .step-content {
+        display: block;
+      }
     </style>
-</head>
-<body>
-    <div id="toast-container" class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"></div>
+  </head>
+  <body>
+    <div
+      id="toast-container"
+      class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"
+    ></div>
 
     <!-- Simple Nav -->
     <nav class="bg-[#2874f0] text-white py-3 shadow-md">
-        <div class="container container-max flex items-center gap-10">
-            <a href="/" class="flex flex-col leading-none no-underline">
-                <span class="text-2xl font-black italic tracking-tighter text-white">SoloCart</span>
-            </a>
-            <h1 class="text-sm font-bold opacity-60 uppercase tracking-widest hidden md:block">Secure Checkout</h1>
-        </div>
+      <div class="container container-max flex items-center gap-10">
+        <a href="/" class="flex flex-col leading-none no-underline">
+          <span class="text-2xl font-black italic tracking-tighter text-white"
+            >SoloCart</span
+          >
+        </a>
+        <h1
+          class="text-sm font-bold opacity-60 uppercase tracking-widest hidden md:block"
+        >
+          Secure Checkout
+        </h1>
+      </div>
     </nav>
 
     <main class="container container-max py-6 px-4">
-        <div class="flex flex-col lg:flex-row gap-4">
-            <!-- Left Side Steps -->
-            <div class="lg:w-8/12 space-y-4">
-                
-                <!-- Step 1: Login Status -->
-                <div class="bg-white rounded-sm shadow-sm border border-slate-100 overflow-hidden" id="step-auth">
-                    <div class="p-3 bg-white flex items-center justify-between">
-                         <div class="flex items-center gap-4">
-                            <span class="w-5 h-5 bg-slate-100 text-[#2874f0] rounded-sm flex items-center justify-center text-[10px] font-black">1</span>
-                            <h3 class="text-xs font-black uppercase tracking-widest text-slate-400">Login Status</h3>
-                        </div>
-                        <div id="auth-status-info" class="text-xs font-bold text-slate-800">
-                             <!-- Loaded via JS -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 2: Delivery Address -->
-                <div class="bg-white rounded-sm shadow-sm border border-slate-100 overflow-hidden" id="step-address">
-                    <div class="p-3 bg-[#2874f0] text-white flex items-center gap-4">
-                        <span class="w-5 h-5 bg-white text-[#2874f0] rounded-sm flex items-center justify-center text-[10px] font-black">2</span>
-                        <h3 class="text-xs font-black uppercase tracking-widest">Delivery Address</h3>
-                    </div>
-                    <div class="p-6">
-                        <form id="address-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input type="text" id="name" placeholder="Full Name" required class="border p-3 text-sm rounded-sm outline-[#2874f0]">
-                            <input type="text" id="phone" placeholder="10-digit mobile number" required class="border p-3 text-sm rounded-sm outline-[#2874f0]">
-                            <input type="text" id="pincode" placeholder="Pincode" required class="border p-3 text-sm rounded-sm outline-[#2874f0]">
-                            <input type="text" id="locality" placeholder="Locality" required class="border p-3 text-sm rounded-sm outline-[#2874f0]">
-                            <textarea id="address" placeholder="Address (Area and Street)" required class="border p-3 text-sm rounded-sm outline-[#2874f0] md:col-span-2 h-24"></textarea>
-                            <input type="text" id="city" placeholder="City/District/Town" required class="border p-3 text-sm rounded-sm outline-[#2874f0]">
-                            <select id="state" required class="border p-3 text-sm rounded-sm outline-[#2874f0]">
-                                <option value="">Select State</option>
-                                <option value="Maharashtra">Maharashtra</option>
-                                <option value="Delhi">Delhi</option>
-                                <option value="Karnataka">Karnataka</option>
-                                <!-- More states... -->
-                            </select>
-                            <div class="md:col-span-2 pt-4">
-                                <button type="submit" class="bg-[#fb641b] text-white px-12 py-3.5 rounded-sm font-black text-sm uppercase shadow-md">Deliver Here</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                 <!-- Step 3: Order Summary -->
-                <div class="bg-white rounded-sm shadow-sm border border-slate-100 overflow-hidden step-inactive" id="step-summary">
-                    <div class="p-3 bg-[#2874f0] text-white flex items-center gap-4">
-                        <span class="w-5 h-5 bg-white text-[#2874f0] rounded-sm flex items-center justify-center text-[10px] font-black">3</span>
-                        <h3 class="text-xs font-black uppercase tracking-widest">Order Summary</h3>
-                    </div>
-                    <div class="p-4" id="checkout-items-list">
-                        <!-- Loaded via JS -->
-                    </div>
-                    <div class="p-4 border-t flex justify-end">
-                         <button id="confirm-summary-btn" class="bg-[#fb641b] text-white px-10 py-3 rounded-sm font-black text-sm uppercase shadow-lg">CONTINUE</button>
-                    </div>
-                </div>
-
-                <!-- Step 4: Payment Options -->
-                <div class="bg-white rounded-sm shadow-sm border border-slate-100 overflow-hidden step-inactive" id="step-payment">
-                    <div class="p-3 bg-[#2874f0] text-white flex items-center gap-4">
-                        <span class="w-5 h-5 bg-white text-[#2874f0] rounded-sm flex items-center justify-center text-[10px] font-black">4</span>
-                        <h3 class="text-xs font-black uppercase tracking-widest">Payment Options</h3>
-                    </div>
-                    <div class="p-6 space-y-4">
-                        <label class="flex items-center gap-4 p-4 border rounded cursor-pointer hover:bg-slate-50">
-                            <input type="radio" name="payment_method" value="cod" checked>
-                            <div class="flex flex-col">
-                                <span class="text-sm font-bold">Cash on Delivery</span>
-                                <span class="text-[10px] text-slate-400 font-bold uppercase">Signal confirmation on arrival</span>
-                            </div>
-                        </label>
-                        <label class="flex items-center gap-4 p-4 border rounded opacity-50 cursor-not-allowed">
-                            <input type="radio" name="payment_method" value="online" disabled>
-                            <div class="flex flex-col">
-                                <span class="text-sm font-bold">Online Payment (UPI/Cards)</span>
-                                <span class="text-[10px] text-rose-500 font-black uppercase">Temporarily Offline</span>
-                            </div>
-                        </label>
-                        <div class="pt-6">
-                            <button id="complete-order-btn" class="bg-[#fb641b] text-white px-12 py-3.5 rounded-sm font-black text-sm uppercase shadow-lg hover:bg-orange-600">CONFIRM ORDER</button>
-                        </div>
-                    </div>
-                </div>
-
+      <div class="flex flex-col lg:flex-row gap-4">
+        <!-- Left Side Steps -->
+        <div class="lg:w-8/12 space-y-4">
+          <!-- Step 1: Login Status -->
+          <div
+            class="bg-white rounded-sm shadow-sm border border-slate-100 overflow-hidden"
+            id="step-auth"
+          >
+            <div class="p-3 bg-white flex items-center justify-between">
+              <div class="flex items-center gap-4">
+                <span
+                  class="w-5 h-5 bg-slate-100 text-[#2874f0] rounded-sm flex items-center justify-center text-[10px] font-black"
+                  >1</span
+                >
+                <h3
+                  class="text-xs font-black uppercase tracking-widest text-slate-400"
+                >
+                  Login Status
+                </h3>
+              </div>
+              <div
+                id="auth-status-info"
+                class="text-xs font-bold text-slate-800"
+              >
+                <!-- Loaded via JS -->
+              </div>
             </div>
+          </div>
 
-            <!-- Right: Price Details -->
-            <div class="lg:w-4/12 h-fit">
-                <div class="bg-white rounded-sm shadow-sm border border-slate-100 sticky top-4">
-                    <div class="p-4 border-b font-black text-slate-400 text-xs uppercase tracking-widest">Price Details</div>
-                    <div class="p-4 space-y-4">
-                        <div class="flex justify-between text-sm">
-                            <span>Price (<span id="price-details-count">0</span> items)</span>
-                            <span id="total-mrp">₹0</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span>Discount</span>
-                            <span class="text-green-600 font-bold" id="total-discount">- ₹0</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span>Delivery Charges</span>
-                            <span class="text-green-600 font-bold">FREE</span>
-                        </div>
-                        <div class="flex justify-between text-base font-black border-t border-dashed pt-4">
-                            <span>Total Amount</span>
-                            <span id="grand-total">₹0</span>
-                        </div>
-                    </div>
-                </div>
+          <!-- Step 2: Delivery Address -->
+          <div
+            class="bg-white rounded-sm shadow-sm border border-slate-100 overflow-hidden"
+            id="step-address"
+          >
+            <div class="p-3 bg-[#2874f0] text-white flex items-center gap-4">
+              <span
+                class="w-5 h-5 bg-white text-[#2874f0] rounded-sm flex items-center justify-center text-[10px] font-black"
+                >2</span
+              >
+              <h3 class="text-xs font-black uppercase tracking-widest">
+                Delivery Address
+              </h3>
             </div>
+            <div class="p-6">
+              <form
+                id="address-form"
+                class="grid grid-cols-1 md:grid-cols-2 gap-4"
+              >
+                <input
+                  type="text"
+                  id="name"
+                  placeholder="Full Name"
+                  required
+                  class="border p-3 text-sm rounded-sm outline-[#2874f0]"
+                />
+                <input
+                  type="text"
+                  id="phone"
+                  placeholder="10-digit mobile number"
+                  required
+                  class="border p-3 text-sm rounded-sm outline-[#2874f0]"
+                />
+                <input
+                  type="text"
+                  id="pincode"
+                  placeholder="Pincode"
+                  required
+                  class="border p-3 text-sm rounded-sm outline-[#2874f0]"
+                />
+                <input
+                  type="text"
+                  id="locality"
+                  placeholder="Locality"
+                  required
+                  class="border p-3 text-sm rounded-sm outline-[#2874f0]"
+                />
+                <textarea
+                  id="address"
+                  placeholder="Address (Area and Street)"
+                  required
+                  class="border p-3 text-sm rounded-sm outline-[#2874f0] md:col-span-2 h-24"
+                ></textarea>
+                <input
+                  type="text"
+                  id="city"
+                  placeholder="City/District/Town"
+                  required
+                  class="border p-3 text-sm rounded-sm outline-[#2874f0]"
+                />
+                <select
+                  id="state"
+                  required
+                  class="border p-3 text-sm rounded-sm outline-[#2874f0]"
+                >
+                  <option value="">Select State</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Delhi">Delhi</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <!-- More states... -->
+                </select>
+                <div class="md:col-span-2 pt-4">
+                  <button
+                    type="submit"
+                    class="bg-[#fb641b] text-white px-12 py-3.5 rounded-sm font-black text-sm uppercase shadow-md"
+                  >
+                    Deliver Here
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Step 3: Order Summary -->
+          <div
+            class="bg-white rounded-sm shadow-sm border border-slate-100 overflow-hidden step-inactive"
+            id="step-summary"
+          >
+            <div class="p-3 bg-[#2874f0] text-white flex items-center gap-4">
+              <span
+                class="w-5 h-5 bg-white text-[#2874f0] rounded-sm flex items-center justify-center text-[10px] font-black"
+                >3</span
+              >
+              <h3 class="text-xs font-black uppercase tracking-widest">
+                Order Summary
+              </h3>
+            </div>
+            <div class="p-4" id="checkout-items-list">
+              <!-- Loaded via JS -->
+            </div>
+            <div class="p-4 border-t flex justify-end">
+              <button
+                id="confirm-summary-btn"
+                class="bg-[#fb641b] text-white px-10 py-3 rounded-sm font-black text-sm uppercase shadow-lg"
+              >
+                CONTINUE
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 4: Payment handled on payment.html (removed from checkout) -->
         </div>
+
+        <!-- Right: Price Details -->
+        <div class="lg:w-4/12 h-fit">
+          <div
+            class="bg-white rounded-sm shadow-sm border border-slate-100 sticky top-4"
+          >
+            <div
+              class="p-4 border-b font-black text-slate-400 text-xs uppercase tracking-widest"
+            >
+              Price Details
+            </div>
+            <div class="p-4 space-y-4">
+              <div class="flex justify-between text-sm">
+                <span
+                  >Price (<span id="price-details-count">0</span> items)</span
+                >
+                <span id="total-mrp">₹0</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span>Discount</span>
+                <span class="text-green-600 font-bold" id="total-discount"
+                  >- ₹0</span
+                >
+              </div>
+              <div class="flex justify-between text-sm">
+                <span>Delivery Charges</span>
+                <span class="text-green-600 font-bold">FREE</span>
+              </div>
+              <div
+                class="flex justify-between text-base font-black border-t border-dashed pt-4"
+              >
+                <span>Total Amount</span>
+                <span id="grand-total">₹0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
 
     <script type="module" src="/js/checkout.js"></script>
-</body>
+  </body>
 </html>

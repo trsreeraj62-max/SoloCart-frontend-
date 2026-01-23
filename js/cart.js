@@ -133,7 +133,7 @@ function renderCartItems(items) {
           : "https://placehold.co/400x400?text=No+Image";
 
       return `
-        <div class="p-4 flex gap-4 hover:bg-slate-50 transition-colors cart-row" data-product-id="${product.id}">
+        <div class="p-4 flex gap-4 hover:bg-slate-50 transition-colors cart-row" data-product-id="${product.id}" data-item-id="${item.id}">
             <div class="w-24 h-24 flex-shrink-0 border p-2 rounded-sm bg-white">
           <img src="${imageUrl}" class="h-full w-full object-contain" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
             </div>
@@ -158,9 +158,9 @@ function renderCartItems(items) {
 
                 <div class="flex items-center gap-6 mt-6">
                     <div class="flex items-center border rounded-sm overflow-hidden">
-                        <button class="qty-btn minus px-2.5 py-1 text-slate-400 hover:bg-slate-100 font-black" data-product-id="${product.id}">-</button>
-                        <input type="text" value="${qty}" readonly class="w-8 text-center text-xs font-black outline-none border-x qty-input" data-product-id="${product.id}">
-                        <button class="qty-btn plus px-2.5 py-1 text-slate-600 hover:bg-slate-100 font-black" data-product-id="${product.id}">+</button>
+                        <button class="qty-btn minus px-2.5 py-1 text-slate-400 hover:bg-slate-100 font-black" data-product-id="${product.id}" data-item-id="${item.id}">-</button>
+                        <input type="text" value="${qty}" readonly class="w-8 text-center text-xs font-black outline-none border-x qty-input" data-product-id="${product.id}" data-item-id="${item.id}">
+                        <button class="qty-btn plus px-2.5 py-1 text-slate-600 hover:bg-slate-100 font-black" data-product-id="${product.id}" data-item-id="${item.id}">+</button>
                     </div>
                     <button class="remove-btn text-xs font-black uppercase tracking-widest text-[#212121] hover:text-[#2874f0]" data-product-id="${product.id}">Remove</button>
                     <button class="buy-this-btn text-xs bg-[#2874f0] text-white px-3 py-1 rounded-sm" data-product-id="${product.id}">Buy This Item</button>
@@ -189,14 +189,17 @@ function renderCartItems(items) {
 
   // Attach buy-this handlers
   container.querySelectorAll(".buy-this-btn").forEach((b) => {
-    b.addEventListener("click", (e) => {
-      const pid = b.dataset.productId;
-      initiateCheckoutSelection("single", pid);
+    btn.addEventListener("click", (e) => {
+      const pid = btn.dataset.productId;
+      const itemId = btn.dataset.itemId;
+      const isPlus = btn.classList.contains("plus");
+      const input = container.querySelector(
+        `.qty-input[data-product-id="${pid}"]`,
+      );
+      const current = Number(input?.value || 1);
+      const newQty = isPlus ? current + 1 : Math.max(1, current - 1);
+      setQuantity(pid, newQty, itemId);
     });
-  });
-
-  // Re-bind buttons
-  container.querySelectorAll(".qty-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       const pid = btn.dataset.productId;
       const isPlus = btn.classList.contains("plus");
@@ -211,16 +214,21 @@ function renderCartItems(items) {
 
   container.querySelectorAll(".remove-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
-      removeItem(btn.dataset.productId);
+      const pid = btn.dataset.productId;
+      const itemId = btn.dataset.itemId;
+      removeItem(pid, itemId);
     });
   });
 }
 
-async function setQuantity(productId, quantity) {
+async function setQuantity(productId, quantity, itemId = null) {
   try {
+    const payload = { product_id: productId, quantity };
+    if (itemId) payload.item_id = itemId;
+
     const data = await apiCall("/cart/update", {
       method: "POST",
-      body: JSON.stringify({ product_id: productId, quantity }),
+      body: JSON.stringify(payload),
       requireAuth: true,
     });
 
@@ -233,13 +241,17 @@ async function setQuantity(productId, quantity) {
   }
 }
 
-async function removeItem(productId) {
+async function removeItem(productId, itemId = null) {
   if (!confirm("Are you sure you want to remove this item?")) return;
 
   try {
+    const payload = {};
+    if (productId) payload.product_id = productId;
+    if (itemId) payload.item_id = itemId;
+
     const data = await apiCall(`/cart/remove`, {
       method: "POST",
-      body: JSON.stringify({ product_id: productId }),
+      body: JSON.stringify(payload),
       requireAuth: true,
     });
 
