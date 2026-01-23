@@ -23,7 +23,7 @@ async function initCheckout() {
 
 async function fetchCartData() {
   try {
-    const data = await apiCall("/cart");
+    const data = await apiCall("/cart", { requireAuth: true });
     cartData = data;
 
     if (!cartData || !cartData.items || cartData.items.length === 0) {
@@ -134,6 +134,7 @@ async function completeOrder() {
         address: savedAddress,
         payment_method: "cod",
       }),
+      requireAuth: true,
     });
 
     if (data && (data.order || data.success)) {

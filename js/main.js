@@ -47,6 +47,25 @@ export async function apiCall(endpoint, options = {}) {
     delete defaultHeaders["Content-Type"];
   }
 
+  // RequireAuth option: callers can set { requireAuth: true } to block when token is missing
+  const requireAuth = options.requireAuth === true;
+
+  // If requireAuth is set but token is missing, block the call and redirect to login
+  if (requireAuth && !token) {
+    console.error(
+      "apiCall blocked: requireAuth=true but no auth token present. Redirecting to login.",
+    );
+    try {
+      const redirectTo = `/login.html?redirect=${encodeURIComponent(window.location.href)}`;
+      setTimeout(() => (window.location.href = redirectTo), 300);
+    } catch (e) {}
+    return {
+      success: false,
+      message: "Authentication required",
+      statusCode: 401,
+    };
+  }
+
   try {
     console.log("[API] Request ->", secureUrl, {
       method: options.method || "GET",
@@ -215,6 +234,14 @@ export async function updateCartBadge() {
   if (!badge) return;
 
   const token = getAuthToken();
+  const urlParams = new URLSearchParams(window.location.search);
+  const skipAuth =
+    urlParams.get("as_buyer") === "1" || urlParams.get("view_as_buyer") === "1";
+  if (skipAuth) {
+    // When viewing as buyer from admin, do not call protected cart APIs
+    badge.classList.add("hidden");
+    return;
+  }
   if (!token) {
     badge.classList.add("hidden");
     return;
@@ -254,6 +281,7 @@ window.addToCart = async function (productId, quantity = 1) {
   const data = await apiCall("/cart/add", {
     method: "POST",
     body: JSON.stringify({ product_id: productId, quantity: quantity }),
+    requireAuth: true,
   });
 
   if (data && (data.success || data.id)) {

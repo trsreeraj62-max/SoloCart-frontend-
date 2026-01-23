@@ -7,27 +7,6 @@ async function handleLogin(e) {
   const password = document.getElementById("password").value;
   const btn = document.getElementById("login-btn");
 
-  // Local dev/test bypass: allow quick admin login without backend (useful during frontend-only testing)
-  // This only triggers for the exact test credentials and does not alter backend logic.
-  if (email === "admin@store.com" && password === "admin123") {
-    try {
-      if (btn) {
-        btn.innerText = "Authenticating...";
-      }
-      const devUser = {
-        name: "Admin",
-        email: "admin@store.com",
-        role: "admin",
-        is_admin: true,
-      };
-      const devToken = "dev-admin-token";
-      finalizeLogin({ token: devToken, access_token: devToken, user: devUser });
-      return;
-    } catch (e) {
-      console.error("Dev bypass login failed", e);
-    }
-  }
-
   if (btn) {
     btn.disabled = true;
     btn.innerText = "Authenticating...";
@@ -253,7 +232,16 @@ async function handleResendOtp() {
 }
 
 function finalizeLogin(data) {
-  localStorage.setItem("auth_token", data.token || data.access_token);
+  const tokenValue = data.token || data.access_token;
+  if (tokenValue) {
+    localStorage.setItem("auth_token", tokenValue);
+    console.log(
+      "[Auth] Stored auth_token (masked):",
+      `${String(tokenValue).slice(0, 12)}...`,
+    );
+  } else {
+    console.error("[Auth] No token present in finalizeLogin payload");
+  }
   localStorage.setItem("user_data", JSON.stringify(data.user || {}));
   if (window.showToast) window.showToast("LoggedIn Successfully");
 

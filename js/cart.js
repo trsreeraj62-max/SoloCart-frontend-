@@ -21,7 +21,7 @@ async function fetchCartItems() {
       "tokenMasked:",
       token ? `${String(token).slice(0, 12)}...` : null,
     );
-    const data = await apiCall("/cart");
+    const data = await apiCall("/cart", { requireAuth: true });
 
     const items = data?.items || [];
     const container = document.getElementById("cart-items-list");
@@ -124,6 +124,7 @@ async function updateQuantity(itemId, isPlus) {
       item_id: itemId,
       increment: isPlus,
     }),
+    requireAuth: true,
   });
 
   if (data && (data.success || data.items)) {
@@ -137,6 +138,7 @@ async function removeItem(itemId) {
 
   const data = await apiCall(`/cart/remove/${itemId}`, {
     method: "DELETE",
+    requireAuth: true,
   });
 
   if (data && (data.success || data.message)) {

@@ -202,6 +202,7 @@ async function handleAddToCart(isBuyNow = false) {
       product_id: currentProduct.id,
       quantity: 1,
     }),
+    requireAuth: true,
   });
 
   if (data && (data.success || data.id)) {
