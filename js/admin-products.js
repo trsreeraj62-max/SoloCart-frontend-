@@ -209,6 +209,24 @@ function setupEventListeners() {
   if (productForm) {
     productForm.addEventListener("submit", saveProduct);
     console.log("✓ Product form submit listener attached");
+
+    // Also attach click handler to Save button to ensure submission fires across browsers
+    const saveBtn = document.getElementById("save-product-btn");
+    if (saveBtn) {
+      saveBtn.addEventListener("click", (ev) => {
+        console.log("🔘 Save button clicked");
+        // Use requestSubmit when available to trigger validation + submit event
+        if (typeof productForm.requestSubmit === "function") {
+          productForm.requestSubmit();
+        } else {
+          // Fallback: dispatch submit event which our handler will intercept
+          productForm.dispatchEvent(new Event("submit", { cancelable: true }));
+        }
+      });
+      console.log("✓ Save button click listener attached");
+    } else {
+      console.warn("⚠️ Save button (#save-product-btn) not found");
+    }
   } else {
     console.warn("✗ Product form not found in DOM");
   }
@@ -341,6 +359,15 @@ async function saveProduct(e) {
   } else if (hiddenImageUrl) {
     formData.append("image_url", hiddenImageUrl);
     console.log("[ADMIN] Preserving existing image_url:", hiddenImageUrl);
+  }
+
+  // Debug: log FormData entries (files will show as File objects)
+  try {
+    for (const entry of formData.entries()) {
+      console.log("[ADMIN][FormData]", entry[0], entry[1]);
+    }
+  } catch (e) {
+    console.warn("[ADMIN] Could not enumerate FormData entries", e);
   }
 
   const endpoint = id ? `/admin/products/${id}` : "/admin/products";
