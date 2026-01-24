@@ -240,6 +240,12 @@
     <script type="module">
       import CONFIG from "./js/config.js";
 
+      // Email validation utility
+      function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+      }
+
       document
         .getElementById("contact-form")
         ?.addEventListener("submit", async (e) => {
@@ -248,16 +254,40 @@
           const btn = form.querySelector("button");
           const originalText = btn.innerText;
 
-          const name = form.querySelector(
-            'input[placeholder="John Doe"]',
-          ).value;
-          const email = form.querySelector(
-            'input[placeholder="john@example.com"]',
-          ).value;
-          const subject = form.querySelector(
-            'input[placeholder="How can we help?"]',
-          ).value;
-          const message = form.querySelector("textarea").value;
+          const name = document.getElementById("contact-name").value.trim();
+          const email = document
+            .getElementById("contact-email")
+            .value.trim()
+            .toLowerCase();
+          const subject = document
+            .getElementById("contact-subject")
+            .value.trim();
+          const message = document
+            .getElementById("contact-message")
+            .value.trim();
+
+          // Validate form fields
+          if (!name) {
+            window.showToast("Please enter your full name", "error");
+            return;
+          }
+
+          if (!email || !isValidEmail(email)) {
+            window.showToast("Please enter a valid email address", "error");
+            return;
+          }
+
+          if (!subject) {
+            window.showToast("Please enter a subject", "error");
+            return;
+          }
+
+          if (!message) {
+            window.showToast("Please enter a message", "error");
+            return;
+          }
+
+          console.log("[Contact] Submitting contact form with email:", email);
 
           btn.disabled = true;
           btn.innerText = "Sending...";
@@ -268,6 +298,8 @@
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ name, email, subject, message }),
             });
+
+            console.log("[Contact] Response status:", response.status);
 
             if (response.ok) {
               window.showToast("Signal transmitted successfully!");

@@ -1,11 +1,26 @@
 import CONFIG from "./config.js";
 import { apiCall } from "./main.js";
 
+// Email validation utility
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
 async function handleLogin(e) {
   e.preventDefault();
-  const email = document.getElementById("email").value.trim();
+  const email = document.getElementById("email").value.trim().toLowerCase();
   const password = document.getElementById("password").value;
   const btn = document.getElementById("login-btn");
+
+  // Validate email format
+  if (!email || !isValidEmail(email)) {
+    if (window.showToast)
+      window.showToast("Please enter a valid email address", "error");
+    return;
+  }
+
+  console.log("[Login] Email submitted:", email);
 
   if (btn) {
     btn.disabled = true;
@@ -17,6 +32,8 @@ async function handleLogin(e) {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
+
+    console.log("[Login] Response received:", data);
 
     // Check for nested data structure (e.g. data.data.token)
     const responseData = data.data || data;
@@ -69,19 +86,41 @@ async function handleLogin(e) {
 async function handleRegister(e) {
   e.preventDefault();
   console.log("[Register] Form submitted");
-  
+
   const name = document.getElementById("name").value.trim();
   const phone = document.getElementById("phone").value.trim();
-  const email = document.getElementById("email").value.trim();
+  const email = document.getElementById("email").value.trim().toLowerCase();
   const password = document.getElementById("password").value;
   const password_confirmation = document.getElementById(
     "password_confirmation",
   ).value;
 
-  console.log("[Register] Form data:", { name, phone, email, password: password ? "***" : "" });
+  // Validate email format
+  if (!email || !isValidEmail(email)) {
+    if (window.showToast)
+      window.showToast("Please enter a valid email address", "error");
+    return;
+  }
+
+  // Validate phone number
+  if (!phone || phone.length < 10) {
+    if (window.showToast)
+      window.showToast(
+        "Please enter a valid phone number (at least 10 digits)",
+        "error",
+      );
+    return;
+  }
+
+  console.log("[Register] Form data:", {
+    name,
+    phone,
+    email,
+    password: password ? "***" : "",
+  });
 
   const btn = document.querySelector('#register-form button[type="submit"]');
-  
+
   if (btn) {
     btn.disabled = true;
     btn.innerText = "Creating Account...";
@@ -139,7 +178,7 @@ async function handleRegister(e) {
       }
 
       if (window.showToast) window.showToast(errorMsg, "error");
-      
+
       // Re-enable button
       if (btn) {
         btn.disabled = false;
@@ -149,7 +188,7 @@ async function handleRegister(e) {
   } catch (e) {
     console.error("Registration failed", e);
     if (window.showToast) window.showToast("Server connection failed", "error");
-    
+
     // Re-enable button
     if (btn) {
       btn.disabled = false;
@@ -160,9 +199,22 @@ async function handleRegister(e) {
 
 async function handleVerifyOtp(e) {
   e.preventDefault();
-  const email = document.getElementById("email").value.trim();
+  const email = document.getElementById("email").value.trim().toLowerCase();
   const otp = document.getElementById("otp").value.trim();
   const btn = document.getElementById("verify-btn");
+
+  // Validate email and OTP
+  if (!email || !isValidEmail(email)) {
+    if (window.showToast)
+      window.showToast("Please provide a valid email address", "error");
+    return;
+  }
+
+  if (!otp || otp.length !== 6 || !/^\d{6}$/.test(otp)) {
+    if (window.showToast)
+      window.showToast("OTP must be exactly 6 digits", "error");
+    return;
+  }
 
   if (btn) {
     btn.disabled = true;
@@ -222,11 +274,16 @@ async function handleVerifyOtp(e) {
 }
 
 async function handleResendOtp() {
-  const email = document.getElementById("email").value.trim();
-  if (!email) {
-    if (window.showToast) window.showToast("Email is required", "error");
+  const email = document.getElementById("email").value.trim().toLowerCase();
+
+  // Validate email
+  if (!email || !isValidEmail(email)) {
+    if (window.showToast)
+      window.showToast("Please provide a valid email address", "error");
     return;
   }
+
+  console.log("[Resend OTP] Resending OTP to:", email);
 
   try {
     const data = await apiCall("/otp/resend", {
@@ -234,7 +291,7 @@ async function handleResendOtp() {
       body: JSON.stringify({ email }),
     });
 
-    console.log("Resend OTP Response:", data); // Debug log
+    console.log("[Resend OTP] Response:", data); // Debug log
 
     // Check for success
     if (
