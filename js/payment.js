@@ -71,27 +71,71 @@ async function initPayment() {
       return;
     }
 
+    // Determine if this is Buy Now (single product) or Cart checkout
+    const isBuyNow = checkout.is_buy_now === true;
+    console.log("[Payment] Checkout type - Buy Now:", isBuyNow);
+
     // Build order payload from checkout_data
     try {
-      const payload = {
-        items: checkout.items.map((it) => ({
-          product_id: it.product_id,
-          quantity: it.quantity,
-        })),
-        address: checkout.address || null,
-        payment_method,
-        payment_details: collectPaymentDetails(payment_method),
-      };
+      let resp;
 
-      const resp = await apiCall("/orders", {
-        method: "POST",
-        body: JSON.stringify(payload),
-        requireAuth: true,
-      });
+      if (isBuyNow && checkout.items.length === 1) {
+        // Use /api/checkout/single for Buy Now
+        const item = checkout.items[0];
+        const payload = {
+          product_id: item.product_id || item.id,
+          quantity: item.quantity || 1,
+          full_name: checkout.address?.name || "",
+          email: checkout.address?.email || "",
+          phone: checkout.address?.phone || "",
+          address: checkout.address?.address || "",
+          city: checkout.address?.city || "",
+          state: checkout.address?.state || "",
+          pincode: checkout.address?.pincode || "",
+          payment_method,
+        };
+
+        console.log(
+          "[Payment] Sending Buy Now payload to /checkout/single:",
+          JSON.stringify(payload),
+        );
+
+        resp = await apiCall("/checkout/single", {
+          method: "POST",
+          body: JSON.stringify(payload),
+          requireAuth: true,
+        });
+      } else {
+        // Use /api/checkout/cart for cart checkout
+        const payload = {
+          full_name: checkout.address?.name || "",
+          email: checkout.address?.email || "",
+          phone: checkout.address?.phone || "",
+          address: checkout.address?.address || "",
+          city: checkout.address?.city || "",
+          state: checkout.address?.state || "",
+          pincode: checkout.address?.pincode || "",
+          payment_method,
+        };
+
+        console.log(
+          "[Payment] Sending Cart checkout payload to /checkout/cart:",
+          JSON.stringify(payload),
+        );
+
+        resp = await apiCall("/checkout/cart", {
+          method: "POST",
+          body: JSON.stringify(payload),
+          requireAuth: true,
+        });
+      }
+
+      console.log("[Payment] Order API response:", resp);
 
       if (resp && (resp.order || resp.success)) {
         if (window.showToast) window.showToast("Order Successful!");
         const orderId = resp.order?.order_number || resp.order?.id || "SUCCESS";
+        console.log("[Payment] Order created successfully with ID:", orderId);
         // clear checkout_data and buy-now keys
         localStorage.removeItem(CHECKOUT_KEY);
         localStorage.removeItem("buy_now_item");
@@ -100,6 +144,7 @@ async function initPayment() {
           window.location.href = `/checkout-success.html?order_id=${orderId}`;
         }, 900);
       } else {
+        console.error("[Payment] Order creation failed", resp);
         if (window.showToast)
           window.showToast(resp?.message || "Order failed", "error");
         payBtn.disabled = false;

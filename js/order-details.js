@@ -17,12 +17,41 @@ async function initOrderDetails() {
 async function fetchOrderDetail(id) {
   try {
     const data = await apiCall(`/orders/${id}`);
-    if (data && data.order) {
-      renderDetails(data.order);
+    console.log("[Order Details] Raw API response:", data);
+
+    // Handle multiple response structures
+    let order = null;
+
+    if (!data) {
+      console.error("Order data not found - empty response");
+    } else if (data.order) {
+      // { order: {...} }
+      order = data.order;
+      console.log("[Order Details] Found in data.order");
+    } else if (
+      data.data &&
+      typeof data.data === "object" &&
+      !Array.isArray(data.data)
+    ) {
+      // { data: {...} }
+      order = data.data;
+      console.log("[Order Details] Found in data.data");
+    } else if (data.id || data.order_number) {
+      // Direct order object
+      order = data;
+      console.log("[Order Details] Direct order object");
+    }
+
+    if (order && order.id) {
+      console.log("[Order Details] Order found, rendering...", order);
+      renderDetails(order);
       // Start polling the single order for live updates
       startOrderPolling(id);
     } else {
-      console.error("Order data not found");
+      console.error("Order data not found - no valid structure", {
+        data,
+        order,
+      });
       if (window.showToast) window.showToast("Order not found", "error");
     }
   } catch (e) {
@@ -44,7 +73,7 @@ function renderDetails(order) {
     ).toLocaleString();
   if (document.getElementById("total-amount"))
     document.getElementById("total-amount").innerText =
-      `₹${Number(order.total_amount || 0).toLocaleString()}`;
+      `₹${Number(order.total || order.total_amount || 0).toLocaleString()}`;
   if (document.getElementById("payment-method"))
     document.getElementById("payment-method").innerText =
       order.payment_method || "N/A";

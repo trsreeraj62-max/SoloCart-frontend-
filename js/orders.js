@@ -16,10 +16,10 @@ async function fetchOrders() {
     console.log("[Orders] Auth token:", getAuthToken() ? "present" : "missing");
     const res = await apiCall("/orders", { requireAuth: true });
     console.log("[Orders] Raw API response:", res);
-    
+
     // Handle multiple possible response structures
     let orders = [];
-    
+
     if (!res) {
       console.error("[Orders] No response from API");
       orders = [];
@@ -43,10 +43,10 @@ async function fetchOrders() {
       console.warn("[Orders] Unknown response structure, trying to extract...");
       orders = [];
     }
-    
+
     console.log("[Orders] Extracted orders count:", orders.length);
     console.log("[Orders] Orders data:", orders);
-    
+
     const container = document.getElementById("orders-list");
     if (!container) {
       console.error("[Orders] Container #orders-list not found!");
@@ -61,7 +61,11 @@ async function fetchOrders() {
 
     // Clear container and render all orders
     container.innerHTML = "";
-    console.log("[Orders] Cleared container, rendering", orders.length, "orders");
+    console.log(
+      "[Orders] Cleared container, rendering",
+      orders.length,
+      "orders",
+    );
 
     // Hide empty message if present
     const emptyEl = document.querySelector(".empty-orders");
@@ -105,7 +109,7 @@ function renderOrders(orders) {
                     <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">Order ID: #${order.order_number || order.id}</p>
                 </div>
                 <div>
-                    <span class="text-sm font-bold text-slate-900">₹${Number(order.total_amount || 0).toLocaleString()}</span>
+                    <span class="text-sm font-bold text-slate-900">₹${Number(order.total || order.total_amount || 0).toLocaleString()}</span>
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
