@@ -281,13 +281,51 @@ async function removeItem(productId, itemId = null) {
   }
 }
 
-function initiateCheckoutSelection(type, productId) {
-  const sel = {
-    type: type === "single" ? "single" : "all",
-    product_id: productId || null,
-  };
-  sessionStorage.setItem("checkout_selection", JSON.stringify(sel));
-  window.location.href = "/checkout.html";
+async function initiateCheckoutSelection(type, productId) {
+  // Build a unified checkout_data object and persist to localStorage.
+  // For 'all' - fetch full cart items from API. For 'single' - fetch cart and filter.
+  try {
+    const payload = { type: type === "single" ? "single" : "all", items: [] };
+    const data = await apiCall("/cart", { requireAuth: true });
+    let items = [];
+    if (!data) items = [];
+    else if (Array.isArray(data)) items = data;
+    else if (Array.isArray(data.items)) items = data.items;
+    else if (data.data && Array.isArray(data.data.items))
+      items = data.data.items;
+    else if (data.cart && Array.isArray(data.cart.items))
+      items = data.cart.items;
+    else if (Array.isArray(data.data)) items = data.data;
+    else items = data.items || data.data || [];
+
+    if (payload.type === "single" && productId) {
+      items = items.filter((it) => {
+        const product = it.product || it.product_data || it;
+        return (
+          String(product.id) === String(productId) ||
+          String(it.product_id) === String(productId)
+        );
+      });
+    }
+
+    // Normalize stored items: minimal shape expected by checkout (/checkout/preview)
+    payload.items = (items || []).map((it) => {
+      const product = it.product || it.product_data || it;
+      return {
+        product_id: product.id || product.product_id || product._id,
+        name: product.name || product.title || "",
+        price: Number(product.price || product.unit_price || 0),
+        quantity: Number(it.quantity || it.qty || 1),
+      };
+    });
+
+    localStorage.setItem("checkout_data", JSON.stringify(payload));
+    window.location.href = "/checkout.html";
+  } catch (e) {
+    console.error("Failed to prepare checkout data", e);
+    if (window.showToast)
+      window.showToast("Failed to prepare checkout", "error");
+  }
 }
 
 function updatePriceDetails(data) {

@@ -19,6 +19,8 @@ async function fetchOrderDetail(id) {
     const data = await apiCall(`/orders/${id}`);
     if (data && data.order) {
       renderDetails(data.order);
+      // Start polling the single order for live updates
+      startOrderPolling(id);
     } else {
       console.error("Order data not found");
       if (window.showToast) window.showToast("Order not found", "error");
@@ -67,9 +69,53 @@ function renderDetails(order) {
   const stepShipped = document.getElementById("step-shipped");
   const stepDelivered = document.getElementById("step-delivered");
   const downloadBtn = document.getElementById("download-invoice-btn");
+  const cancelBtnId = "cancel-order-btn";
+  let cancelBtn = document.getElementById(cancelBtnId);
+  if (!cancelBtn) {
+    const btn = document.createElement("button");
+    btn.id = cancelBtnId;
+    btn.className =
+      "ml-2 bg-rose-500 text-white px-4 py-2 rounded-sm text-xs font-bold hover:opacity-90";
+    btn.innerHTML = '<i class="fas fa-times mr-2"></i> Cancel Order';
+    btn.addEventListener("click", async () => {
+      if (!confirm("Are you sure you want to cancel this order?")) return;
+      btn.disabled = true;
+      btn.innerText = "Cancelling...";
+      try {
+        const res = await apiCall(`/orders/${order.id}/cancel`, {
+          method: "POST",
+          requireAuth: true,
+        });
+        if (res && (res.success || res.status === "cancelled" || res.order)) {
+          if (window.showToast) window.showToast("Order cancelled");
+          // refresh details
+          await fetchOrderDetail(order.id);
+        } else {
+          if (window.showToast)
+            window.showToast(res?.message || "Failed to cancel", "error");
+          btn.disabled = false;
+          btn.innerText = "Cancel Order";
+        }
+      } catch (err) {
+        console.error("Cancel failed", err);
+        if (window.showToast)
+          window.showToast("Network error while cancelling", "error");
+        btn.disabled = false;
+        btn.innerText = "Cancel Order";
+      }
+    });
+    // insert next to invoice button
+    const headerActions = document.querySelector(".p-4.border-b.flex");
+    if (headerActions) headerActions.appendChild(btn);
+    cancelBtn = btn;
+  }
 
   const status = (order.status || "").toLowerCase();
   if (fill) {
+    // Reset visual states
+    if (stepShipped) stepShipped.classList.remove("bg-green-500");
+    if (stepDelivered) stepDelivered.classList.remove("bg-green-500");
+
     if (status === "shipped") {
       fill.style.width = "50%";
       if (stepShipped)
@@ -81,6 +127,20 @@ function renderDetails(order) {
       if (stepDelivered)
         stepDelivered.classList.replace("bg-slate-200", "bg-green-500");
       if (downloadBtn) downloadBtn.classList.remove("hidden");
+    }
+    if (status === "processing" || status === "approved") {
+      // show partial progress
+      fill.style.width = status === "approved" ? "25%" : "33%";
+    }
+    if (status === "pending") {
+      fill.style.width = "5%";
+    }
+    if (status === "cancelled") {
+      fill.style.width = "0%";
+      // visually mark steps as cancelled
+      if (stepShipped) stepShipped.classList.add("bg-rose-200");
+      if (stepDelivered) stepDelivered.classList.add("bg-rose-200");
+      if (downloadBtn) downloadBtn.classList.add("hidden");
     }
   }
 
@@ -121,15 +181,55 @@ function renderDetails(order) {
 
   // Invoice listener
   if (downloadBtn) {
-    downloadBtn.addEventListener("click", () => {
-      // Enforce HTTPS for invoice URL
-      const invoiceUrl =
-        `${CONFIG.API_BASE_URL}/orders/${order.id}/invoice?token=${getAuthToken()}`.replace(
-          /^http:/,
-          "https:",
-        );
-      window.open(invoiceUrl, "_blank");
+    downloadBtn.addEventListener("click", async () => {
+      downloadBtn.disabled = true;
+      downloadBtn.innerText = "Preparing...";
+      try {
+        const resp = await apiCall(`/orders/${order.id}/invoice`, {
+          method: "GET",
+          requireAuth: true,
+        });
+        // If apiCall returns a non-JSON (raw) response, main.apiCall returns object with raw text; use fetch directly for blob
+        const invoiceUrl = `${CONFIG.API_BASE_URL.replace(/\/$/, "")}/orders/${order.id}/invoice`;
+        const token = getAuthToken();
+        const fetchResp = await fetch(invoiceUrl, {
+          headers: { Authorization: token ? `Bearer ${token}` : undefined },
+        });
+        if (!fetchResp.ok) throw new Error("Failed to download");
+        const blob = await fetchResp.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `invoice-order-${order.order_number || order.id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error("Invoice download failed", err);
+        if (window.showToast)
+          window.showToast("Failed to download invoice", "error");
+      } finally {
+        downloadBtn.disabled = false;
+        downloadBtn.innerHTML =
+          '<i class="fas fa-file-pdf"></i> Download Invoice';
+      }
     });
+  }
+}
+
+let _orderPollTimer = null;
+function startOrderPolling(orderId) {
+  if (_orderPollTimer) return;
+  _orderPollTimer = setInterval(() => {
+    fetchOrderDetail(orderId).catch(() => {});
+  }, 20000);
+}
+
+function stopOrderPolling() {
+  if (_orderPollTimer) {
+    clearInterval(_orderPollTimer);
+    _orderPollTimer = null;
   }
 }
 

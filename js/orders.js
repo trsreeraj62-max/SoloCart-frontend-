@@ -30,6 +30,8 @@ async function fetchOrders() {
     }
 
     renderOrders(orders);
+    // Start polling for live updates (every 25 seconds)
+    startOrdersPolling();
   } catch (e) {
     console.error("Failed to load orders", e);
     if (window.showToast) window.showToast("Failed to load history", "error");
@@ -66,16 +68,53 @@ function renderOrders(orders) {
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full ${getStatusColor(order.status || "pending")}"></div>
-                        <span class="text-xs font-black uppercase tracking-widest text-slate-700">${order.status || "PENDING"}</span>
-                    </div>
-                    <p class="text-[10px] font-bold text-slate-400 mt-1">${order.status_date || "Status updated today"}</p>
+                            <div class="w-2 h-2 rounded-full ${getStatusColor(order.status || "pending")}"></div>
+                            <span class="text-xs font-black uppercase tracking-widest text-slate-700">${order.status || "PENDING"}</span>
+                        </div>
+                        <p class="text-[10px] font-bold text-slate-400 mt-1">${order.status_date || "Status updated today"}</p>
+                        <div class="mt-2">
+                          ${canCancel(order.status) ? `<button data-id="${order.id}" class="cancel-order-btn text-xs bg-rose-500 text-white px-3 py-1 rounded-sm">Cancel Order</button>` : ``}
+                        </div>
                 </div>
             </div>
         </a>
     `;
     })
     .join("");
+
+  // Attach cancel handlers
+  container.querySelectorAll(".cancel-order-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const id = btn.dataset.id;
+      if (!id) return;
+      if (!confirm("Are you sure you want to cancel this order?")) return;
+      btn.disabled = true;
+      btn.innerText = "Cancelling...";
+      try {
+        const res = await apiCall(`/orders/${id}/cancel`, {
+          method: "POST",
+          requireAuth: true,
+        });
+        if (res && (res.success || res.status === "cancelled" || res.order)) {
+          if (window.showToast) window.showToast("Order cancelled");
+          // Optimistically update UI by re-fetching orders
+          await fetchOrders();
+        } else {
+          if (window.showToast)
+            window.showToast(res?.message || "Failed to cancel", "error");
+          btn.disabled = false;
+          btn.innerText = "Cancel Order";
+        }
+      } catch (err) {
+        console.error("Cancel failed", err);
+        if (window.showToast)
+          window.showToast("Network error while cancelling", "error");
+        btn.disabled = false;
+        btn.innerText = "Cancel Order";
+      }
+    });
+  });
 }
 
 function getStatusColor(status) {
@@ -91,6 +130,27 @@ function getStatusColor(status) {
       return "bg-rose-500";
     default:
       return "bg-slate-400";
+  }
+}
+
+function canCancel(status) {
+  if (!status) return false;
+  const s = String(status).toLowerCase();
+  return s === "pending" || s === "approved";
+}
+
+let _ordersPollTimer = null;
+function startOrdersPolling() {
+  if (_ordersPollTimer) return; // already polling
+  _ordersPollTimer = setInterval(() => {
+    fetchOrders().catch(() => {});
+  }, 25000);
+}
+
+function stopOrdersPolling() {
+  if (_ordersPollTimer) {
+    clearInterval(_ordersPollTimer);
+    _ordersPollTimer = null;
   }
 }
 

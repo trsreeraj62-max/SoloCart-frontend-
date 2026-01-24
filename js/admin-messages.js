@@ -4,7 +4,6 @@ let messages = [];
 let currentMessageId = null;
 
 async function initAdminMessages() {
-  // Protect admin route: require token
   const token = getAuthToken();
   if (!token) {
     window.location.href = "/login.html";
@@ -27,19 +26,16 @@ async function initAdminMessages() {
 async function fetchMessages() {
   const tbody = document.getElementById("messages-table");
   if (!tbody) return;
-  tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">Loading...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">Loading...</td></tr>`;
 
   try {
-    const data = await apiCall("/admin/contact-messages", {
-      requireAuth: true,
-    });
-    // normalize
-    const list = data?.data || data?.messages || data?.items || data || [];
+    const data = await apiCall("/admin/contacts", { requireAuth: true });
+    const list = data?.data || data?.contacts || data?.items || data || [];
     messages = Array.isArray(list) ? list : [];
     renderMessages(messages);
   } catch (e) {
     console.error("Failed to load messages", e);
-    tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-rose-500">Failed to load messages</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-rose-500">Failed to load messages</td></tr>`;
   }
 }
 
@@ -47,27 +43,28 @@ function renderMessages(list) {
   const tbody = document.getElementById("messages-table");
   if (!tbody) return;
   if (!Array.isArray(list) || list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No messages</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No messages</td></tr>`;
     return;
   }
 
   tbody.innerHTML = list
     .map((m) => {
-      const status = m.status || m.is_replied || m.replied ? "Replied" : "New";
-      const isNew = status === "New";
-      const date = m.created_at || m.date || m.created || "";
       const name = m.name || m.full_name || m.from_name || "Unknown";
       const email = m.email || m.from_email || "";
-      const subject = m.subject || m.title || "(no subject)";
+      const rawMsg = m.message || m.body || m.content || "";
+      const preview =
+        rawMsg.length > 50
+          ? `${escapeHtml(rawMsg.slice(0, 50))}…`
+          : escapeHtml(rawMsg);
+      const date = m.created_at || m.date || m.created || "";
       return `
-        <tr class="${isNew ? "bg-yellow-50" : ""}">
+        <tr>
           <td class="px-4 py-3">${escapeHtml(name)}</td>
           <td class="px-4 py-3">${escapeHtml(email)}</td>
-          <td class="px-4 py-3">${escapeHtml(subject)}</td>
-          <td class="px-4 py-3 font-bold">${status}</td>
+          <td class="px-4 py-3 text-sm text-slate-700">${preview}</td>
           <td class="px-4 py-3 text-sm text-slate-500">${escapeHtml(date)}</td>
           <td class="px-4 py-3 text-right">
-            <button data-id="${m.id}" class="view-msg px-3 py-1 bg-[#2874f0] text-white rounded">View / Reply</button>
+            <button data-id="${m.id}" class="view-msg px-3 py-1 bg-[#2874f0] text-white rounded">View</button>
           </td>
         </tr>`;
     })
@@ -88,18 +85,32 @@ function toggleReplyModal(show = true) {
   else modal.classList.add("hidden");
 }
 
-function openMessage(id) {
-  const msg = messages.find((m) => String(m.id) === String(id));
-  if (!msg) return;
-  currentMessageId = msg.id;
-  const orig = document.getElementById("original-message");
-  if (orig) {
-    orig.innerHTML = `<div class="font-bold mb-2">From: ${escapeHtml(msg.name || msg.from_name || "")} &lt;${escapeHtml(msg.email || msg.from_email || "")}&gt;</div><div class="text-xs opacity-80 mb-2">Subject: ${escapeHtml(msg.subject || msg.title || "")}</div><div class="whitespace-pre-wrap">${escapeHtml(msg.message || msg.body || msg.content || "")}</div>`;
+async function openMessage(id) {
+  const tbody = document.getElementById("messages-table");
+  try {
+    const data = await apiCall(`/admin/contacts/${id}`, { requireAuth: true });
+    const msg = data?.data || data?.contact || data || null;
+    if (!msg) {
+      if (window.showToast) window.showToast("Failed to load message", "error");
+      return;
+    }
+
+    currentMessageId = msg.id || id;
+    const orig = document.getElementById("original-message");
+    if (orig) {
+      orig.innerHTML = `
+        <div class="font-bold mb-2">From: ${escapeHtml(msg.name || msg.from_name || "")} &lt;${escapeHtml(msg.email || msg.from_email || "")}&gt;</div>
+        <div class="text-xs opacity-80 mb-2">Date: ${escapeHtml(msg.created_at || msg.date || "")}</div>
+        <div class="whitespace-pre-wrap">${escapeHtml(msg.message || msg.body || msg.content || "")}</div>`;
+    }
+    const ta = document.getElementById("reply-text");
+    if (ta) ta.value = "";
+    toggleReplyModal(true);
+  } catch (err) {
+    console.error("Failed to fetch message", err);
+    if (window.showToast)
+      window.showToast("Failed to load message details", "error");
   }
-  // clear reply textarea
-  const ta = document.getElementById("reply-text");
-  if (ta) ta.value = "";
-  toggleReplyModal(true);
 }
 
 async function handleSendReply(e) {
@@ -121,7 +132,7 @@ async function handleSendReply(e) {
   }
 
   try {
-    const endpoint = `/admin/contact-messages/${currentMessageId}/reply`;
+    const endpoint = `/admin/contacts/${currentMessageId}/reply`;
     const data = await apiCall(endpoint, {
       method: "POST",
       body: JSON.stringify({ message: text }),
@@ -129,12 +140,11 @@ async function handleSendReply(e) {
     });
     if (data && data.success !== false) {
       if (window.showToast) window.showToast("Reply sent");
-      // update local state to mark replied
+      // update local state to mark replied if present
       const idx = messages.findIndex(
         (m) => String(m.id) === String(currentMessageId),
       );
       if (idx !== -1) {
-        messages[idx].status = "replied";
         messages[idx].replied = true;
       }
       renderMessages(messages);

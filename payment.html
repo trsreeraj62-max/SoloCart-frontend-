@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Payment — SoloCart</title>
     <link rel="stylesheet" href="/css/app.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <style>
       body {
         background: #f1f3f6;
@@ -39,9 +42,56 @@
               Cash on Delivery</label
             >
             <label class="block p-3 border rounded mb-2"
-              ><input type="radio" name="payment_method" value="online" />
-              Online Payment (UI only)</label
+              ><input type="radio" name="payment_method" value="upi" />
+              UPI</label
             >
+            <div id="upi-fields" class="ml-4 mt-2 hidden">
+              <input
+                id="upi-id"
+                type="text"
+                class="w-full border p-2 rounded"
+                placeholder="Enter UPI ID (eg. name@bank)"
+              />
+            </div>
+            <label class="block p-3 border rounded mb-2"
+              ><input type="radio" name="payment_method" value="card" /> Credit
+              / Debit Card</label
+            >
+            <div id="card-fields" class="ml-4 mt-2 hidden space-y-2">
+              <input
+                id="card-number"
+                type="text"
+                class="w-full border p-2 rounded"
+                placeholder="Card number (16 digits)"
+              />
+              <div class="grid grid-cols-2 gap-2">
+                <input
+                  id="card-expiry"
+                  type="text"
+                  class="border p-2 rounded"
+                  placeholder="MM/YY"
+                />
+                <input
+                  id="card-cvv"
+                  type="password"
+                  class="border p-2 rounded"
+                  placeholder="CVV"
+                />
+              </div>
+            </div>
+            <label class="block p-3 border rounded mb-2"
+              ><input type="radio" name="payment_method" value="netbanking" />
+              Net Banking</label
+            >
+            <div id="netbank-fields" class="ml-4 mt-2 hidden">
+              <select id="netbank-select" class="w-full border p-2 rounded">
+                <option value="">Select Bank</option>
+                <option value="sbi">State Bank of India</option>
+                <option value="hdfc">HDFC Bank</option>
+                <option value="icici">ICICI Bank</option>
+                <option value="axis">Axis Bank</option>
+              </select>
+            </div>
           </div>
           <div class="mt-6 flex justify-end">
             <button

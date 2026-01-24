@@ -212,6 +212,21 @@ async function handleAddToCart(isBuyNow = false) {
       );
     await updateCartBadge();
     if (isBuyNow) {
+      // Prepare unified checkout_data to show only this product on checkout
+      try {
+        const checkoutData = {
+          type: "single",
+          items: [
+            {
+              product_id: currentProduct.id,
+              name: currentProduct.name || "",
+              price: Number(currentProduct.price || 0),
+              quantity: 1,
+            },
+          ],
+        };
+        localStorage.setItem("checkout_data", JSON.stringify(checkoutData));
+      } catch (e) {}
       window.location.href = "/checkout.html";
     }
   } else {

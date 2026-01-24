@@ -3,6 +3,7 @@ import { getAuthToken, apiCall, safeJSONParse } from "./main.js";
 
 let cartData = null;
 let savedAddress = null;
+const CHECKOUT_KEY = "checkout_data";
 
 async function initCheckout() {
   const token = getAuthToken();
@@ -17,8 +18,103 @@ async function initCheckout() {
     authStatusInfo.innerText = userData.name || userData.email || "Logged In";
   }
 
-  await fetchCartData();
+  // Load unified checkout_data from localStorage
+  const raw = localStorage.getItem(CHECKOUT_KEY);
+  if (!raw) {
+    // No checkout_data present — redirect to cart
+    window.location.href = "/cart.html";
+    return;
+  }
+
+  let checkout = null;
+  try {
+    checkout = JSON.parse(raw);
+  } catch (e) {
+    checkout = null;
+  }
+
+  if (
+    !checkout ||
+    !Array.isArray(checkout.items) ||
+    checkout.items.length === 0
+  ) {
+    window.location.href = "/cart.html";
+    return;
+  }
+
+  // Use checkout.items as source of truth for rendering; call backend preview to verify prices
+  await fetchPreviewAndRender(checkout.items);
   setupEventListeners();
+}
+
+async function fetchPreviewAndRender(items) {
+  // Call backend preview to validate pricing and get canonical totals
+  try {
+    const body = {
+      items: items.map((it) => ({
+        product_id: it.product_id,
+        quantity: it.quantity,
+      })),
+    };
+    const preview = await apiCall("/checkout/preview", {
+      method: "POST",
+      body: JSON.stringify(body),
+      requireAuth: true,
+    });
+
+    // Prefer preview items/totals if available
+    let previewItems = null;
+    if (preview && Array.isArray(preview.items)) previewItems = preview.items;
+
+    const renderItems = previewItems || items;
+
+    renderOrderSummary(
+      renderItems.map((it) => {
+        // normalize shape: ensure product, quantity
+        return {
+          product: it.product ||
+            it.product_data || {
+              id: it.product_id,
+              name: it.name,
+              price: it.price,
+            },
+          quantity: Number(it.quantity || it.qty || 1),
+          subtotal:
+            Number(it.price || (it.product && it.product.price) || 0) *
+            Number(it.quantity || 1),
+        };
+      }),
+    );
+
+    // Render price details using preview totals when available
+    renderPriceDetails({
+      total_price: preview?.total_price || preview?.grand_total || null,
+      total_mrp: preview?.total_mrp || preview?.mrp_total || null,
+      items: renderItems,
+    });
+  } catch (err) {
+    console.error("Preview failed", err);
+    // Fallback: render based on provided items
+    renderOrderSummary(
+      items.map((it) => ({
+        product: it.product || {
+          id: it.product_id,
+          name: it.name,
+          price: it.price,
+        },
+        quantity: it.quantity || 1,
+        subtotal: (it.price || 0) * (it.quantity || 1),
+      })),
+    );
+    renderPriceDetails({
+      total_price: items.reduce(
+        (s, x) => s + Number(x.price || 0) * Number(x.quantity || 1),
+        0,
+      ),
+      total_mrp: 0,
+      items,
+    });
+  }
 }
 
 async function fetchCartData() {
@@ -41,35 +137,7 @@ async function fetchCartData() {
     cartData = data;
 
     // Apply checkout selection (single item) if present
-    const rawSel = sessionStorage.getItem("checkout_selection");
-    let selection = null;
-    try {
-      selection = rawSel ? JSON.parse(rawSel) : null;
-    } catch (e) {
-      selection = null;
-    }
-
-    if (selection && selection.type === "single" && selection.product_id) {
-      items = items.filter((it) => {
-        const product = it.product || it.product_data || it;
-        return (
-          String(product.id) === String(selection.product_id) ||
-          String(it.product_id) === String(selection.product_id)
-        );
-      });
-    }
-
-    if (!items || items.length === 0) {
-      window.location.href = "/cart.html";
-      return;
-    }
-
-    renderPriceDetails({
-      total_price: data.total_price || data.cart?.total_price || null,
-      total_mrp: data.total_mrp || data.cart?.total_mrp || null,
-      items,
-    });
-    renderOrderSummary(items);
+    // old flow removed in favor of unified checkout_data
   } catch (e) {
     console.error("Failed to fetch cart data", e);
   }
@@ -160,15 +228,7 @@ function renderOrderSummary(items) {
   });
 
   // Attach buy-this handlers
-  container.querySelectorAll(".buy-this-btn").forEach((b) => {
-    b.addEventListener("click", (e) => {
-      const pid = b.dataset.productId || b.dataset.productid || b.dataset.id;
-      sessionStorage.setItem(
-        "checkout_selection",
-        JSON.stringify({ type: "single", product_id: pid }),
-      );
-    });
-  });
+  // (no buy-this handlers here — checkout selection should be prepared before reaching this page)
 }
 
 function setupEventListeners() {
@@ -185,9 +245,12 @@ function setupEventListeners() {
       state: document.getElementById("state").value,
     };
 
-    // Persist address for payment page
+    // Persist address inside checkout_data for payment page
     try {
-      sessionStorage.setItem("checkout_address", JSON.stringify(savedAddress));
+      const raw = localStorage.getItem(CHECKOUT_KEY);
+      const checkout = raw ? JSON.parse(raw) : {};
+      checkout.address = savedAddress;
+      localStorage.setItem(CHECKOUT_KEY, JSON.stringify(checkout));
     } catch (e) {}
 
     // Move to next step
@@ -200,16 +263,30 @@ function setupEventListeners() {
   document
     .getElementById("confirm-summary-btn")
     ?.addEventListener("click", () => {
-      // Move to payment page; payment selection happens there.
-      const selRaw = sessionStorage.getItem("checkout_selection");
-      if (!selRaw) {
-        // default to all
-        sessionStorage.setItem(
-          "checkout_selection",
-          JSON.stringify({ type: "all", product_id: null }),
-        );
+      // Ensure checkout_data contains address and items
+      const raw = localStorage.getItem(CHECKOUT_KEY);
+      if (!raw) {
+        if (window.showToast)
+          window.showToast("Checkout data missing", "error");
+        return;
       }
-      window.location.href = "/payment.html";
+      try {
+        const checkout = JSON.parse(raw);
+        if (!checkout.items || checkout.items.length === 0) {
+          if (window.showToast) window.showToast("No items selected", "error");
+          return;
+        }
+        if (!checkout.address) {
+          if (window.showToast)
+            window.showToast("Please provide delivery address", "error");
+          return;
+        }
+        // proceed to payment
+        window.location.href = "/payment.html";
+      } catch (e) {
+        if (window.showToast)
+          window.showToast("Invalid checkout data", "error");
+      }
     });
 
   // Complete Order

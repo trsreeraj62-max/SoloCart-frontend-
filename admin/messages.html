@@ -43,21 +43,22 @@
       </div>
 
       <div class="bg-white rounded shadow overflow-hidden">
-        <table class="w-full text-left">
-          <thead
-            class="bg-slate-50 text-xs font-black uppercase text-slate-500"
-          >
-            <tr>
-              <th class="px-4 py-3">Name</th>
-              <th class="px-4 py-3">Email</th>
-              <th class="px-4 py-3">Subject</th>
-              <th class="px-4 py-3">Status</th>
-              <th class="px-4 py-3">Date</th>
-              <th class="px-4 py-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="messages-table" class="divide-y"></tbody>
-        </table>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead
+              class="bg-slate-50 text-xs font-black uppercase text-slate-500"
+            >
+              <tr>
+                <th class="px-4 py-3">Name</th>
+                <th class="px-4 py-3">Email</th>
+                <th class="px-4 py-3">Message</th>
+                <th class="px-4 py-3">Date</th>
+                <th class="px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="messages-table" class="divide-y"></tbody>
+          </table>
+        </div>
       </div>
     </main>
 
