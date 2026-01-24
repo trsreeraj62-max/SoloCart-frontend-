@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <title>Checkout</title>
 
-    <!-- Tailwind CDN -->
+    <!-- Tailwind CSS (OK for static demo / Netlify) -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- FontAwesome -->
@@ -50,7 +50,7 @@
 
       <!-- MAIN GRID -->
       <div class="grid md:grid-cols-3 gap-6">
-        <!-- LEFT : TOTAL ONLY -->
+        <!-- LEFT -->
         <div class="md:col-span-2">
           <div class="bg-white border shadow-sm p-6 text-center">
             <h2
@@ -59,10 +59,7 @@
               Total Payable Amount
             </h2>
 
-            <div
-              id="payment-total-amount"
-              class="text-4xl font-black text-[#2874f0]"
-            >
+            <div id="payment-total" class="text-4xl font-black text-[#2874f0]">
               ₹0
             </div>
 
@@ -72,29 +69,27 @@
           </div>
         </div>
 
-        <!-- RIGHT : PAYMENT OPTIONS -->
+        <!-- RIGHT -->
         <div class="bg-white border shadow-sm p-6 h-fit">
-          <h3 class="text-lg font-black mb-4">PAYMENT OPTIONS</h3>
+          <h3 class="text-lg font-black mb-4">Payment Options</h3>
 
-          <!-- UPI -->
           <label
             class="flex items-center gap-3 p-3 border rounded mb-3 cursor-pointer hover:bg-gray-50"
           >
-            <input type="radio" name="method" value="upi" checked />
+            <input type="radio" name="payment_method" value="upi" checked />
             <span class="font-bold">UPI (PhonePe / GPay)</span>
           </label>
 
-          <!-- COD -->
           <label
             class="flex items-center gap-3 p-3 border rounded mb-6 cursor-pointer hover:bg-gray-50"
           >
-            <input type="radio" name="method" value="cod" />
+            <input type="radio" name="payment_method" value="cod" />
             <span class="font-bold">Cash on Delivery</span>
           </label>
 
           <button
-            id="pay-now-btn"
-            class="w-full bg-[#fb641b] text-white py-4 font-black tracking-wider hover:bg-[#ff4500] transition"
+            id="pay-btn"
+            class="w-full bg-[#fb641b] text-white py-4 font-black tracking-wider hover:bg-[#ff4500] transition disabled:opacity-50"
           >
             CONFIRM & PAY
           </button>
@@ -106,28 +101,50 @@
       </div>
     </div>
 
-    <!-- PAYMENT LOGIC -->
+    <!-- JS LOGIC -->
     <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const buyNowItem = JSON.parse(localStorage.getItem("buyNowItem"));
-        const checkoutCart = JSON.parse(localStorage.getItem("checkoutCart"));
-
+      document.addEventListener("DOMContentLoaded", function () {
         let total = 0;
 
-        if (buyNowItem) {
-          total = buyNowItem.price * (buyNowItem.quantity || 1);
-        } else if (Array.isArray(checkoutCart)) {
-          total = checkoutCart.reduce(
-            (sum, item) => sum + item.price * item.quantity,
-            0,
-          );
+        try {
+          const buyNow = JSON.parse(localStorage.getItem("buyNowItem"));
+          const cart = JSON.parse(localStorage.getItem("checkoutCart"));
+
+          if (buyNow && typeof buyNow === "object") {
+            const price = Number(buyNow.price) || 0;
+            const qty = Number(buyNow.quantity) || 1;
+            total = price * qty;
+          } else if (Array.isArray(cart) && cart.length > 0) {
+            total = cart.reduce((sum, item) => {
+              const price = Number(item.price) || 0;
+              const qty = Number(item.quantity) || 1;
+              return sum + price * qty;
+            }, 0);
+          }
+        } catch (e) {
+          total = 0;
         }
 
-        document.getElementById("payment-total-amount").innerText =
-          "₹" + total.toLocaleString("en-IN");
+        const totalEl = document.getElementById("payment-total");
+        const payBtn = document.getElementById("pay-btn");
 
-        document.getElementById("pay-now-btn").innerText =
-          "CONFIRM & PAY ₹" + total.toLocaleString("en-IN");
+        if (total <= 0) {
+          totalEl.textContent = "₹0";
+          payBtn.textContent = "NO ITEMS TO PAY";
+          payBtn.disabled = true;
+          return;
+        }
+
+        const formatted = total.toLocaleString("en-IN");
+
+        totalEl.textContent = "₹" + formatted;
+        payBtn.textContent = "CONFIRM & PAY ₹" + formatted;
+
+        payBtn.addEventListener("click", function () {
+          alert("Order confirmed. Call backend API here.");
+          // later:
+          // window.location.href = "success.html";
+        });
       });
     </script>
   </body>
