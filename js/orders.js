@@ -12,19 +12,56 @@ async function initOrders() {
 
 async function fetchOrders() {
   try {
-    const res = await apiCall("/orders");
-    const orders =
-      res.data && Array.isArray(res.data.data) ? res.data.data : [];
+    console.log("[Orders] Fetching orders from /orders...");
+    console.log("[Orders] Auth token:", getAuthToken() ? "present" : "missing");
+    const res = await apiCall("/orders", { requireAuth: true });
+    console.log("[Orders] Raw API response:", res);
+    
+    // Handle multiple possible response structures
+    let orders = [];
+    
+    if (!res) {
+      console.error("[Orders] No response from API");
+      orders = [];
+    } else if (Array.isArray(res)) {
+      // Direct array: [order1, order2, ...]
+      console.log("[Orders] Response is direct array");
+      orders = res;
+    } else if (res.data && Array.isArray(res.data)) {
+      // { data: [order1, order2, ...] }
+      console.log("[Orders] Response has data array");
+      orders = res.data;
+    } else if (res.data && res.data.data && Array.isArray(res.data.data)) {
+      // { data: { data: [order1, order2, ...] } }
+      console.log("[Orders] Response has nested data.data");
+      orders = res.data.data;
+    } else if (res.orders && Array.isArray(res.orders)) {
+      // { orders: [order1, order2, ...] }
+      console.log("[Orders] Response has orders array");
+      orders = res.orders;
+    } else {
+      console.warn("[Orders] Unknown response structure, trying to extract...");
+      orders = [];
+    }
+    
+    console.log("[Orders] Extracted orders count:", orders.length);
+    console.log("[Orders] Orders data:", orders);
+    
     const container = document.getElementById("orders-list");
-    if (!container) return;
+    if (!container) {
+      console.error("[Orders] Container #orders-list not found!");
+      return;
+    }
 
-    if (orders.length === 0) {
+    if (!orders || orders.length === 0) {
+      console.warn("[Orders] No orders found, showing empty message");
       showEmptyMessage();
       return;
     }
 
     // Clear container and render all orders
     container.innerHTML = "";
+    console.log("[Orders] Cleared container, rendering", orders.length, "orders");
 
     // Hide empty message if present
     const emptyEl = document.querySelector(".empty-orders");
@@ -32,11 +69,12 @@ async function fetchOrders() {
 
     // Render all orders using the renderOrders function
     renderOrders(orders);
+    console.log("[Orders] Rendering complete!");
 
     // Start polling for live updates (every 25 seconds)
     startOrdersPolling();
   } catch (e) {
-    console.error("Failed to load orders", e);
+    console.error("[Orders] Fatal error fetching orders:", e);
     if (window.showToast) window.showToast("Failed to load history", "error");
   }
 }
