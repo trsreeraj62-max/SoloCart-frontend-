@@ -177,10 +177,10 @@ function setupEventListeners() {
     ?.addEventListener("click", () => handleAddToCart(false));
   document
     .getElementById("buy-now-btn")
-    ?.addEventListener("click", () => handleAddToCart(true));
+    ?.addEventListener("click", handleBuyNow);
 }
 
-async function handleAddToCart(isBuyNow = false) {
+async function handleAddToCart() {
   if (!currentProduct) {
     if (window.showToast)
       window.showToast("Product data not loaded. Please refresh.", "error");
@@ -206,33 +206,31 @@ async function handleAddToCart(isBuyNow = false) {
   });
 
   if (data && (data.success || data.id)) {
-    if (window.showToast)
-      window.showToast(
-        isBuyNow ? "Moving to checkout..." : "Added to cart successfully",
-      );
+    if (window.showToast) window.showToast("Added to cart successfully");
     await updateCartBadge();
-    if (isBuyNow) {
-      // Prepare unified checkout_data to show only this product on checkout
-      try {
-        const checkoutData = {
-          type: "single",
-          items: [
-            {
-              product_id: currentProduct.id,
-              name: currentProduct.name || "",
-              price: Number(currentProduct.price || 0),
-              quantity: 1,
-            },
-          ],
-        };
-        localStorage.setItem("checkout_data", JSON.stringify(checkoutData));
-      } catch (e) {}
-      window.location.href = "/checkout.html";
-    }
   } else {
     if (window.showToast)
       window.showToast(data?.message || "Failed to update cart", "error");
   }
+}
+
+function handleBuyNow() {
+  if (!currentProduct) {
+    if (window.showToast)
+      window.showToast("Product data not loaded. Please refresh.", "error");
+    return;
+  }
+  // Store buy-now item and type in localStorage
+  const buyNowItem = {
+    id: currentProduct.id,
+    name: currentProduct.name,
+    price: Number(currentProduct.price || 0),
+    image: currentProduct.image_url || currentProduct.image || "",
+    quantity: 1,
+  };
+  localStorage.setItem("buy_now_item", JSON.stringify(buyNowItem));
+  localStorage.setItem("checkout_type", "buy_now");
+  window.location.href = "/checkout.html";
 }
 
 document.addEventListener("DOMContentLoaded", initProductDetails);

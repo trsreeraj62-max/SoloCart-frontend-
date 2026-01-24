@@ -19,9 +19,56 @@ async function initCheckout() {
     authStatusInfo.innerText = userData.name || userData.email || "Logged In";
   }
 
-  // Fetch cart once and render using backend-provided totals only
-  await fetchCartOnce();
+  // Detect buy now vs cart checkout
+  const checkoutType = localStorage.getItem("checkout_type");
+  if (checkoutType === "buy_now") {
+    renderBuyNow();
+  } else {
+    await fetchCartOnce();
+  }
   setupEventListeners();
+}
+
+function renderBuyNow() {
+  const item = JSON.parse(localStorage.getItem("buy_now_item") || "null");
+  if (!item) {
+    window.location.href = "/cart.html";
+    return;
+  }
+  const container = document.getElementById("checkout-items-list");
+  if (!container) return;
+  container.innerHTML = `
+    <div class="py-4 flex gap-4 border-b last:border-0 checkout-item">
+      <div class="w-16 h-16 border rounded-sm p-1">
+        <img src="${item.image || "https://placehold.co/400x400?text=No+Image"}" class="h-full w-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
+      </div>
+      <div class="flex-grow">
+        <div class="flex justify-between items-start">
+          <div>
+            <h4 class="text-xs font-bold text-slate-800 line-clamp-1">${item.name || "Unavailable"}</h4>
+            <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">₹${Number(item.price).toLocaleString()}</div>
+          </div>
+          <div class="text-right">
+            <div class="text-sm font-black mt-2">Subtotal: <span class="item-subtotal">₹${Number(item.price * item.quantity).toLocaleString()}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  // Render price details
+  renderBuyNowPrice(item);
+}
+
+function renderBuyNowPrice(item) {
+  const countEl = document.getElementById("price-details-count");
+  const mrpEl = document.getElementById("total-mrp");
+  const discEl = document.getElementById("total-discount");
+  const grandEl = document.getElementById("grand-total");
+  if (countEl) countEl.innerText = 1;
+  if (mrpEl) mrpEl.innerText = `₹${Number(item.price).toLocaleString()}`;
+  if (discEl) discEl.innerText = `- ₹0`;
+  if (grandEl)
+    grandEl.innerText = `₹${Number(item.price * item.quantity).toLocaleString()}`;
 }
 
 // Strict single cart fetch and render using backend-provided totals only
