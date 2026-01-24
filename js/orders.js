@@ -155,4 +155,17 @@ function stopOrdersPolling() {
   }
 }
 
+// Safe empty-state renderer used when user has no orders
+function showEmptyMessage() {
+  const container = document.getElementById("orders-list");
+  if (!container) return;
+  container.innerHTML = `
+    <div class="empty-orders bg-white p-20 text-center rounded-sm border border-slate-100">
+      <img src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/myorders-empty_8244e8.png" class="w-64 mx-auto mb-6 opacity-60" alt="No orders">
+      <h3 class="text-xl font-bold text-slate-700">You haven't ordered anything yet!</h3>
+      <a href="/shop.html" class="mt-6 inline-block bg-[#2874f0] text-white px-8 py-2 rounded-sm font-bold no-underline uppercase text-xs">Shop Now</a>
+    </div>
+  `;
+}
+
 document.addEventListener("DOMContentLoaded", initOrders);
