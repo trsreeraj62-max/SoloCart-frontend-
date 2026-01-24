@@ -224,11 +224,10 @@ async function handleRegister(e) {
 
 /**
  * Verify OTP submitted by user
- * Production-ready implementation:
- * - Only sends email + otp (or email + otp + user_id if available)
- * - Expects HTTP 200 with token for success
- * - Properly handles error responses
- * - No debug logic or OTP parsing
+ * - Email + OTP sent to backend
+ * - No OTP parsing from response
+ * - Success = HTTP 200 + token
+ * - Clear error handling
  */
 async function handleVerifyOtp(e) {
   e.preventDefault();
@@ -256,17 +255,17 @@ async function handleVerifyOtp(e) {
   }
 
   try {
-    // Build payload with email + otp
-    // Include user_id only if available from registration
+    // Send only email + otp to backend
     const payload = { email, otp };
 
+    // Include user_id if available from registration/login flow
     try {
       const userId = localStorage.getItem("solocart_pending_user_id");
       if (userId) {
         payload.user_id = parseInt(userId);
       }
     } catch (e) {
-      // localStorage not available, proceed with email + otp
+      /* ignore */
     }
 
     const data = await apiCall("/otp/verify", {
@@ -274,18 +273,15 @@ async function handleVerifyOtp(e) {
       body: JSON.stringify(payload),
     });
 
-    // Check for successful response (HTTP 200)
-    // Success indicated by presence of token
+    // Success = token present in response
     const token =
-      data?.data?.token ||
-      data?.data?.access_token ||
       data?.token ||
-      data?.access_token;
-
-    const user = data?.data?.user || data?.user;
+      data?.data?.token ||
+      data?.access_token ||
+      data?.data?.access_token;
 
     if (token) {
-      // OTP verified successfully
+      // Verification successful
       if (window.showToast) window.showToast("Verification successful!");
 
       // Clean up session data
@@ -296,10 +292,11 @@ async function handleVerifyOtp(e) {
         /* ignore */
       }
 
-      // Finalize login
-      finalizeLogin({ token, access_token: token, user: user || {} });
+      // Log in user
+      const user = data?.user || data?.data?.user || {};
+      finalizeLogin({ token, access_token: token, user });
     } else {
-      // No token in response = verification failed
+      // No token = verification failed
       const errorMsg =
         data?.message || "Invalid or expired OTP. Please try again.";
       if (window.showToast) window.showToast(errorMsg, "error");
@@ -326,11 +323,10 @@ async function handleVerifyOtp(e) {
 
 /**
  * Resend OTP to user's email
- * Production-ready implementation:
- * - Treats HTTP 200 as success only
- * - Implements cooldown timer (60 seconds)
- * - Prevents abuse through disabled state
- * - No debug logic
+ * - Simple email validation
+ * - HTTP 200 = success
+ * - 60-second cooldown to prevent abuse
+ * - Clear error messages
  */
 async function handleResendOtp() {
   const email = document.getElementById("email").value.trim().toLowerCase();
@@ -345,68 +341,58 @@ async function handleResendOtp() {
 
   // Check if button is in cooldown
   if (resendBtn?.disabled) {
-    if (window.showToast)
-      window.showToast("Please wait before requesting another OTP", "error");
-    return;
+    return; // Silently ignore while on cooldown
   }
 
-  // Disable button and show cooldown
+  // Disable button and start cooldown
   if (resendBtn) {
     resendBtn.disabled = true;
     resendBtn.style.opacity = "0.5";
     resendBtn.style.cursor = "not-allowed";
   }
 
-  const COOLDOWN_SECONDS = 60;
-  let cooldownCount = COOLDOWN_SECONDS;
-
-  const updateButtonText = () => {
-    if (resendBtn) {
-      if (cooldownCount > 0) {
-        resendBtn.innerText = `Resend OTP in ${cooldownCount}s`;
-      } else {
-        resendBtn.innerText = "Resend OTP";
-        resendBtn.disabled = false;
-        resendBtn.style.opacity = "1";
-        resendBtn.style.cursor = "pointer";
-      }
-    }
-  };
-
   try {
-    const data = await apiCall("/otp/resend", {
+    const res = await fetch(`${CONFIG.API_BASE_URL}/otp/resend`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
 
-    // Treat only success (HTTP 200, data.success === true or data has expected structure)
-    // as actual success. Don't treat 422 or errors as success.
-    const isSuccess =
-      data?.success === true ||
-      (data && !data.errors && !data.message?.includes("failed"));
+    const data = await res.json();
 
-    if (isSuccess) {
+    // HTTP 200-299 range = success
+    if (res.ok) {
       if (window.showToast)
-        window.showToast("OTP has been sent to your email", "success");
+        window.showToast("OTP sent. Check your email.", "success");
 
-      // Start cooldown timer
+      // Start 60-second cooldown
+      let cooldownSeconds = 60;
+
       const cooldownInterval = setInterval(() => {
-        cooldownCount--;
-        updateButtonText();
+        cooldownSeconds--;
 
-        if (cooldownCount < 0) {
-          clearInterval(cooldownInterval);
+        if (resendBtn) {
+          if (cooldownSeconds > 0) {
+            resendBtn.innerText = `Resend OTP in ${cooldownSeconds}s`;
+          } else {
+            resendBtn.innerText = "Resend OTP";
+            resendBtn.disabled = false;
+            resendBtn.style.opacity = "1";
+            resendBtn.style.cursor = "pointer";
+            clearInterval(cooldownInterval);
+          }
         }
       }, 1000);
 
-      updateButtonText();
+      if (resendBtn) {
+        resendBtn.innerText = `Resend OTP in ${cooldownSeconds}s`;
+      }
     } else {
-      // Request failed - show error and re-enable button
-      const errorMsg =
-        data?.message || "Failed to resend OTP. Please try again.";
+      // Request failed (4xx / 5xx)
+      const errorMsg = data?.message || "Failed to resend OTP";
       if (window.showToast) window.showToast(errorMsg, "error");
 
-      // Re-enable button immediately on error
+      // Re-enable button immediately
       if (resendBtn) {
         resendBtn.disabled = false;
         resendBtn.innerText = "Resend OTP";
@@ -417,12 +403,9 @@ async function handleResendOtp() {
   } catch (error) {
     console.error("Resend OTP error:", error);
     if (window.showToast)
-      window.showToast(
-        "Failed to resend OTP. Please check your connection.",
-        "error",
-      );
+      window.showToast("Failed to resend OTP. Check your connection.", "error");
 
-    // Re-enable button on error
+    // Re-enable button on network error
     if (resendBtn) {
       resendBtn.disabled = false;
       resendBtn.innerText = "Resend OTP";
