@@ -12,24 +12,25 @@ async function initOrders() {
 
 async function fetchOrders() {
   try {
-    const data = await apiCall("/orders");
-
-    const orders = data?.orders || (Array.isArray(data) ? data : []);
+    const res = await apiCall("/orders");
+    const orders =
+      res.data && Array.isArray(res.data.data) ? res.data.data : [];
     const container = document.getElementById("orders-list");
     if (!container) return;
 
     if (orders.length === 0) {
-      container.innerHTML = `
-                <div class="bg-white p-20 text-center rounded-sm border border-slate-100">
-                    <img src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/myorders-empty_8244e8.png" class="w-64 mx-auto mb-6 opacity-60">
-                    <h3 class="text-xl font-bold text-slate-700">You haven't ordered anything yet!</h3>
-                    <a href="/shop.html" class="mt-6 inline-block bg-[#2874f0] text-white px-8 py-2 rounded-sm font-bold no-underline uppercase text-xs">Shop Now</a>
-                </div>
-            `;
+      showEmptyMessage();
       return;
     }
 
-    renderOrders(orders);
+    // Hide empty message if present
+    const emptyEl = document.querySelector(".empty-orders");
+    if (emptyEl) emptyEl.style.display = "none";
+
+    orders.forEach((order) => {
+      renderOrder(order);
+    });
+
     // Start polling for live updates (every 25 seconds)
     startOrdersPolling();
   } catch (e) {

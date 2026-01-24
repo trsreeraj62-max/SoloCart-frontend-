@@ -45,6 +45,10 @@ async function initProfile() {
   setupEventListeners();
 }
 
+// Ensure profile is re-fetched on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', loadProfile);
+}
+
 // Fetch fresh profile from backend and populate DOM
 export async function loadProfile() {
   try {
@@ -94,8 +98,7 @@ export async function loadProfile() {
       document.getElementById("p-name").value = user.name || "";
     if (document.getElementById("p-email"))
       document.getElementById("p-email").value = user.email || "";
-    if (document.getElementById("p-bio"))
-      document.getElementById("p-bio").value = user.bio || "";
+    // Bio field removed
     if (document.getElementById("p-phone"))
       document.getElementById("p-phone").value = user.phone || "";
 
@@ -139,7 +142,6 @@ function setupEventListeners() {
       document.querySelectorAll(".field-error")?.forEach((el) => el.remove());
 
       const name = document.getElementById("p-name")?.value?.trim();
-      const bio = document.getElementById("p-bio")?.value?.trim();
       const phone = document.getElementById("p-phone")?.value?.trim();
       const fileInput = document.getElementById("p-image-file");
 
@@ -152,7 +154,6 @@ function setupEventListeners() {
       // Build FormData
       const fd = new FormData();
       fd.append("name", name);
-      fd.append("bio", bio || "");
       fd.append("phone", phone || "");
 
       if (fileInput && fileInput.files && fileInput.files[0]) {

@@ -31,15 +31,11 @@ async function fetchOrders() {
     : "/admin/orders";
 
   try {
-    const data = await apiCall(endpoint);
-    if (data && (data.orders || Array.isArray(data))) {
-      currentOrders = data.orders || data;
-      renderOrders(currentOrders);
-    } else {
-      // If we get "success: false" or valid JSON but no orders, check if we should throw or just show empty
-      if (data && data.success === false)
-        throw new Error(data.message || "API Error");
-    }
+    const res = await apiCall(endpoint);
+    const orders =
+      res.data && Array.isArray(res.data.data) ? res.data.data : [];
+    currentOrders = orders;
+    renderOrders(currentOrders);
   } catch (e) {
     console.error("Failed to load admin orders", e);
     if (window.showToast)

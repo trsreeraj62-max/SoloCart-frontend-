@@ -411,4 +411,22 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!pid) return console.warn("add-to-cart element missing product id");
     await window.addToCart(pid, qty);
   });
+
+/**
+ * Updates all profile avatar images on the page using .profile-avatar class.
+ * Reads from localStorage 'user_profile' or 'user_data'.
+ */
+export function updateProfileAvatar() {
+  let profile = safeJSONParse(localStorage.getItem("user_profile"), null);
+  if (!profile || !profile.avatar) {
+    // Fallback to user_data
+    profile = safeJSONParse(localStorage.getItem("user_data"), null);
+  }
+  const avatarUrl = profile && profile.avatar
+    ? (profile.avatar.startsWith("http") ? profile.avatar : `${CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "")}/storage/${profile.avatar}`)
+    : "https://ui-avatars.com/api/?name=User&background=2874f0&color=fff&size=128";
+  document.querySelectorAll('.profile-avatar').forEach(img => {
+    img.src = avatarUrl;
+  });
+}
 });
