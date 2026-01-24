@@ -4,32 +4,110 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Payment — SoloCart</title>
+
     <link rel="stylesheet" href="/css/app.css" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+
     <style>
       body {
         background: #f1f3f6;
-        font-family: Inter, sans-serif;
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
       }
+
       .container-max {
         max-width: 1100px;
         margin: 0 auto;
       }
+
+      /* Card polish */
+      .card {
+        background: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+      }
+
+      /* Stepper */
+      .step-active {
+        background: #fb641b;
+        color: white;
+        border: 2px solid #2874f0;
+      }
+
+      /* Payment options */
+      .payment-method-option {
+        border: 2px solid #e5e7eb;
+        background: #fafafa;
+        transition: all 0.25s ease;
+      }
+
+      .payment-method-option:hover {
+        border-color: #fb641b;
+        background: #fff7f2;
+      }
+
+      .payment-method-option:has(input:checked) {
+        border-color: #fb641b;
+        background: #fff4ec;
+        box-shadow: 0 4px 14px rgba(251, 100, 27, 0.18);
+      }
+
+      .payment-method-option input:checked + span {
+        font-weight: 800;
+        color: #fb641b;
+      }
+
+      /* Inputs */
+      input,
+      select {
+        outline: none;
+        transition: all 0.2s ease;
+      }
+
+      input:focus,
+      select:focus {
+        border-color: #fb641b;
+        box-shadow: 0 0 0 2px rgba(251, 100, 27, 0.2);
+      }
+
+      /* Pay button */
+      #pay-now-btn {
+        letter-spacing: 0.4px;
+        transition: all 0.2s ease;
+      }
+
+      #pay-now-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(251, 100, 27, 0.4);
+      }
+
+      #pay-now-btn:active {
+        transform: translateY(0);
+      }
     </style>
   </head>
+
   <body>
-    <nav class="bg-[#2874f0] text-white py-3">
+    <!-- NAV -->
+    <nav class="bg-[#2874f0] text-white py-3 shadow-md">
       <div class="container container-max flex items-center gap-4">
-        <a href="/" class="text-white font-black text-2xl">SoloCart</a>
+        <a href="/" class="text-white font-black text-2xl tracking-tight"
+          >SoloCart</a
+        >
         <div class="flex-1"></div>
       </div>
     </nav>
 
     <main class="container container-max py-8">
-      <!-- Stepper -->
+      <!-- STEPPER -->
       <div class="flex items-center justify-center mb-8">
         <div class="flex items-center gap-4">
           <div class="flex flex-col items-center">
@@ -52,7 +130,7 @@
           <div class="h-1 w-8 bg-[#2874f0]/30 rounded"></div>
           <div class="flex flex-col items-center">
             <div
-              class="w-8 h-8 rounded-full bg-[#fb641b] text-white flex items-center justify-center font-black border-2 border-[#2874f0]"
+              class="w-8 h-8 rounded-full step-active flex items-center justify-center font-black"
             >
               3
             </div>
@@ -60,125 +138,124 @@
           </div>
         </div>
       </div>
+
+      <!-- CONTENT -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-2 bg-white rounded-xl p-8 shadow-md">
-          <h2 class="font-black text-2xl mb-6 flex items-center gap-2">
+        <!-- PAYMENT -->
+        <div class="lg:col-span-2 card p-8">
+          <h2 class="font-black text-2xl mb-6 flex items-center gap-3">
             <i class="fa-solid fa-credit-card text-[#fb641b]"></i> Payment
           </h2>
+
           <div id="payment-order-list" class="mb-8">
             <!-- Order summary rendered here -->
           </div>
-          <div class="mb-8">
-            <h3 class="font-bold mb-4 text-lg">Select Payment Method</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label
-                class="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all payment-method-option"
-              >
-                <input
-                  type="radio"
-                  name="payment_method"
-                  value="cod"
-                  class="accent-[#fb641b]"
-                  checked
-                />
-                <span class="flex items-center gap-2"
-                  ><i class="fa-solid fa-money-bill-wave text-green-600"></i>
-                  Cash on Delivery</span
-                >
-              </label>
-              <label
-                class="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all payment-method-option"
-              >
-                <input
-                  type="radio"
-                  name="payment_method"
-                  value="upi"
-                  class="accent-[#fb641b]"
-                />
-                <span class="flex items-center gap-2"
-                  ><i class="fa-brands fa-google-pay text-[#4285F4]"></i>
-                  UPI</span
-                >
-              </label>
-              <label
-                class="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all payment-method-option"
-              >
-                <input
-                  type="radio"
-                  name="payment_method"
-                  value="card"
-                  class="accent-[#fb641b]"
-                />
-                <span class="flex items-center gap-2"
-                  ><i class="fa-regular fa-credit-card text-[#fb641b]"></i>
-                  Credit / Debit Card</span
-                >
-              </label>
-              <label
-                class="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all payment-method-option"
-              >
-                <input
-                  type="radio"
-                  name="payment_method"
-                  value="netbanking"
-                  class="accent-[#fb641b]"
-                />
-                <span class="flex items-center gap-2"
-                  ><i class="fa-solid fa-building-columns text-blue-700"></i>
-                  Net Banking</span
-                >
-              </label>
-            </div>
-            <div id="upi-fields" class="ml-4 mt-4 hidden">
+
+          <h3 class="font-bold mb-4 text-lg">Select Payment Method</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label
+              class="payment-method-option flex items-center gap-3 p-4 rounded-lg cursor-pointer"
+            >
               <input
-                id="upi-id"
-                type="text"
-                class="w-full border p-3 rounded-lg"
-                placeholder="Enter UPI ID (eg. name@bank)"
+                type="radio"
+                name="payment_method"
+                value="cod"
+                checked
+                class="accent-[#fb641b]"
               />
-            </div>
-            <div id="card-fields" class="ml-4 mt-4 hidden space-y-3">
+              <span class="flex items-center gap-2">
+                <i class="fa-solid fa-money-bill-wave text-green-600"></i> Cash
+                on Delivery
+              </span>
+            </label>
+
+            <label
+              class="payment-method-option flex items-center gap-3 p-4 rounded-lg cursor-pointer"
+            >
               <input
-                id="card-number"
-                type="text"
-                class="w-full border p-3 rounded-lg"
-                placeholder="Card number (16 digits)"
+                type="radio"
+                name="payment_method"
+                value="upi"
+                class="accent-[#fb641b]"
               />
-              <div class="grid grid-cols-2 gap-3">
-                <input
-                  id="card-expiry"
-                  type="text"
-                  class="border p-3 rounded-lg"
-                  placeholder="MM/YY"
-                />
-                <input
-                  id="card-cvv"
-                  type="password"
-                  class="border p-3 rounded-lg"
-                  placeholder="CVV"
-                />
-              </div>
-            </div>
-            <div id="netbank-fields" class="ml-4 mt-4 hidden">
-              <select id="netbank-select" class="w-full border p-3 rounded-lg">
-                <option value="">Select Bank</option>
-                <option value="sbi">State Bank of India</option>
-                <option value="hdfc">HDFC Bank</option>
-                <option value="icici">ICICI Bank</option>
-                <option value="axis">Axis Bank</option>
-              </select>
+              <span class="flex items-center gap-2">
+                <i class="fa-brands fa-google-pay text-[#4285F4]"></i> UPI
+              </span>
+            </label>
+
+            <label
+              class="payment-method-option flex items-center gap-3 p-4 rounded-lg cursor-pointer"
+            >
+              <input
+                type="radio"
+                name="payment_method"
+                value="card"
+                class="accent-[#fb641b]"
+              />
+              <span class="flex items-center gap-2">
+                <i class="fa-regular fa-credit-card text-[#fb641b]"></i> Credit
+                / Debit Card
+              </span>
+            </label>
+
+            <label
+              class="payment-method-option flex items-center gap-3 p-4 rounded-lg cursor-pointer"
+            >
+              <input
+                type="radio"
+                name="payment_method"
+                value="netbanking"
+                class="accent-[#fb641b]"
+              />
+              <span class="flex items-center gap-2">
+                <i class="fa-solid fa-building-columns text-blue-700"></i> Net
+                Banking
+              </span>
+            </label>
+          </div>
+
+          <!-- PAYMENT FIELDS -->
+          <div id="upi-fields" class="ml-4 mt-4 hidden">
+            <input
+              class="w-full border p-3 rounded-lg"
+              placeholder="Enter UPI ID (eg. name@bank)"
+            />
+          </div>
+
+          <div id="card-fields" class="ml-4 mt-4 hidden space-y-3">
+            <input
+              class="w-full border p-3 rounded-lg"
+              placeholder="Card number (16 digits)"
+            />
+            <div class="grid grid-cols-2 gap-3">
+              <input class="border p-3 rounded-lg" placeholder="MM/YY" />
+              <input class="border p-3 rounded-lg" placeholder="CVV" />
             </div>
           </div>
-          <div class="flex justify-end mt-8">
+
+          <div id="netbank-fields" class="ml-4 mt-4 hidden">
+            <select class="w-full border p-3 rounded-lg">
+              <option>Select Bank</option>
+              <option>SBI</option>
+              <option>HDFC</option>
+              <option>ICICI</option>
+              <option>Axis</option>
+            </select>
+          </div>
+
+          <div class="flex justify-end mt-10">
             <button
               id="pay-now-btn"
-              class="bg-[#fb641b] hover:bg-[#e65c17] text-white px-10 py-3 rounded-lg font-black text-lg shadow-lg transition-all"
+              class="bg-[#fb641b] text-white px-10 py-3 rounded-lg font-black text-lg"
             >
               <i class="fa-solid fa-lock mr-2"></i> Pay & Place Order
             </button>
           </div>
         </div>
-        <aside class="bg-white rounded-xl p-8 shadow-md">
+
+        <!-- SUMMARY -->
+        <aside class="card p-8 sticky top-6">
           <h4 class="font-black text-lg mb-4">Order Summary</h4>
           <div
             class="text-3xl font-black mb-2 text-[#fb641b]"
@@ -189,11 +266,11 @@
           <div class="text-sm text-slate-500 mb-4" id="payment-address">
             Address will appear here
           </div>
-          <div class="border-t pt-4 mt-4">
+          <div class="border-t pt-4 mt-4 space-y-2">
             <div class="flex items-center gap-2 text-green-600 font-bold">
               <i class="fa-solid fa-shield-check"></i> 100% Secure Payments
             </div>
-            <div class="flex items-center gap-2 text-slate-400 mt-2">
+            <div class="flex items-center gap-2 text-slate-400">
               <i class="fa-solid fa-truck"></i> Fast Delivery Guarantee
             </div>
           </div>
