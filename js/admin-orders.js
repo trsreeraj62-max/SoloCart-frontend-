@@ -62,7 +62,6 @@ function renderOrders(orders) {
           <td class="px-6 py-4">—</td>
           <td class="px-6 py-4"><img src="https://placehold.co/80x80?text=No+Image" class="w-12 h-12 object-contain"/></td>
           <td class="px-6 py-4">—</td>
-          <td class="px-6 py-4 font-black">₹${Number(o.total_amount || 0).toLocaleString()}</td>
           <td class="px-6 py-4">${statusBadge}</td>
           <td class="px-6 py-4 text-right">${actionButtons}</td>
         </tr>
@@ -87,7 +86,6 @@ function renderOrders(orders) {
             <td class="px-6 py-4">${escapeHtml(productName)}</td>
             <td class="px-6 py-4"><img src="${imageUrl}" class="w-12 h-12 object-contain" onerror="this.src='https://placehold.co/80x80?text=No+Image'"/></td>
             <td class="px-6 py-4">₹${price}</td>
-            <td class="px-6 py-4 font-black">₹${Number(o.total_amount || 0).toLocaleString()}</td>
             <td class="px-6 py-4">${statusBadge}</td>
             <td class="px-6 py-4 text-right">${actionButtons}</td>
           </tr>
