@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin Messages — SoloCart Admin</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="toast-container"
+      class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"
+    ></div>
+
+    <main class="p-8 max-w-6xl mx-auto">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-black">Contact Messages</h1>
+        <div>
+          <button
+            id="refresh-messages"
+            class="px-4 py-2 bg-[#2874f0] text-white rounded"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded shadow overflow-hidden">
+        <table class="w-full text-left">
+          <thead
+            class="bg-slate-50 text-xs font-black uppercase text-slate-500"
+          >
+            <tr>
+              <th class="px-4 py-3">Name</th>
+              <th class="px-4 py-3">Email</th>
+              <th class="px-4 py-3">Subject</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3">Date</th>
+              <th class="px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="messages-table" class="divide-y"></tbody>
+        </table>
+      </div>
+    </main>
+
+    <!-- Reply Modal -->
+    <div
+      id="replyModal"
+      class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4"
+    >
+      <div class="bg-white rounded-xl w-full max-w-2xl p-6">
+        <h2 class="text-lg font-black mb-4">Reply to Message</h2>
+        <div
+          id="original-message"
+          class="mb-4 text-sm text-slate-700 bg-slate-50 p-4 rounded"
+        ></div>
+        <form id="reply-form" novalidate>
+          <textarea
+            id="reply-text"
+            rows="5"
+            class="w-full border p-3 rounded mb-4"
+            placeholder="Type your reply here"
+          ></textarea>
+          <div class="flex justify-end gap-3">
+            <button
+              type="button"
+              class="close-reply px-4 py-2 bg-slate-200 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              id="send-reply-btn"
+              class="px-4 py-2 bg-green-600 text-white rounded"
+            >
+              Send Reply
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script type="module" src="/js/admin-messages.js"></script>
+  </body>
+</html>

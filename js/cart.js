@@ -113,12 +113,16 @@ async function fetchCartItems() {
 function renderCartItems(items) {
   const container = document.getElementById("cart-items-list");
   if (!container || !Array.isArray(items)) return;
-
   const cartCountTitle = document.getElementById("cart-count-title");
   const priceDetailsCount = document.getElementById("price-details-count");
 
-  if (cartCountTitle) cartCountTitle.innerText = items.length;
-  if (priceDetailsCount) priceDetailsCount.innerText = items.length;
+  // Compute total item count (sum of quantities) for badges
+  const totalItemCount = items.reduce(
+    (s, it) => s + Number(it.quantity || it.qty || 1),
+    0,
+  );
+  if (cartCountTitle) cartCountTitle.innerText = totalItemCount;
+  if (priceDetailsCount) priceDetailsCount.innerText = totalItemCount;
 
   container.innerHTML = items
     .map((item) => {
@@ -162,8 +166,8 @@ function renderCartItems(items) {
                         <input type="text" value="${qty}" readonly class="w-8 text-center text-xs font-black outline-none border-x qty-input" data-product-id="${product.id}" data-item-id="${item.id}">
                         <button class="qty-btn plus px-2.5 py-1 text-slate-600 hover:bg-slate-100 font-black" data-product-id="${product.id}" data-item-id="${item.id}">+</button>
                     </div>
-                    <button class="remove-btn text-xs font-black uppercase tracking-widest text-[#212121] hover:text-[#2874f0]" data-product-id="${product.id}">Remove</button>
-                    <button class="buy-this-btn text-xs bg-[#2874f0] text-white px-3 py-1 rounded-sm" data-product-id="${product.id}">Buy This Item</button>
+          <button class="remove-btn text-xs font-black uppercase tracking-widest text-[#212121] hover:text-[#2874f0]" data-product-id="${product.id}" data-item-id="${item.id}">Remove</button>
+          <button class="buy-this-btn text-xs bg-[#2874f0] text-white px-3 py-1 rounded-sm" data-product-id="${product.id}" data-item-id="${item.id}">Buy This Item</button>
                 </div>
             </div>
         </div>
@@ -187,36 +191,48 @@ function renderCartItems(items) {
     });
   }
 
-  // Attach buy-this handlers
-  container.querySelectorAll(".buy-this-btn").forEach((b) => {
+  // Attach quantity handlers
+  container.querySelectorAll(".qty-btn.plus").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       const pid = btn.dataset.productId;
       const itemId = btn.dataset.itemId;
-      const isPlus = btn.classList.contains("plus");
       const input = container.querySelector(
-        `.qty-input[data-product-id="${pid}"]`,
+        `.qty-input[data-item-id="${itemId}"]`,
       );
       const current = Number(input?.value || 1);
-      const newQty = isPlus ? current + 1 : Math.max(1, current - 1);
+      const newQty = current + 1;
       setQuantity(pid, newQty, itemId);
     });
+  });
+  container.querySelectorAll(".qty-btn.minus").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       const pid = btn.dataset.productId;
-      const isPlus = btn.classList.contains("plus");
+      const itemId = btn.dataset.itemId;
       const input = container.querySelector(
-        `.qty-input[data-product-id="${pid}"]`,
+        `.qty-input[data-item-id="${itemId}"]`,
       );
       const current = Number(input?.value || 1);
-      const newQty = isPlus ? current + 1 : Math.max(1, current - 1);
-      setQuantity(pid, newQty);
+      const newQty = Math.max(1, current - 1);
+      setQuantity(pid, newQty, itemId);
     });
   });
 
+  // Attach remove handlers
   container.querySelectorAll(".remove-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       const pid = btn.dataset.productId;
       const itemId = btn.dataset.itemId;
       removeItem(pid, itemId);
+    });
+  });
+
+  // Attach buy-this handlers (single item checkout)
+  container.querySelectorAll(".buy-this-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const pid = btn.dataset.productId;
+      const itemId = btn.dataset.itemId;
+      // Store selection and navigate to checkout
+      initiateCheckoutSelection("single", pid);
     });
   });
 }

@@ -1,5 +1,5 @@
 import CONFIG from "./config.js";
-import { apiCall } from "./main.js";
+import { apiCall, updateHeaderProfileImage } from "./main.js";
 
 let currentFilters = {
   category: "",
@@ -15,6 +15,9 @@ let hasMore = true;
 
 async function initShop() {
   console.log("[SHOP] 🔍 Initializing shop...");
+  try {
+    updateHeaderProfileImage();
+  } catch (e) {}
   // Parse URL parameters
   const params = new URLSearchParams(window.location.search);
   currentFilters.category = params.get("category") || "";

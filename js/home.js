@@ -1,5 +1,5 @@
 import CONFIG from "./config.js";
-import { apiCall } from "./main.js";
+import { apiCall, updateHeaderProfileImage } from "./main.js";
 
 /**
  * Fetches home page data and updates the UI.
@@ -301,7 +301,12 @@ function renderProducts(products, gridId) {
 // Initialize on load
 console.log("[HOME] 📄 home.js loaded, waiting for DOMContentLoaded");
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("[HOME] 🚀 DOMContentLoaded fired, calling fetchHomeData");
+  console.log(
+    "[HOME] 🚀 DOMContentLoaded fired, calling header update + fetchHomeData",
+  );
+  try {
+    updateHeaderProfileImage();
+  } catch (e) {}
   fetchHomeData();
 });
 

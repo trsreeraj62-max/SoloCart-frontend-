@@ -115,6 +115,7 @@ export async function apiCall(endpoint, options = {}) {
         try {
           localStorage.removeItem("auth_token");
           localStorage.removeItem("user_data");
+          localStorage.removeItem("user_profile");
         } catch (e) {}
         if (!skipAuth) {
           const redirectTo = `/login.html?redirect=${encodeURIComponent(window.location.href)}`;
@@ -176,7 +177,10 @@ export function updateAuthUI() {
   if (!authActions) return;
 
   const token = getAuthToken();
-  const user = safeJSONParse(localStorage.getItem("user_data"), null);
+  // Prefer canonical `user_profile`. Fallback to legacy `user_data` for compatibility.
+  const user =
+    safeJSONParse(localStorage.getItem("user_profile"), null) ||
+    safeJSONParse(localStorage.getItem("user_data"), null);
 
   if (token && user && user.name) {
     // build avatar URL if available
@@ -199,7 +203,7 @@ export function updateAuthUI() {
       <div class="relative group">
         <button class="flex items-center gap-2 focus:outline-none">
           <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center border border-white/20 overflow-hidden">
-            ${avatarUrl ? `<img src="${avatarUrl}" alt="avatar" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/64x64?text=User'">` : `<i class="fas fa-user-circle"></i>`}
+            ${avatarUrl ? `<img src="${avatarUrl}" alt="avatar" class="w-full h-full object-cover user-avatar" onerror="this.onerror=null;this.src='https://placehold.co/64x64?text=User'">` : `<i class="fas fa-user-circle"></i>`}
           </div>
           <span class="text-sm font-bold truncate max-w-[100px]">${user.name}</span>
         </button>
@@ -239,10 +243,40 @@ async function handleLogout() {
 
   localStorage.removeItem("auth_token");
   localStorage.removeItem("user_data");
+  localStorage.removeItem("user_profile");
   showToast("Logged out successfully");
   setTimeout(() => {
     window.location.href = "/index.html";
   }, 500);
+}
+
+/**
+ * Update header avatar images from stored profile.
+ * Reads `user_profile` (preferred) and falls back to `user_data`.
+ */
+export function updateHeaderProfileImage() {
+  try {
+    const user =
+      safeJSONParse(localStorage.getItem("user_profile"), null) ||
+      safeJSONParse(localStorage.getItem("user_data"), null);
+    if (!user) return;
+
+    const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
+    let avatar = user.profile_image || user.avatar || user.image_url || null;
+    if (!avatar) return;
+    if (!/^https?:\/\//i.test(avatar)) {
+      avatar = `${backendBase}/${String(avatar).replace(/^\//, "")}`;
+    }
+    avatar = String(avatar).replace(/^http:/, "https:");
+
+    document.querySelectorAll(".user-avatar").forEach((img) => {
+      try {
+        img.src = avatar;
+      } catch (e) {}
+    });
+  } catch (e) {
+    console.error("updateHeaderProfileImage failed:", e);
+  }
 }
 
 export async function updateCartBadge() {

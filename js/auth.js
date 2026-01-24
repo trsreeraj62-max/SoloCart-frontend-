@@ -243,6 +243,9 @@ function finalizeLogin(data) {
     console.error("[Auth] No token present in finalizeLogin payload");
   }
   localStorage.setItem("user_data", JSON.stringify(data.user || {}));
+  try {
+    localStorage.setItem("user_profile", JSON.stringify(data.user || {}));
+  } catch (e) {}
   if (window.showToast) window.showToast("LoggedIn Successfully");
 
   // Redirect Logic

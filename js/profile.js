@@ -1,5 +1,10 @@
 import CONFIG from "./config.js";
-import { getAuthToken, apiCall, safeJSONParse } from "./main.js";
+import {
+  getAuthToken,
+  apiCall,
+  safeJSONParse,
+  updateHeaderProfileImage,
+} from "./main.js";
 
 async function initProfile() {
   const token = getAuthToken();
@@ -7,29 +12,13 @@ async function initProfile() {
     window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.href)}`;
     return;
   }
-
-  const userData = safeJSONParse(localStorage.getItem("user_data"), {});
-  const displayName = document.getElementById("user-display-name");
-  const initials = document.getElementById("user-initials");
-
-  if (displayName) displayName.innerText = userData.name || "User";
-  if (initials && userData.name)
-    initials.innerText = userData.name.charAt(0).toUpperCase();
-
-  if (document.getElementById("p-name"))
-    document.getElementById("p-name").value = userData.name || "";
-  if (document.getElementById("p-email"))
-    document.getElementById("p-email").value = userData.email || "";
-  if (document.getElementById("p-bio"))
-    document.getElementById("p-bio").value = userData.bio || "";
-  if (document.getElementById("p-phone"))
-    document.getElementById("p-phone").value = userData.phone || "";
-  const profileImg = document.getElementById("p-image-preview");
-  if (profileImg)
-    profileImg.src =
-      userData.profile_image || userData.avatar || profileImg.src;
-  // Load fresh profile from API (do not rely solely on localStorage)
+  // Always fetch the authoritative profile on page load
   await loadProfile();
+
+  // Update header avatars from stored profile
+  try {
+    updateHeaderProfileImage();
+  } catch (e) {}
 
   // Preview change handler (local preview before upload)
   const fileInput = document.getElementById("p-image-file");
@@ -77,8 +66,9 @@ export async function loadProfile() {
 
     if (!user) return;
 
-    // Save to localStorage for other parts of app
+    // Save to localStorage for other parts of app (canonical key: user_profile)
     try {
+      localStorage.setItem("user_profile", JSON.stringify(user));
       localStorage.setItem("user_data", JSON.stringify(user));
     } catch (e) {}
 
@@ -169,15 +159,20 @@ function setupEventListeners() {
         if (data && (data.user || data.success)) {
           const user = data.user || (data.data && data.data.user) || null;
           if (user) {
-            localStorage.setItem("user_data", JSON.stringify(user));
+            // Persist canonical profile for other pages
+            try {
+              localStorage.setItem("user_profile", JSON.stringify(user));
+              localStorage.setItem("user_data", JSON.stringify(user));
+            } catch (e) {}
             if (window.showToast)
               window.showToast("Profile updated successfully");
             const displayName = document.getElementById("user-display-name");
             if (displayName) displayName.innerText = user.name || name;
-            // update preview if backend sent image path
-            const profileImg = document.getElementById("p-image-preview");
-            if (profileImg && user.profile_image)
-              profileImg.src = user.profile_image;
+            // Re-fetch profile to ensure all UI is rebuilt from backend
+            await loadProfile();
+            try {
+              updateHeaderProfileImage();
+            } catch (e) {}
           } else {
             if (window.showToast)
               window.showToast("Profile updated", "success");
