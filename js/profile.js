@@ -45,10 +45,6 @@ async function initProfile() {
   setupEventListeners();
 }
 
-// Ensure profile is re-fetched on DOMContentLoaded
-document.addEventListener('DOMContentLoaded', loadProfile);
-}
-
 // Fetch fresh profile from backend and populate DOM
 export async function loadProfile() {
   try {

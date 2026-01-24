@@ -36,25 +36,9 @@
     </nav>
 
     <main class="container container-max py-6 px-4">
-        <div class="flex flex-col lg:flex-row gap-4">
-            <!-- Sidebar -->
-            <aside class="lg:w-1/4">
-                <div class="bg-white rounded-sm shadow-sm border border-slate-100 p-4">
-                    <h2 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Filters</h2>
-                    <div class="space-y-3">
-                         <h3 class="text-sm font-bold">Order Status</h3>
-                         <div class="space-y-2">
-                             <label class="flex items-center gap-2 text-xs font-medium cursor-pointer"><input type="checkbox" checked> On the way</label>
-                             <label class="flex items-center gap-2 text-xs font-medium cursor-pointer"><input type="checkbox" checked> Delivered</label>
-                             <label class="flex items-center gap-2 text-xs font-medium cursor-pointer"><input type="checkbox"> Cancelled</label>
-                             <label class="flex items-center gap-2 text-xs font-medium cursor-pointer"><input type="checkbox"> Returned</label>
-                         </div>
-                    </div>
-                </div>
-            </aside>
-
+        <div class="flex flex-col gap-4">
             <!-- Orders List -->
-            <div class="lg:w-3/4 space-y-3" id="orders-list">
+            <div class="w-full space-y-3" id="orders-list">
                 <!-- Loaded via JS -->
                 <div class="bg-white p-6 animate-pulse rounded-sm h-32"></div>
                 <div class="bg-white p-6 animate-pulse rounded-sm h-32"></div>

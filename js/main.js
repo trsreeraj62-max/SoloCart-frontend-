@@ -59,7 +59,32 @@ export async function apiCall(endpoint, options = {}) {
 
 /* ---------------- UI HELPERS ---------------- */
 window.showToast = function (msg, type = "success") {
-  alert(msg); // keep simple, your toast logic is fine if already included
+  const container = document.getElementById("toast-container");
+  if (!container) {
+    console.warn("Toast container not found, using alert fallback");
+    alert(msg);
+    return;
+  }
+
+  const toast = document.createElement("div");
+  const bgColor = type === "error" ? "bg-rose-500" : "bg-green-500";
+  const icon = type === "error" ? "fa-exclamation-circle" : "fa-check-circle";
+
+  toast.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in min-w-[250px] max-w-[400px]`;
+  toast.innerHTML = `
+    <i class="fas ${icon}"></i>
+    <span class="font-medium text-sm">${String(msg).replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span>
+  `;
+
+  container.appendChild(toast);
+
+  // Auto-remove after 3 seconds
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(100%)";
+    toast.style.transition = "all 0.3s ease";
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
 };
 
 /* ---------------- AUTH UI ---------------- */

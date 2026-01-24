@@ -68,6 +68,8 @@ async function handleLogin(e) {
 
 async function handleRegister(e) {
   e.preventDefault();
+  console.log("[Register] Form submitted");
+  
   const name = document.getElementById("name").value.trim();
   const phone = document.getElementById("phone").value.trim();
   const email = document.getElementById("email").value.trim();
@@ -76,7 +78,17 @@ async function handleRegister(e) {
     "password_confirmation",
   ).value;
 
+  console.log("[Register] Form data:", { name, phone, email, password: password ? "***" : "" });
+
+  const btn = document.querySelector('#register-form button[type="submit"]');
+  
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = "Creating Account...";
+  }
+
   try {
+    console.log("[Register] Calling API...");
     const data = await apiCall("/register", {
       method: "POST",
       body: JSON.stringify({
@@ -127,10 +139,22 @@ async function handleRegister(e) {
       }
 
       if (window.showToast) window.showToast(errorMsg, "error");
+      
+      // Re-enable button
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = "CONTINUE";
+      }
     }
   } catch (e) {
     console.error("Registration failed", e);
     if (window.showToast) window.showToast("Server connection failed", "error");
+    
+    // Re-enable button
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = "CONTINUE";
+    }
   }
 }
 

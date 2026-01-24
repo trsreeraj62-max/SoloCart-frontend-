@@ -23,13 +23,15 @@ async function fetchOrders() {
       return;
     }
 
+    // Clear container and render all orders
+    container.innerHTML = "";
+
     // Hide empty message if present
     const emptyEl = document.querySelector(".empty-orders");
     if (emptyEl) emptyEl.style.display = "none";
 
-    orders.forEach((order) => {
-      renderOrder(order);
-    });
+    // Render all orders using the renderOrders function
+    renderOrders(orders);
 
     // Start polling for live updates (every 25 seconds)
     startOrdersPolling();
