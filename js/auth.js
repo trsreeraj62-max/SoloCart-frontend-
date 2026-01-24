@@ -60,6 +60,10 @@ async function handleLogin(e) {
       if (window.showToast) window.showToast("OTP sent to your email");
       try {
         localStorage.setItem("solocart_pending_email", email);
+        const userId = data.data?.id || data.user?.id || data.id;
+        if (userId) {
+          localStorage.setItem("solocart_pending_user_id", userId);
+        }
       } catch (e) {}
       setTimeout(() => {
         window.location.href = `/verify-otp.html?email=${encodeURIComponent(email)}`;
@@ -154,6 +158,10 @@ async function handleRegister(e) {
       // Redirect to OTP page - backend should have sent OTP automatically
       try {
         localStorage.setItem("solocart_pending_email", email);
+        const userId = data.data?.id || data.user?.id || data.id;
+        if (userId) {
+          localStorage.setItem("solocart_pending_user_id", userId);
+        }
       } catch (e) {}
       setTimeout(() => {
         window.location.href = `/verify-otp.html?email=${encodeURIComponent(email)}`;
@@ -222,12 +230,29 @@ async function handleVerifyOtp(e) {
   }
 
   try {
-    const data = await apiCall("/otp/verify", {
-      method: "POST",
-      body: JSON.stringify({ email, otp }),
+    // Get user_id from localStorage if available
+    let userId;
+    try {
+      userId = localStorage.getItem("solocart_pending_user_id");
+    } catch (e) {}
+
+    const payload = { email, otp };
+    if (userId) {
+      payload.user_id = parseInt(userId);
+    }
+
+    console.log("[OTP Verify] Sending:", {
+      email,
+      otp: "***",
+      user_id: userId ? "present" : "not found",
     });
 
-    console.log("OTP Verify Response:", data); // Debug log
+    const data = await apiCall("/otp/verify", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    console.log("[OTP Verify] Response:", data); // Debug log
 
     // Check for token in various response structures
     const responseData = data.data || data;
@@ -243,8 +268,21 @@ async function handleVerifyOtp(e) {
       const user = responseData.user || data.user || {};
       try {
         localStorage.removeItem("solocart_pending_email");
+        localStorage.removeItem("solocart_pending_user_id");
       } catch (e) {}
       finalizeLogin({ token, access_token: token, user });
+    } else if (
+      data.message?.includes("DEBUG MODE") &&
+      data.message?.includes("OTP")
+    ) {
+      // Backend in debug mode - email service pending
+      const errorMsg =
+        "Email service is pending verification. Please contact support or check debug console for OTP.";
+      if (window.showToast) window.showToast(errorMsg, "error");
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = "VERIFY OTP";
+      }
     } else if (data.success === false || data.statusCode >= 400) {
       // Explicit failure
       const errorMsg = data.message || "Invalid OTP";
@@ -293,15 +331,26 @@ async function handleResendOtp() {
 
     console.log("[Resend OTP] Response:", data); // Debug log
 
-    // Check for success
+    // Check for success (including debug mode)
     if (
       data &&
       (data.success === true ||
         data.message?.includes("sent") ||
-        data.message?.includes("OTP"))
+        data.message?.includes("OTP") ||
+        (data.message?.includes("DEBUG MODE") && data.message?.includes("OTP")))
     ) {
-      if (window.showToast)
-        window.showToast(data.message || "OTP Resent Successfully");
+      // Show success or debug message
+      const displayMsg =
+        data.message?.includes("DEBUG MODE") && data.message?.includes("OTP")
+          ? "OTP sent (check debug console for details in debug mode)"
+          : data.message || "OTP Resent Successfully";
+      if (window.showToast) window.showToast(displayMsg);
+      console.log(
+        "[Resend OTP] Debug info:",
+        data.message?.match(/\d{6}/)?.[0]
+          ? "OTP found in debug message"
+          : "No OTP in message",
+      );
     } else {
       const errorMsg = data?.message || "Failed to resend OTP";
       if (window.showToast) window.showToast(errorMsg, "error");
