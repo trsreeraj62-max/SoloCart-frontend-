@@ -30,7 +30,23 @@ async function fetchMessages() {
 
   try {
     const data = await apiCall("/admin/contacts", { requireAuth: true });
-    const list = data?.data || data?.contacts || data?.items || data || [];
+
+    // Handle common apiCall error shapes
+    if (data && data.success === false) {
+      if (data.statusCode === 401) {
+        // unauthorized — redirect to login
+        if (window.showToast)
+          window.showToast("Session expired. Please login.", "error");
+        setTimeout(() => (window.location.href = "/login.html"), 400);
+        return;
+      }
+      tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-rose-500">${escapeHtml(data.message || "Failed to load messages")}</td></tr>`;
+      return;
+    }
+
+    const list = Array.isArray(data)
+      ? data
+      : data?.data || data?.contacts || data?.items || [];
     messages = Array.isArray(list) ? list : [];
     renderMessages(messages);
   } catch (e) {

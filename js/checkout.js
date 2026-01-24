@@ -3,6 +3,7 @@ import { getAuthToken, apiCall, safeJSONParse } from "./main.js";
 
 let cartData = null;
 let savedAddress = null;
+let _fetchInFlight = false;
 const CHECKOUT_KEY = "checkout_data";
 
 async function initCheckout() {
@@ -18,102 +19,52 @@ async function initCheckout() {
     authStatusInfo.innerText = userData.name || userData.email || "Logged In";
   }
 
-  // Load unified checkout_data from localStorage
-  const raw = localStorage.getItem(CHECKOUT_KEY);
-  if (!raw) {
-    // No checkout_data present — redirect to cart
-    window.location.href = "/cart.html";
-    return;
-  }
-
-  let checkout = null;
-  try {
-    checkout = JSON.parse(raw);
-  } catch (e) {
-    checkout = null;
-  }
-
-  if (
-    !checkout ||
-    !Array.isArray(checkout.items) ||
-    checkout.items.length === 0
-  ) {
-    window.location.href = "/cart.html";
-    return;
-  }
-
-  // Use checkout.items as source of truth for rendering; call backend preview to verify prices
-  await fetchPreviewAndRender(checkout.items);
+  // Fetch cart once and render using backend-provided totals only
+  await fetchCartOnce();
   setupEventListeners();
 }
 
-async function fetchPreviewAndRender(items) {
-  // Call backend preview to validate pricing and get canonical totals
+// Strict single cart fetch and render using backend-provided totals only
+async function fetchCartOnce() {
+  if (_fetchInFlight) return;
+  _fetchInFlight = true;
   try {
-    const body = {
-      items: items.map((it) => ({
-        product_id: it.product_id,
-        quantity: it.quantity,
-      })),
-    };
-    const preview = await apiCall("/checkout/preview", {
-      method: "POST",
-      body: JSON.stringify(body),
-      requireAuth: true,
-    });
+    const data = await apiCall("/cart", { requireAuth: true });
+    if (!data || data.success === false) {
+      if (data && data.statusCode === 401) {
+        if (window.showToast) window.showToast("Session expired", "error");
+        setTimeout(() => (window.location.href = "/login.html"), 300);
+        return;
+      }
+      if (window.showToast) window.showToast(data?.message || "Failed to load cart", "error");
+      return;
+    }
 
-    // Prefer preview items/totals if available
-    let previewItems = null;
-    if (preview && Array.isArray(preview.items)) previewItems = preview.items;
+    cartData = data;
 
-    const renderItems = previewItems || items;
+    // Extract items array from common shapes (no price math here)
+    let items = [];
+    if (Array.isArray(data)) items = data;
+    else if (Array.isArray(data.items)) items = data.items;
+    else if (data.data && Array.isArray(data.data.items)) items = data.data.items;
+    else if (data.cart && Array.isArray(data.cart.items)) items = data.cart.items;
+    else if (Array.isArray(data.data)) items = data.data;
+    else items = data.items || data.data || [];
 
-    renderOrderSummary(
-      renderItems.map((it) => {
-        // normalize shape: ensure product, quantity
-        return {
-          product: it.product ||
-            it.product_data || {
-              id: it.product_id,
-              name: it.name,
-              price: it.price,
-            },
-          quantity: Number(it.quantity || it.qty || 1),
-          subtotal:
-            Number(it.price || (it.product && it.product.price) || 0) *
-            Number(it.quantity || 1),
-        };
-      }),
-    );
+    // If no items, redirect to cart page
+    if (!items || items.length === 0) {
+      window.location.href = "/cart.html";
+      return;
+    }
 
-    // Render price details using preview totals when available
-    renderPriceDetails({
-      total_price: preview?.total_price || preview?.grand_total || null,
-      total_mrp: preview?.total_mrp || preview?.mrp_total || null,
-      items: renderItems,
-    });
+    renderCartItems(items);
+    // Render totals strictly from backend fields only
+    renderPriceDetails(data);
   } catch (err) {
-    console.error("Preview failed", err);
-    // Fallback: render based on provided items
-    renderOrderSummary(
-      items.map((it) => ({
-        product: it.product || {
-          id: it.product_id,
-          name: it.name,
-          price: it.price,
-        },
-        quantity: it.quantity || 1,
-        subtotal: (it.price || 0) * (it.quantity || 1),
-      })),
-    );
-    renderPriceDetails({
-      total_price: items.reduce(
-        (s, x) => s + Number(x.price || 0) * Number(x.quantity || 1),
-        0,
-      ),
-      total_mrp: 0,
-      items,
-    });
+    console.error("Failed to fetch cart once", err);
+    if (window.showToast) window.showToast("Failed to load cart", "error");
+  } finally {
+    _fetchInFlight = false;
   }
 }
 
@@ -144,30 +95,34 @@ async function fetchCartData() {
 }
 
 function renderPriceDetails(data) {
+  // Render totals only from backend response keys. No arithmetic performed here.
   const countEl = document.getElementById("price-details-count");
   const mrpEl = document.getElementById("total-mrp");
   const discEl = document.getElementById("total-discount");
   const grandEl = document.getElementById("grand-total");
 
-  if (countEl) countEl.innerText = data.items.length;
-  if (mrpEl)
-    mrpEl.innerText = `₹${Number(data.total_mrp || 0).toLocaleString()}`;
-  if (discEl)
-    discEl.innerText = `- ₹${Number((data.total_mrp || 0) - (data.total_price || 0)).toLocaleString()}`;
-  if (grandEl)
-    grandEl.innerText = `₹${Number(data.total_price || 0).toLocaleString()}`;
+  // Prefer common backend keys; fallbacks are only for compatibility with different API shapes
+  const totalItems = data.total_items || data.items?.length || data.cart?.total_items || 0;
+  const totalMrp = data.total_mrp || data.mrp_total || data.cart?.total_mrp || data.subtotal || data.total_mrp || 0;
+  const totalPrice = data.total_price || data.total || data.grand_total || data.total_amount || data.cart?.total_price || 0;
+  const discount = (totalMrp && totalPrice) ? (totalMrp - totalPrice) : null;
+
+  if (countEl) countEl.innerText = totalItems;
+  if (mrpEl) mrpEl.innerText = `₹${Number(totalMrp || 0).toLocaleString()}`;
+  if (discEl) discEl.innerText = discount !== null ? `- ₹${Number(discount).toLocaleString()}` : `- ₹0`;
+  if (grandEl) grandEl.innerText = `₹${Number(totalPrice || 0).toLocaleString()}`;
 }
 
-function renderOrderSummary(items) {
+function renderCartItems(items) {
   const container = document.getElementById("checkout-items-list");
   if (!container || !Array.isArray(items)) return;
-  // Render with editable qty controls
+
   container.innerHTML = items
     .map((item) => {
-      const product = item.product || item.product_data || item;
-      const qty = Number(item.quantity || item.qty || 1);
-      const price = Number(product.price || product.unit_price || 0);
-      const subtotal = price * qty;
+      const product = item.product || item.product_data || item || {};
+      const qty = item.quantity || item.qty || item.quantity || 1;
+      const priceLabel = item.unit_price || item.price || product.price || null;
+      const subtotalLabel = item.subtotal || item.line_total || item.total || null; // must be provided by backend
       const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
       const imageUrl = product.image_url
         ? String(product.image_url).replace(/^http:/, "https:")
@@ -184,7 +139,7 @@ function renderOrderSummary(items) {
                 <div class="flex justify-between items-start">
                   <div>
                     <h4 class="text-xs font-bold text-slate-800 line-clamp-1">${product.name || product.title || "Unavailable"}</h4>
-                    <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">₹${price.toLocaleString()}</div>
+                    <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">${priceLabel ? `₹${Number(priceLabel).toLocaleString()}` : 'Price Unavailable'}</div>
                   </div>
                   <div class="text-right">
                     <div class="flex items-center gap-2">
@@ -192,7 +147,7 @@ function renderOrderSummary(items) {
                       <input class="qty-input w-10 text-center" data-product-id="${product.id}" data-item-id="${item.id}" value="${qty}" readonly>
                       <button class="qty-btn plus px-2 py-1 text-slate-400 border" data-product-id="${product.id}" data-item-id="${item.id}">+</button>
                     </div>
-                    <div class="text-sm font-black mt-2">Subtotal: ₹<span class="item-subtotal">${subtotal.toLocaleString()}</span></div>
+                    <div class="text-sm font-black mt-2">Subtotal: <span class="item-subtotal">${subtotalLabel ? `₹${Number(subtotalLabel).toLocaleString()}` : '—'}</span></div>
                   </div>
                 </div>
             </div>
@@ -201,35 +156,79 @@ function renderOrderSummary(items) {
     })
     .join("");
 
-  // Attach qty handlers (send product_id + quantity)
-  container.querySelectorAll(".qty-btn").forEach((btn) => {
-    btn.addEventListener("click", async (e) => {
+  // Attach qty handlers: call /cart/update and then re-fetch cart once
+  container.querySelectorAll('.qty-btn.plus').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
       const pid = btn.dataset.productId;
       const itemId = btn.dataset.itemId;
-      const isPlus = btn.classList.contains("plus");
-      const input = container.querySelector(
-        `.qty-input[data-product-id="${pid}"]`,
-      );
+      const input = container.querySelector(`.qty-input[data-item-id="${itemId}"]`);
       const current = Number(input?.value || 1);
-      const newQty = isPlus ? current + 1 : Math.max(1, current - 1);
+      const newQty = current + 1;
+      btn.disabled = true;
       try {
         const payload = { product_id: pid, quantity: newQty };
         if (itemId) payload.item_id = itemId;
-        await apiCall("/cart/update", {
-          method: "POST",
-          body: JSON.stringify(payload),
-          requireAuth: true,
-        });
-        await fetchCartData();
+        const res = await apiCall('/cart/update', { method: 'POST', body: JSON.stringify(payload), requireAuth: true });
+        if (res && res.success !== false) {
+          await fetchCartOnce();
+        } else {
+          if (window.showToast) window.showToast(res?.message || 'Failed to update cart', 'error');
+        }
       } catch (err) {
-        console.error("Failed to update quantity", err);
-      }
+        console.error('Qty update failed', err);
+      } finally { btn.disabled = false; }
     });
   });
 
-  // Attach buy-this handlers
-  // (no buy-this handlers here — checkout selection should be prepared before reaching this page)
-}
+  container.querySelectorAll('.qty-btn.minus').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const pid = btn.dataset.productId;
+      const itemId = btn.dataset.itemId;
+      const input = container.querySelector(`.qty-input[data-item-id="${itemId}"]`);
+      const current = Number(input?.value || 1);
+      const newQty = Math.max(1, current - 1);
+      btn.disabled = true;
+      try {
+        const payload = { product_id: pid, quantity: newQty };
+        if (itemId) payload.item_id = itemId;
+        const res = await apiCall('/cart/update', { method: 'POST', body: JSON.stringify(payload), requireAuth: true });
+        if (res && res.success !== false) {
+          await fetchCartOnce();
+        } else {
+          if (window.showToast) window.showToast(res?.message || 'Failed to update cart', 'error');
+        }
+      } catch (err) {
+        console.error('Qty update failed', err);
+      } finally { btn.disabled = false; }
+    });
+  });
+
+  // Attach remove handlers
+  container.querySelectorAll('.remove-btn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const pid = btn.dataset.productId;
+      const itemId = btn.dataset.itemId;
+      if (!confirm('Are you sure you want to remove this item?')) return;
+      btn.disabled = true;
+      try {
+        const payload = {};
+        if (pid) payload.product_id = pid;
+        if (itemId) payload.item_id = itemId;
+        const res = await apiCall('/cart/remove', { method: 'POST', body: JSON.stringify(payload), requireAuth: true });
+        if (res && res.success !== false) {
+          if (window.showToast) window.showToast('Item removed');
+          await fetchCartOnce();
+          await import('./main.js').then(m=>m.updateCartBadge());
+        } else {
+          if (window.showToast) window.showToast(res?.message || 'Failed to remove item', 'error');
+          btn.disabled = false;
+        }
+      } catch (err) {
+        console.error('Remove failed', err);
+        btn.disabled = false;
+      }
+    });
+  });
 
 function setupEventListeners() {
   // Address Form

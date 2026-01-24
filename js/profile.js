@@ -22,13 +22,21 @@ async function initProfile() {
 
   // Preview change handler (local preview before upload)
   const fileInput = document.getElementById("p-image-file");
+  // Select preview element once (production-safe). If missing, skip preview behavior.
+  const previewEl = document.getElementById("p-image-preview");
   if (fileInput) {
     fileInput.addEventListener("change", (e) => {
       const f = e.target.files && e.target.files[0];
       if (!f) return;
+      // Only attempt preview when an <img> preview exists
+      if (!previewEl) return;
       const reader = new FileReader();
       reader.onload = (ev) => {
-        if (profileImg) profileImg.src = ev.target.result;
+        try {
+          previewEl.src = ev.target.result;
+        } catch (err) {
+          console.error("Profile preview failed:", err);
+        }
       };
       reader.readAsDataURL(f);
     });
