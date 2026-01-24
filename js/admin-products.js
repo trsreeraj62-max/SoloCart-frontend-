@@ -145,6 +145,45 @@ function renderProducts(products) {
       btn.addEventListener("click", () => deleteProduct(btn.dataset.id)),
     );
 }
+// Validate a form using JS-only rules (ignores native HTML validation)
+function validateForm(form) {
+  if (!form) return { ok: true };
+  const requiredEls = form.querySelectorAll('[data-validate="required"]');
+  for (const el of requiredEls) {
+    const tag = el.tagName.toLowerCase();
+    const val = (el.value || "").toString().trim();
+    if (tag === "select") {
+      if (!val)
+        return {
+          ok: false,
+          field: el,
+          message: "Please complete required fields",
+        };
+    } else if (val === "") {
+      return {
+        ok: false,
+        field: el,
+        message: "Please complete required fields",
+      };
+    }
+  }
+  return { ok: true };
+}
+
+function normalizeNumberInput(el, fallback = 0) {
+  if (!el) return fallback;
+  const raw = (el.value || "").toString().trim();
+  if (raw === "") {
+    el.value = String(fallback);
+    return fallback;
+  }
+  const num = Number(raw);
+  if (isNaN(num)) {
+    el.value = String(fallback);
+    return fallback;
+  }
+  return num;
+}
 
 async function deleteProduct(id) {
   if (!confirm("Permanently delete this product?")) return;
@@ -201,6 +240,9 @@ function editProduct(id) {
 
   document.getElementById("modal-title").textContent = "Edit Product";
   document.getElementById("productModal").classList.remove("hidden");
+  // Update save button text
+  const saveBtn = document.getElementById("save-product-btn");
+  if (saveBtn) saveBtn.innerText = "Update";
 }
 
 function setupEventListeners() {
@@ -231,6 +273,16 @@ function setupEventListeners() {
     console.warn("✗ Product form not found in DOM");
   }
 
+  // Generic modal close/cancel handlers (safe: buttons are type=button so won't trigger validation)
+  document.querySelectorAll(".close-modal, .cancel-modal").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      const modalId = btn.dataset.modal;
+      if (!modalId) return;
+      const modal = document.getElementById(modalId);
+      if (modal) modal.classList.add("hidden");
+    });
+  });
+
   // Wire "Add New Product" button to open modal
   const openAddBtn = document.getElementById("open-add-product-btn");
   if (openAddBtn) {
@@ -253,6 +305,12 @@ function setupEventListeners() {
   if (categoryForm) {
     categoryForm.addEventListener("submit", saveCategory);
     console.log("✓ Category form submit listener attached");
+  }
+  // Discount form handler
+  const discountForm = document.getElementById("discount-form");
+  if (discountForm) {
+    discountForm.addEventListener("submit", saveDiscount);
+    console.log("✓ Discount form submit listener attached");
   }
   // Image file preview handler
   const imageFileInput = document.getElementById("p-image-file");
@@ -299,6 +357,8 @@ async function openAddModal() {
   if (previewImg) previewImg.src = "https://placehold.co/160x160?text=Preview";
   document.getElementById("modal-title").textContent = "Add New Product";
   document.getElementById("productModal").classList.remove("hidden");
+  const saveBtn = document.getElementById("save-product-btn");
+  if (saveBtn) saveBtn.innerText = "Save Product";
   console.log("✓ Add Product modal opened");
 }
 
@@ -306,36 +366,46 @@ async function saveProduct(e) {
   e.preventDefault();
   console.log("🔹 saveProduct() called - form submitted");
 
+  const form = document.getElementById("product-form");
+  // JS-only validation
+  const v = validateForm(form);
+  if (!v.ok) {
+    const msg = v.message || "Please complete required fields";
+    console.warn("⚠️  Validation failed:", msg);
+    if (window.showToast) window.showToast(msg, "error");
+    if (v.field) v.field.focus();
+    return;
+  }
+
   const id = (document.getElementById("product-id").value || "").toString();
   const name = (document.getElementById("p-name").value || "").trim();
   const description = (
     document.getElementById("p-description").value || ""
   ).trim();
-  const price = parseFloat(document.getElementById("p-price").value);
-  const stock = parseInt(document.getElementById("p-stock").value);
-  const category_id = parseInt(document.getElementById("p-category").value);
+  // Ensure numeric defaults are set before submitting
+  const price = normalizeNumberInput(document.getElementById("p-price"), 0);
+  const stock = normalizeNumberInput(document.getElementById("p-stock"), 0);
+  const categoryRaw = (
+    document.getElementById("p-category").value || ""
+  ).toString();
+  const category_id = isNaN(Number(categoryRaw)) ? 0 : parseInt(categoryRaw);
   const brand = (document.getElementById("p-brand").value || "").trim();
 
   console.log("📦 Product Fields:", { name, price, stock, category_id, brand });
 
-  // Basic client-side validation
-  if (!name || isNaN(price) || isNaN(stock)) {
-    const msg = "Please fill required fields (name, price, stock)";
-    console.warn("⚠️  Validation failed:", msg);
+  // Extra JS checks
+  if (!name) {
+    const msg = "Please enter product name";
     if (window.showToast) window.showToast(msg, "error");
     return;
   }
-  if (!category_id || isNaN(category_id)) {
+  if (!category_id) {
     const msg = "Please select a category";
-    console.warn("⚠️  Validation failed:", msg);
     if (window.showToast) window.showToast(msg, "error");
     return;
   }
-
-  console.log("✓ Validation passed");
 
   // Disable submit button to prevent duplicate clicks
-  const form = document.getElementById("product-form");
   const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
   if (submitBtn) {
     submitBtn.disabled = true;
@@ -417,6 +487,48 @@ async function saveProduct(e) {
       submitBtn.disabled = false;
       submitBtn.innerText = id ? "Update" : "Save Product";
     }
+  }
+}
+
+// Discount form submit handler
+async function saveDiscount(e) {
+  e.preventDefault();
+  const form = document.getElementById("discount-form");
+  const v = validateForm(form);
+  if (!v.ok) {
+    const msg = v.message || "Please complete required fields";
+    if (window.showToast) window.showToast(msg, "error");
+    return;
+  }
+
+  // Ensure discount percent defaults to 0 if empty
+  const percentEl = document.getElementById("discount-percent");
+  const percent = normalizeNumberInput(percentEl, 0);
+  const category = (
+    document.getElementById("discount-category").value || "all"
+  ).toString();
+
+  const payload = {
+    category: category,
+    percent: percent,
+  };
+
+  try {
+    const data = await apiCall("/discounts", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (data && data.success === true) {
+      if (window.showToast) window.showToast("Discount applied");
+      document.getElementById("discountModal").classList.add("hidden");
+    } else {
+      const msg = data?.message || "Failed to apply discount";
+      if (window.showToast) window.showToast(msg, "error");
+    }
+  } catch (err) {
+    console.error("Failed to save discount", err);
+    if (window.showToast)
+      window.showToast(err.message || "Failed to apply discount", "error");
   }
 }
 
