@@ -30,24 +30,39 @@ async function fetchMessages() {
 
   try {
     const data = await apiCall("/admin/contacts", { requireAuth: true });
+    console.log("[Admin Messages] /admin/contacts response:", data);
 
-    // Handle common apiCall error shapes
-    if (data && data.success === false) {
-      if (data.statusCode === 401) {
-        // unauthorized — redirect to login
+    // apiCall returns success:false with statusCode for errors
+    if (!data || data.success === false) {
+      if (data && data.statusCode === 401) {
         if (window.showToast)
           window.showToast("Session expired. Please login.", "error");
         setTimeout(() => (window.location.href = "/login.html"), 400);
         return;
       }
-      tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-rose-500">${escapeHtml(data.message || "Failed to load messages")}</td></tr>`;
+      if (data && data.statusCode === 404) {
+        tbody.innerHTML = `<tr><td colspan=\"5\" class=\"p-6 text-center text-rose-500\">Admin contacts API not found (404). Check backend route.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = `<tr><td colspan=\"5\" class=\"p-6 text-center text-rose-500\">${escapeHtml(data?.message || "Failed to load messages")}</td></tr>`;
       return;
     }
 
-    const list = Array.isArray(data)
-      ? data
-      : data?.data || data?.contacts || data?.items || [];
-    messages = Array.isArray(list) ? list : [];
+    // Now normalize the payload. Prefer data.data when success:true
+    let list = [];
+    if (Array.isArray(data)) list = data;
+    else if (Array.isArray(data.data)) list = data.data;
+    else if (Array.isArray(data.contacts)) list = data.contacts;
+    else if (Array.isArray(data.items)) list = data.items;
+    else if (
+      data.data &&
+      typeof data.data === "object" &&
+      Array.isArray(data.data.messages)
+    )
+      list = data.data.messages;
+    else list = [];
+
+    messages = list;
     renderMessages(messages);
   } catch (e) {
     console.error("Failed to load messages", e);

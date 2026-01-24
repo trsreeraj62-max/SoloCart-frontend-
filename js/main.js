@@ -362,6 +362,44 @@ window.addToCart = async function (productId, quantity = 1) {
 document.addEventListener("DOMContentLoaded", () => {
   updateAuthUI();
   updateCartBadge();
+  // If an avatar was persisted from profile update, apply it immediately
+  try {
+    const storedAvatar = localStorage.getItem("profile_avatar");
+    if (storedAvatar) {
+      document
+        .querySelectorAll(".profile-avatar, .user-avatar")
+        .forEach((img) => {
+          try {
+            img.src = storedAvatar;
+          } catch (e) {}
+        });
+      const sidebar = document.getElementById("user-profile-circle");
+      if (sidebar) {
+        sidebar.src = storedAvatar;
+        sidebar.classList.remove("hidden");
+      }
+    }
+
+    // Listen for avatar updates dispatched by profile page
+    window.addEventListener("avatarUpdated", (e) => {
+      const url = e && e.detail ? e.detail : null;
+      if (!url) return;
+      document
+        .querySelectorAll(".profile-avatar, .user-avatar")
+        .forEach((img) => {
+          try {
+            img.src = url;
+          } catch (err) {}
+        });
+      const sidebar = document.getElementById("user-profile-circle");
+      if (sidebar) {
+        sidebar.src = url;
+        sidebar.classList.remove("hidden");
+      }
+    });
+  } catch (err) {
+    console.warn("Avatar hydration failed:", err);
+  }
   // Delegate add-to-cart clicks for elements using data-add-to-cart
   document.body.addEventListener("click", async (e) => {
     const el = e.target.closest && e.target.closest("[data-add-to-cart]");

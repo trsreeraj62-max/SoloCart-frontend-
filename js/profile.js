@@ -190,6 +190,52 @@ function setupEventListeners() {
             try {
               updateHeaderProfileImage();
             } catch (e) {}
+
+            // Persist avatar URL separately for quick global access and update all avatar elements
+            try {
+              const stored = JSON.parse(
+                localStorage.getItem("user_profile") || "null",
+              );
+              let avatar =
+                stored &&
+                (stored.profile_image || stored.avatar || stored.image_url)
+                  ? stored.profile_image || stored.avatar || stored.image_url
+                  : null;
+              if (avatar) {
+                const backendBase = CONFIG.API_BASE_URL.replace(
+                  /\/api\/?$/i,
+                  "",
+                );
+                if (!/^https?:\/\//i.test(avatar))
+                  avatar = `${backendBase}/${String(avatar).replace(/^\//, "")}`;
+                avatar = String(avatar).replace(/^http:/, "https:");
+                localStorage.setItem("profile_avatar", avatar);
+                // update all possible avatar elements used in the app
+                document
+                  .querySelectorAll(".profile-avatar, .user-avatar")
+                  .forEach((img) => {
+                    try {
+                      img.src = avatar;
+                    } catch (err) {}
+                  });
+                const sidebarImg = document.getElementById(
+                  "user-profile-circle",
+                );
+                if (sidebarImg) {
+                  sidebarImg.src = avatar;
+                  sidebarImg.classList.remove("hidden");
+                }
+
+                // Broadcast event for other listeners
+                try {
+                  window.dispatchEvent(
+                    new CustomEvent("avatarUpdated", { detail: avatar }),
+                  );
+                } catch (err) {}
+              }
+            } catch (err) {
+              console.warn("Could not persist profile avatar:", err);
+            }
           } else {
             if (window.showToast)
               window.showToast("Profile updated", "success");
