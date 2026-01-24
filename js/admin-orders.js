@@ -47,86 +47,191 @@ async function fetchOrders() {
 function renderOrders(orders) {
   const table = document.getElementById("admin-orders-table");
   if (!table || !Array.isArray(orders)) return;
-
-  table.innerHTML = orders
-    .map((o) => {
-      let actionButtons = "";
-      if (o.status === "pending") {
-        actionButtons = `
-                <button class="action-btn bg-blue-100 text-blue-600 hover:bg-blue-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-wide" data-id="${o.id}" data-action="processing">Approve</button>
-                <button class="action-btn bg-rose-100 text-rose-600 hover:bg-rose-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-wide ml-2" data-id="${o.id}" data-action="cancelled">Cancel</button>
-            `;
-      } else if (o.status === "processing") {
-        actionButtons = `
-                <button class="action-btn bg-purple-100 text-purple-600 hover:bg-purple-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-wide" data-id="${o.id}" data-action="shipped">Ship Order</button>
-            `;
-      } else if (o.status === "shipped") {
-        actionButtons = `
-                <button class="action-btn bg-green-100 text-green-600 hover:bg-green-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-wide" data-id="${o.id}" data-action="delivered">Mark Delivered</button>
-            `;
-      } else {
-        actionButtons = `<span class="text-xs text-slate-400 font-medium italic">No actions available</span>`;
-      }
-
-      return `
+  // Build rows at product-item level so admin sees what was ordered
+  const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
+  const rows = [];
+  orders.forEach((o) => {
+    const items = Array.isArray(o.items) ? o.items : [];
+    if (items.length === 0) {
+      // fallback single row when no items present
+      const statusBadge = getStatusBadge(o.status);
+      const actionButtons = buildActionButtons(o.id, o.status);
+      rows.push(`
         <tr class="hover:bg-slate-50 transition-colors">
-            <td class="px-6 py-4 font-black italic text-[#2874f0]">#${o.order_number || o.id}</td>
-            <td class="px-6 py-4">
-                <span class="block font-bold">${o.user?.name || "Customer"}</span>
-                <span class="text-[10px] text-slate-400 font-bold uppercase">${o.user?.email || "--"}</span>
-            </td>
-            <td class="px-6 py-4 font-black">₹${Number(o.total_amount || 0).toLocaleString()}</td>
-            <td class="px-6 py-4">
-                 <span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest ${
-                   o.status === "delivered"
-                     ? "bg-green-100 text-green-600"
-                     : o.status === "cancelled"
-                       ? "bg-rose-100 text-rose-600"
-                       : o.status === "shipped"
-                         ? "bg-purple-100 text-purple-600"
-                         : "bg-slate-100 text-slate-600"
-                 }">
-                    ${o.status}
-                </span>
-            </td>
-            <td class="px-6 py-4 text-slate-400 text-xs">${o.created_at ? new Date(o.created_at).toLocaleDateString() : "--"}</td>
-            <td class="px-6 py-4 text-right">
-                ${actionButtons}
-            </td>
+          <td class="px-6 py-4 font-black italic text-[#2874f0]">#${o.order_number || o.id}</td>
+          <td class="px-6 py-4">—</td>
+          <td class="px-6 py-4"><img src="https://placehold.co/80x80?text=No+Image" class="w-12 h-12 object-contain"/></td>
+          <td class="px-6 py-4">—</td>
+          <td class="px-6 py-4 font-black">₹${Number(o.total_amount || 0).toLocaleString()}</td>
+          <td class="px-6 py-4">${statusBadge}</td>
+          <td class="px-6 py-4 text-right">${actionButtons}</td>
         </tr>
-    `;
-    })
-    .join("");
+      `);
+    } else {
+      items.forEach((item) => {
+        const product = item.product || {};
+        const productName = product.name || item.name || "Unnamed";
+        const price = Number(item.price || product.price || 0).toLocaleString();
+        const imageUrl = product.image_url
+          ? String(product.image_url).replace(/^http:/, "https:")
+          : product.image
+            ? `${backendBase}/storage/${product.image}`
+            : "https://placehold.co/80x80?text=No+Image";
 
-  // Re-bind events
-  table.querySelectorAll(".action-btn").forEach((btn) => {
-    btn.addEventListener("click", () =>
-      updateStatus(btn.dataset.id, btn.dataset.action),
-    );
+        const statusBadge = getStatusBadge(o.status);
+        const actionButtons = buildActionButtons(o.id, o.status);
+
+        rows.push(`
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-6 py-4 font-black italic text-[#2874f0]">#${o.order_number || o.id}</td>
+            <td class="px-6 py-4">${escapeHtml(productName)}</td>
+            <td class="px-6 py-4"><img src="${imageUrl}" class="w-12 h-12 object-contain" onerror="this.src='https://placehold.co/80x80?text=No+Image'"/></td>
+            <td class="px-6 py-4">₹${price}</td>
+            <td class="px-6 py-4 font-black">₹${Number(o.total_amount || 0).toLocaleString()}</td>
+            <td class="px-6 py-4">${statusBadge}</td>
+            <td class="px-6 py-4 text-right">${actionButtons}</td>
+          </tr>
+        `);
+      });
+    }
   });
+
+  table.innerHTML = rows.join("");
+
+  // Re-bind events with safe async handlers (disable while running)
+  table.querySelectorAll(".action-btn").forEach((btn) => {
+    btn.addEventListener("click", async (evt) => {
+      evt.preventDefault();
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+      if (!id || !action) return;
+      if (!confirm(`Update order status to ${action}?`)) return;
+      try {
+        btn.disabled = true;
+        const prev = btn.innerText;
+        btn.innerText = "Working...";
+        await updateStatus(id, action);
+        btn.innerText = prev;
+      } catch (err) {
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function getStatusBadge(status) {
+    const s = String(status || "").toLowerCase();
+    if (s === "delivered")
+      return `<span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest bg-green-100 text-green-600">DELIVERED</span>`;
+    if (s === "cancelled")
+      return `<span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest bg-rose-100 text-rose-600">CANCELLED</span>`;
+    if (s === "shipped")
+      return `<span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest bg-purple-100 text-purple-600">SHIPPED</span>`;
+    if (s === "approved" || s === "processing")
+      return `<span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest bg-blue-100 text-blue-600">APPROVED</span>`;
+    if (s === "pending")
+      return `<span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest bg-orange-100 text-orange-600">PENDING</span>`;
+    return `<span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600">${String(status || "-").toUpperCase()}</span>`;
+  }
+
+  function buildActionButtons(orderId, status) {
+    const s = String(status || "").toLowerCase();
+    const parts = [];
+    if (s === "pending") {
+      parts.push(
+        `<button class="action-btn bg-blue-100 text-blue-600 hover:bg-blue-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-wide mr-2" data-id="${orderId}" data-action="approved">Approve</button>`,
+      );
+      parts.push(
+        `<button class="action-btn bg-rose-100 text-rose-600 hover:bg-rose-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-wide" data-id="${orderId}" data-action="cancelled">Cancel</button>`,
+      );
+    } else if (s === "approved" || s === "processing") {
+      parts.push(
+        `<button class="action-btn bg-purple-100 text-purple-600 hover:bg-purple-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-wide mr-2" data-id="${orderId}" data-action="shipped">Ship</button>`,
+      );
+      parts.push(
+        `<button class="action-btn bg-rose-100 text-rose-600 hover:bg-rose-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-wide" data-id="${orderId}" data-action="cancelled">Cancel</button>`,
+      );
+    } else if (s === "shipped") {
+      parts.push(
+        `<button class="action-btn bg-green-100 text-green-600 hover:bg-green-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-wide" data-id="${orderId}" data-action="delivered">Deliver</button>`,
+      );
+    } else {
+      parts.push(
+        `<span class="text-xs text-slate-400 font-medium italic">No actions</span>`,
+      );
+    }
+    return parts.join("");
+  }
 }
 
 async function updateStatus(id, status) {
-  if (!confirm(`Update order status to ${status}?`)) return;
-
   try {
-    const data = await apiCall(`/admin/orders/${id}/status`, {
+    const res = await apiCall(`/admin/orders/${id}/status`, {
       method: "POST",
       body: JSON.stringify({ status }),
+      requireAuth: true,
     });
 
-    if (data && (data.success || !data.message?.includes("fail"))) {
+    // HTTP-level errors returned by apiCall
+    if (res && res.statusCode === 401) {
+      console.error("Unauthorized while updating order", res);
+      try {
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user_data");
+      } catch (e) {}
+      window.location.href = "/login.html";
+      return;
+    }
+
+    if (res && res.statusCode === 422) {
+      console.error("Validation errors:", res.raw || res);
+      try {
+        const parsed =
+          typeof res.raw === "string" ? JSON.parse(res.raw) : res.raw;
+        console.error(parsed.errors || parsed.message || parsed);
+      } catch (err) {}
+      if (window.showToast) window.showToast("Validation error", "error");
+      return;
+    }
+
+    // Application-level success
+    if (res && (res.success || res.order || (res.data && res.data.order))) {
       if (window.showToast) window.showToast(`Order updated to ${status}`);
-      // Update local state and re-render
       const order = currentOrders.find((o) => o.id == id);
       if (order) order.status = status;
       renderOrders(currentOrders);
-    } else {
-      throw new Error("Server returned failure");
+      return;
     }
+
+    // If backend returned structured errors
+    if (res && res.errors) {
+      console.error("Validation errors:", res.errors);
+      if (window.showToast) window.showToast("Validation error", "error");
+      return;
+    }
+
+    if (res && res.message) {
+      console.error("Update failed:", res.message, res);
+      if (window.showToast) window.showToast(res.message, "error");
+      return;
+    }
+
+    console.error("Unknown response from status update", res);
+    if (window.showToast) window.showToast("Failed to update status", "error");
   } catch (e) {
     console.error("Failed to update status", e);
-    if (window.showToast) window.showToast("Failed to update status", "error");
+    if (window.showToast)
+      window.showToast("Network error while updating order", "error");
   }
 }
 

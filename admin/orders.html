@@ -1,88 +1,175 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Manage Orders — SoloCart Admin</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --fk-blue: #2874f0; --fk-bg: #f8fafc; }
-        body { background-color: var(--fk-bg); font-family: 'Inter', sans-serif; }
-        .sidebar { width: 260px; height: 100vh; position: fixed; left: 0; top: 0; background: #1e293b; color: white; }
-        .main-content { margin-left: 260px; padding: 2rem; }
+      :root {
+        --fk-blue: #2874f0;
+        --fk-bg: #f8fafc;
+      }
+      body {
+        background-color: var(--fk-bg);
+        font-family: "Inter", sans-serif;
+      }
+      .sidebar {
+        width: 260px;
+        height: 100vh;
+        position: fixed;
+        left: 0;
+        top: 0;
+        background: #1e293b;
+        color: white;
+      }
+      .main-content {
+        margin-left: 260px;
+        padding: 2rem;
+      }
     </style>
-</head>
-<body>
-    <div id="toast-container" class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"></div>
+  </head>
+  <body>
+    <div
+      id="toast-container"
+      class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"
+    ></div>
 
     <aside class="sidebar p-6 flex flex-col">
-        <div class="mb-10"><h1 class="text-2xl font-black italic tracking-tighter text-white">SoloCart <span class="text-[#2874f0]">Admin</span></h1></div>
-        <nav class="flex-grow space-y-2">
-            <a href="/admin/dashboard.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline"><i class="fas fa-chart-line"></i> Dashboard</a>
-            <a href="/admin/products.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline"><i class="fas fa-box-open"></i> Products</a>
-            <a href="/admin/orders.html" class="flex items-center gap-3 px-4 py-3 bg-[#2874f0] text-white rounded-lg text-sm font-bold no-underline"><i class="fas fa-shopping-bag"></i> Orders</a>
-            <a href="/admin/users.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline"><i class="fas fa-users"></i> Users</a>
-            <a href="/admin/banners.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline"><i class="fas fa-image"></i> Banners</a>
-        </nav>
+      <div class="mb-10">
+        <h1 class="text-2xl font-black italic tracking-tighter text-white">
+          SoloCart <span class="text-[#2874f0]">Admin</span>
+        </h1>
+      </div>
+      <nav class="flex-grow space-y-2">
+        <a
+          href="/admin/dashboard.html"
+          class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline"
+          ><i class="fas fa-chart-line"></i> Dashboard</a
+        >
+        <a
+          href="/admin/products.html"
+          class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline"
+          ><i class="fas fa-box-open"></i> Products</a
+        >
+        <a
+          href="/admin/orders.html"
+          class="flex items-center gap-3 px-4 py-3 bg-[#2874f0] text-white rounded-lg text-sm font-bold no-underline"
+          ><i class="fas fa-shopping-bag"></i> Orders</a
+        >
+        <a
+          href="/admin/users.html"
+          class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline"
+          ><i class="fas fa-users"></i> Users</a
+        >
+        <a
+          href="/admin/banners.html"
+          class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-sm font-bold no-underline"
+          ><i class="fas fa-image"></i> Banners</a
+        >
+      </nav>
     </aside>
 
     <main class="main-content">
-        <div class="flex justify-between items-center mb-10">
-            <div>
-                <h2 class="text-2xl font-black text-slate-800 tracking-tighter">Order Transmissions</h2>
-                <p class="text-sm font-medium text-slate-400 uppercase tracking-widest">Global Acquisition Log</p>
-            </div>
+      <div class="flex justify-between items-center mb-10">
+        <div>
+          <h2 class="text-2xl font-black text-slate-800 tracking-tighter">
+            Order Transmissions
+          </h2>
+          <p
+            class="text-sm font-medium text-slate-400 uppercase tracking-widest"
+          >
+            Global Acquisition Log
+          </p>
+        </div>
+      </div>
+
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"
+      >
+        <div class="p-6 border-b border-slate-50 flex gap-4">
+          <div class="relative flex-grow">
+            <input
+              type="text"
+              id="order-search"
+              placeholder="Search by Order ID or User..."
+              class="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm outline-none"
+            />
+            <i class="fas fa-search absolute left-3 top-2.5 text-slate-400"></i>
+          </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="p-6 border-b border-slate-50 flex gap-4">
-                <div class="relative flex-grow">
-                    <input type="text" id="order-search" placeholder="Search by Order ID or User..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm outline-none">
-                    <i class="fas fa-search absolute left-3 top-2.5 text-slate-400"></i>
-                </div>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                        <tr>
-                            <th class="px-6 py-4">Order ID</th>
-                            <th class="px-6 py-4">Customer</th>
-                            <th class="px-6 py-4">Total Value</th>
-                            <th class="px-6 py-4">Status</th>
-                            <th class="px-6 py-4">Signal Date</th>
-                            <th class="px-6 py-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50 text-sm font-medium" id="admin-orders-table">
-                        <!-- Loaded via JS -->
-                    </tbody>
-                </table>
-            </div>
-             <div id="pagination" class="p-4 bg-slate-50 flex justify-center gap-2"></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead
+              class="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400"
+            >
+              <tr>
+                <th class="px-6 py-4">Order ID</th>
+                <th class="px-6 py-4">Product Name</th>
+                <th class="px-6 py-4">Product Image</th>
+                <th class="px-6 py-4">Price</th>
+                <th class="px-6 py-4">Total Amount</th>
+                <th class="px-6 py-4">Order Status</th>
+                <th class="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody
+              class="divide-y divide-slate-50 text-sm font-medium"
+              id="admin-orders-table"
+            >
+              <!-- Loaded via JS -->
+            </tbody>
+          </table>
         </div>
+        <div
+          id="pagination"
+          class="p-4 bg-slate-50 flex justify-center gap-2"
+        ></div>
+      </div>
     </main>
 
     <!-- Order Detail Modal -->
-    <div id="orderModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-[2000] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div class="p-6 border-b flex justify-between items-center sticky top-0 bg-white">
-                <h3 class="text-lg font-black italic">Detailed Signal Log: <span id="modal-order-number">?</span></h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-rose-500"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="p-8" id="modal-content">
-                <!-- Loaded via JS -->
-            </div>
+    <div
+      id="orderModal"
+      class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-[2000] flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+      >
+        <div
+          class="p-6 border-b flex justify-between items-center sticky top-0 bg-white"
+        >
+          <h3 class="text-lg font-black italic">
+            Detailed Signal Log: <span id="modal-order-number">?</span>
+          </h3>
+          <button
+            onclick="closeModal()"
+            class="text-slate-400 hover:text-rose-500"
+          >
+            <i class="fas fa-times"></i>
+          </button>
         </div>
+        <div class="p-8" id="modal-content">
+          <!-- Loaded via JS -->
+        </div>
+      </div>
     </div>
 
     <script type="module" src="/js/admin-orders.js"></script>
     <script>
-        window.closeModal = () => document.getElementById('orderModal').classList.add('hidden');
+      window.closeModal = () =>
+        document.getElementById("orderModal").classList.add("hidden");
     </script>
-</body>
+  </body>
 </html>
