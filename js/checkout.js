@@ -36,7 +36,8 @@ async function fetchCartOnce() {
         setTimeout(() => (window.location.href = "/login.html"), 300);
         return;
       }
-      if (window.showToast) window.showToast(data?.message || "Failed to load cart", "error");
+      if (window.showToast)
+        window.showToast(data?.message || "Failed to load cart", "error");
       return;
     }
 
@@ -46,8 +47,10 @@ async function fetchCartOnce() {
     let items = [];
     if (Array.isArray(data)) items = data;
     else if (Array.isArray(data.items)) items = data.items;
-    else if (data.data && Array.isArray(data.data.items)) items = data.data.items;
-    else if (data.cart && Array.isArray(data.cart.items)) items = data.cart.items;
+    else if (data.data && Array.isArray(data.data.items))
+      items = data.data.items;
+    else if (data.cart && Array.isArray(data.cart.items))
+      items = data.cart.items;
     else if (Array.isArray(data.data)) items = data.data;
     else items = data.items || data.data || [];
 
@@ -102,15 +105,31 @@ function renderPriceDetails(data) {
   const grandEl = document.getElementById("grand-total");
 
   // Prefer common backend keys; fallbacks are only for compatibility with different API shapes
-  const totalItems = data.total_items || data.items?.length || data.cart?.total_items || 0;
-  const totalMrp = data.total_mrp || data.mrp_total || data.cart?.total_mrp || data.subtotal || data.total_mrp || 0;
-  const totalPrice = data.total_price || data.total || data.grand_total || data.total_amount || data.cart?.total_price || 0;
-  const discount = (totalMrp && totalPrice) ? (totalMrp - totalPrice) : null;
+  const totalItems =
+    data.total_items || data.items?.length || data.cart?.total_items || 0;
+  const totalMrp =
+    data.total_mrp ||
+    data.mrp_total ||
+    data.cart?.total_mrp ||
+    data.subtotal ||
+    data.total_mrp ||
+    0;
+  const totalPrice =
+    data.total_price ||
+    data.total ||
+    data.grand_total ||
+    data.total_amount ||
+    data.cart?.total_price ||
+    0;
+  const discount = totalMrp && totalPrice ? totalMrp - totalPrice : null;
 
   if (countEl) countEl.innerText = totalItems;
   if (mrpEl) mrpEl.innerText = `₹${Number(totalMrp || 0).toLocaleString()}`;
-  if (discEl) discEl.innerText = discount !== null ? `- ₹${Number(discount).toLocaleString()}` : `- ₹0`;
-  if (grandEl) grandEl.innerText = `₹${Number(totalPrice || 0).toLocaleString()}`;
+  if (discEl)
+    discEl.innerText =
+      discount !== null ? `- ₹${Number(discount).toLocaleString()}` : `- ₹0`;
+  if (grandEl)
+    grandEl.innerText = `₹${Number(totalPrice || 0).toLocaleString()}`;
 }
 
 function renderCartItems(items) {
@@ -122,7 +141,8 @@ function renderCartItems(items) {
       const product = item.product || item.product_data || item || {};
       const qty = item.quantity || item.qty || item.quantity || 1;
       const priceLabel = item.unit_price || item.price || product.price || null;
-      const subtotalLabel = item.subtotal || item.line_total || item.total || null; // must be provided by backend
+      const subtotalLabel =
+        item.subtotal || item.line_total || item.total || null; // must be provided by backend
       const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
       const imageUrl = product.image_url
         ? String(product.image_url).replace(/^http:/, "https:")
@@ -139,7 +159,7 @@ function renderCartItems(items) {
                 <div class="flex justify-between items-start">
                   <div>
                     <h4 class="text-xs font-bold text-slate-800 line-clamp-1">${product.name || product.title || "Unavailable"}</h4>
-                    <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">${priceLabel ? `₹${Number(priceLabel).toLocaleString()}` : 'Price Unavailable'}</div>
+                    <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">${priceLabel ? `₹${Number(priceLabel).toLocaleString()}` : "Price Unavailable"}</div>
                   </div>
                   <div class="text-right">
                     <div class="flex items-center gap-2">
@@ -147,7 +167,7 @@ function renderCartItems(items) {
                       <input class="qty-input w-10 text-center" data-product-id="${product.id}" data-item-id="${item.id}" value="${qty}" readonly>
                       <button class="qty-btn plus px-2 py-1 text-slate-400 border" data-product-id="${product.id}" data-item-id="${item.id}">+</button>
                     </div>
-                    <div class="text-sm font-black mt-2">Subtotal: <span class="item-subtotal">${subtotalLabel ? `₹${Number(subtotalLabel).toLocaleString()}` : '—'}</span></div>
+                    <div class="text-sm font-black mt-2">Subtotal: <span class="item-subtotal">${subtotalLabel ? `₹${Number(subtotalLabel).toLocaleString()}` : "—"}</span></div>
                   </div>
                 </div>
             </div>
@@ -157,78 +177,102 @@ function renderCartItems(items) {
     .join("");
 
   // Attach qty handlers: call /cart/update and then re-fetch cart once
-  container.querySelectorAll('.qty-btn.plus').forEach((btn) => {
-    btn.addEventListener('click', async (e) => {
+  container.querySelectorAll(".qty-btn.plus").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
       const pid = btn.dataset.productId;
       const itemId = btn.dataset.itemId;
-      const input = container.querySelector(`.qty-input[data-item-id="${itemId}"]`);
+      const input = container.querySelector(
+        `.qty-input[data-item-id="${itemId}"]`,
+      );
       const current = Number(input?.value || 1);
       const newQty = current + 1;
       btn.disabled = true;
       try {
         const payload = { product_id: pid, quantity: newQty };
         if (itemId) payload.item_id = itemId;
-        const res = await apiCall('/cart/update', { method: 'POST', body: JSON.stringify(payload), requireAuth: true });
+        const res = await apiCall("/cart/update", {
+          method: "POST",
+          body: JSON.stringify(payload),
+          requireAuth: true,
+        });
         if (res && res.success !== false) {
           await fetchCartOnce();
         } else {
-          if (window.showToast) window.showToast(res?.message || 'Failed to update cart', 'error');
+          if (window.showToast)
+            window.showToast(res?.message || "Failed to update cart", "error");
         }
       } catch (err) {
-        console.error('Qty update failed', err);
-      } finally { btn.disabled = false; }
+        console.error("Qty update failed", err);
+      } finally {
+        btn.disabled = false;
+      }
     });
   });
 
-  container.querySelectorAll('.qty-btn.minus').forEach((btn) => {
-    btn.addEventListener('click', async (e) => {
+  container.querySelectorAll(".qty-btn.minus").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
       const pid = btn.dataset.productId;
       const itemId = btn.dataset.itemId;
-      const input = container.querySelector(`.qty-input[data-item-id="${itemId}"]`);
+      const input = container.querySelector(
+        `.qty-input[data-item-id="${itemId}"]`,
+      );
       const current = Number(input?.value || 1);
       const newQty = Math.max(1, current - 1);
       btn.disabled = true;
       try {
         const payload = { product_id: pid, quantity: newQty };
         if (itemId) payload.item_id = itemId;
-        const res = await apiCall('/cart/update', { method: 'POST', body: JSON.stringify(payload), requireAuth: true });
+        const res = await apiCall("/cart/update", {
+          method: "POST",
+          body: JSON.stringify(payload),
+          requireAuth: true,
+        });
         if (res && res.success !== false) {
           await fetchCartOnce();
         } else {
-          if (window.showToast) window.showToast(res?.message || 'Failed to update cart', 'error');
+          if (window.showToast)
+            window.showToast(res?.message || "Failed to update cart", "error");
         }
       } catch (err) {
-        console.error('Qty update failed', err);
-      } finally { btn.disabled = false; }
+        console.error("Qty update failed", err);
+      } finally {
+        btn.disabled = false;
+      }
     });
   });
 
   // Attach remove handlers
-  container.querySelectorAll('.remove-btn').forEach((btn) => {
-    btn.addEventListener('click', async (e) => {
+  container.querySelectorAll(".remove-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
       const pid = btn.dataset.productId;
       const itemId = btn.dataset.itemId;
-      if (!confirm('Are you sure you want to remove this item?')) return;
+      if (!confirm("Are you sure you want to remove this item?")) return;
       btn.disabled = true;
       try {
         const payload = {};
         if (pid) payload.product_id = pid;
         if (itemId) payload.item_id = itemId;
-        const res = await apiCall('/cart/remove', { method: 'POST', body: JSON.stringify(payload), requireAuth: true });
+        const res = await apiCall("/cart/remove", {
+          method: "POST",
+          body: JSON.stringify(payload),
+          requireAuth: true,
+        });
         if (res && res.success !== false) {
-          if (window.showToast) window.showToast('Item removed');
+          if (window.showToast) window.showToast("Item removed");
           await fetchCartOnce();
-          await import('./main.js').then(m=>m.updateCartBadge());
+          await import("./main.js").then((m) => m.updateCartBadge());
         } else {
-          if (window.showToast) window.showToast(res?.message || 'Failed to remove item', 'error');
+          if (window.showToast)
+            window.showToast(res?.message || "Failed to remove item", "error");
           btn.disabled = false;
         }
       } catch (err) {
-        console.error('Remove failed', err);
+        console.error("Remove failed", err);
         btn.disabled = false;
       }
     });
   });
+}
 
 function setupEventListeners() {
   // Address Form
