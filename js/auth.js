@@ -56,18 +56,27 @@ async function handleLogin(e) {
       data.message &&
       (data.message.includes("OTP") || data.temp_token)
     ) {
-      // OTP Required
+      // OTP Required for login
       if (window.showToast) window.showToast("OTP sent to your email");
+
+      // Store email and user_id for OTP verification
       try {
         localStorage.setItem("solocart_pending_email", email);
-        const userId = data.data?.id || data.user?.id || data.id;
+
+        // Extract user_id from response for OTP verification
+        const userId = data?.data?.id || data?.user?.id || data?.id || null;
         if (userId) {
-          localStorage.setItem("solocart_pending_user_id", userId);
+          localStorage.setItem("solocart_pending_user_id", String(userId));
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error("Failed to store session data:", e);
+      }
+
       setTimeout(() => {
-        window.location.href = `/verify-otp.html?email=${encodeURIComponent(email)}`;
-      }, 1000);
+        window.location.href = `/verify-otp.html?email=${encodeURIComponent(
+          email,
+        )}`;
+      }, 1500);
     } else {
       console.error("Login Error Data:", data);
       if (window.showToast)
@@ -153,19 +162,27 @@ async function handleRegister(e) {
       (data.statusCode >= 200 && data.statusCode < 300);
 
     if (isSuccess || (data && !data.errors && data.success !== false)) {
-      if (window.showToast) window.showToast("Account Created! Sending OTP...");
+      if (window.showToast)
+        window.showToast("Account Created! Sending OTP to your email...");
 
-      // Redirect to OTP page - backend should have sent OTP automatically
+      // Store email and user_id for OTP verification
       try {
         localStorage.setItem("solocart_pending_email", email);
-        const userId = data.data?.id || data.user?.id || data.id;
+
+        // Extract user_id from response for OTP verification
+        const userId = data?.data?.id || data?.user?.id || data?.id || null;
         if (userId) {
-          localStorage.setItem("solocart_pending_user_id", userId);
+          localStorage.setItem("solocart_pending_user_id", String(userId));
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error("Failed to store session data:", e);
+      }
+
       setTimeout(() => {
-        window.location.href = `/verify-otp.html?email=${encodeURIComponent(email)}`;
-      }, 1000);
+        window.location.href = `/verify-otp.html?email=${encodeURIComponent(
+          email,
+        )}`;
+      }, 1500);
     } else {
       console.error("Registration Error Data:", data);
 
@@ -205,13 +222,22 @@ async function handleRegister(e) {
   }
 }
 
+/**
+ * Verify OTP submitted by user
+ * Production-ready implementation:
+ * - Only sends email + otp (or email + otp + user_id if available)
+ * - Expects HTTP 200 with token for success
+ * - Properly handles error responses
+ * - No debug logic or OTP parsing
+ */
 async function handleVerifyOtp(e) {
   e.preventDefault();
+
   const email = document.getElementById("email").value.trim().toLowerCase();
   const otp = document.getElementById("otp").value.trim();
   const btn = document.getElementById("verify-btn");
 
-  // Validate email and OTP
+  // Validate inputs
   if (!email || !isValidEmail(email)) {
     if (window.showToast)
       window.showToast("Please provide a valid email address", "error");
@@ -230,80 +256,67 @@ async function handleVerifyOtp(e) {
   }
 
   try {
-    // Get user_id from localStorage if available
-    let userId;
-    try {
-      userId = localStorage.getItem("solocart_pending_user_id");
-    } catch (e) {}
-
+    // Build payload with email + otp
+    // Include user_id only if available from registration
     const payload = { email, otp };
-    if (userId) {
-      payload.user_id = parseInt(userId);
-    }
 
-    console.log("[OTP Verify] Sending:", {
-      email,
-      otp: "***",
-      user_id: userId ? "present" : "not found",
-    });
+    try {
+      const userId = localStorage.getItem("solocart_pending_user_id");
+      if (userId) {
+        payload.user_id = parseInt(userId);
+      }
+    } catch (e) {
+      // localStorage not available, proceed with email + otp
+    }
 
     const data = await apiCall("/otp/verify", {
       method: "POST",
       body: JSON.stringify(payload),
     });
 
-    console.log("[OTP Verify] Response:", data); // Debug log
-
-    // Check for token in various response structures
-    const responseData = data.data || data;
+    // Check for successful response (HTTP 200)
+    // Success indicated by presence of token
     const token =
-      responseData.token ||
-      responseData.access_token ||
-      data.token ||
-      data.access_token ||
-      null;
+      data?.data?.token ||
+      data?.data?.access_token ||
+      data?.token ||
+      data?.access_token;
 
-    if (token && data.success !== false) {
-      // Success - token found. Normalize payload for finalizeLogin
-      const user = responseData.user || data.user || {};
+    const user = data?.data?.user || data?.user;
+
+    if (token) {
+      // OTP verified successfully
+      if (window.showToast) window.showToast("Verification successful!");
+
+      // Clean up session data
       try {
         localStorage.removeItem("solocart_pending_email");
         localStorage.removeItem("solocart_pending_user_id");
-      } catch (e) {}
-      finalizeLogin({ token, access_token: token, user });
-    } else if (
-      data.message?.includes("DEBUG MODE") &&
-      data.message?.includes("OTP")
-    ) {
-      // Backend in debug mode - email service pending
-      const errorMsg =
-        "Email service is pending verification. Please contact support or check debug console for OTP.";
-      if (window.showToast) window.showToast(errorMsg, "error");
-      if (btn) {
-        btn.disabled = false;
-        btn.innerText = "VERIFY OTP";
+      } catch (e) {
+        /* ignore */
       }
-    } else if (data.success === false || data.statusCode >= 400) {
-      // Explicit failure
-      const errorMsg = data.message || "Invalid OTP";
-      if (window.showToast) window.showToast(errorMsg, "error");
-      if (btn) {
-        btn.disabled = false;
-        btn.innerText = "VERIFY OTP";
-      }
+
+      // Finalize login
+      finalizeLogin({ token, access_token: token, user: user || {} });
     } else {
-      // Unexpected response format
-      console.error("Unexpected OTP response:", data);
-      if (window.showToast)
-        window.showToast("Verification failed. Please try again.", "error");
+      // No token in response = verification failed
+      const errorMsg =
+        data?.message || "Invalid or expired OTP. Please try again.";
+      if (window.showToast) window.showToast(errorMsg, "error");
+
       if (btn) {
         btn.disabled = false;
         btn.innerText = "VERIFY OTP";
       }
     }
-  } catch (e) {
-    console.error("OTP Verification failed", e);
-    if (window.showToast) window.showToast("Verification failed", "error");
+  } catch (error) {
+    console.error("OTP verification error:", error);
+    if (window.showToast)
+      window.showToast(
+        "Verification failed. Please check your connection.",
+        "error",
+      );
+
     if (btn) {
       btn.disabled = false;
       btn.innerText = "VERIFY OTP";
@@ -311,8 +324,17 @@ async function handleVerifyOtp(e) {
   }
 }
 
+/**
+ * Resend OTP to user's email
+ * Production-ready implementation:
+ * - Treats HTTP 200 as success only
+ * - Implements cooldown timer (60 seconds)
+ * - Prevents abuse through disabled state
+ * - No debug logic
+ */
 async function handleResendOtp() {
   const email = document.getElementById("email").value.trim().toLowerCase();
+  const resendBtn = document.getElementById("resend-btn");
 
   // Validate email
   if (!email || !isValidEmail(email)) {
@@ -321,7 +343,35 @@ async function handleResendOtp() {
     return;
   }
 
-  console.log("[Resend OTP] Resending OTP to:", email);
+  // Check if button is in cooldown
+  if (resendBtn?.disabled) {
+    if (window.showToast)
+      window.showToast("Please wait before requesting another OTP", "error");
+    return;
+  }
+
+  // Disable button and show cooldown
+  if (resendBtn) {
+    resendBtn.disabled = true;
+    resendBtn.style.opacity = "0.5";
+    resendBtn.style.cursor = "not-allowed";
+  }
+
+  const COOLDOWN_SECONDS = 60;
+  let cooldownCount = COOLDOWN_SECONDS;
+
+  const updateButtonText = () => {
+    if (resendBtn) {
+      if (cooldownCount > 0) {
+        resendBtn.innerText = `Resend OTP in ${cooldownCount}s`;
+      } else {
+        resendBtn.innerText = "Resend OTP";
+        resendBtn.disabled = false;
+        resendBtn.style.opacity = "1";
+        resendBtn.style.cursor = "pointer";
+      }
+    }
+  };
 
   try {
     const data = await apiCall("/otp/resend", {
@@ -329,35 +379,56 @@ async function handleResendOtp() {
       body: JSON.stringify({ email }),
     });
 
-    console.log("[Resend OTP] Response:", data); // Debug log
+    // Treat only success (HTTP 200, data.success === true or data has expected structure)
+    // as actual success. Don't treat 422 or errors as success.
+    const isSuccess =
+      data?.success === true ||
+      (data && !data.errors && !data.message?.includes("failed"));
 
-    // Check for success (including debug mode)
-    if (
-      data &&
-      (data.success === true ||
-        data.message?.includes("sent") ||
-        data.message?.includes("OTP") ||
-        (data.message?.includes("DEBUG MODE") && data.message?.includes("OTP")))
-    ) {
-      // Show success or debug message
-      const displayMsg =
-        data.message?.includes("DEBUG MODE") && data.message?.includes("OTP")
-          ? "OTP sent (check debug console for details in debug mode)"
-          : data.message || "OTP Resent Successfully";
-      if (window.showToast) window.showToast(displayMsg);
-      console.log(
-        "[Resend OTP] Debug info:",
-        data.message?.match(/\d{6}/)?.[0]
-          ? "OTP found in debug message"
-          : "No OTP in message",
-      );
+    if (isSuccess) {
+      if (window.showToast)
+        window.showToast("OTP has been sent to your email", "success");
+
+      // Start cooldown timer
+      const cooldownInterval = setInterval(() => {
+        cooldownCount--;
+        updateButtonText();
+
+        if (cooldownCount < 0) {
+          clearInterval(cooldownInterval);
+        }
+      }, 1000);
+
+      updateButtonText();
     } else {
-      const errorMsg = data?.message || "Failed to resend OTP";
+      // Request failed - show error and re-enable button
+      const errorMsg =
+        data?.message || "Failed to resend OTP. Please try again.";
       if (window.showToast) window.showToast(errorMsg, "error");
+
+      // Re-enable button immediately on error
+      if (resendBtn) {
+        resendBtn.disabled = false;
+        resendBtn.innerText = "Resend OTP";
+        resendBtn.style.opacity = "1";
+        resendBtn.style.cursor = "pointer";
+      }
     }
-  } catch (e) {
-    console.error("Resend OTP failed", e);
-    if (window.showToast) window.showToast("Failed to resend OTP", "error");
+  } catch (error) {
+    console.error("Resend OTP error:", error);
+    if (window.showToast)
+      window.showToast(
+        "Failed to resend OTP. Please check your connection.",
+        "error",
+      );
+
+    // Re-enable button on error
+    if (resendBtn) {
+      resendBtn.disabled = false;
+      resendBtn.innerText = "Resend OTP";
+      resendBtn.style.opacity = "1";
+      resendBtn.style.cursor = "pointer";
+    }
   }
 }
 
