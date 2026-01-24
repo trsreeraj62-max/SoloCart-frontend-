@@ -29,9 +29,7 @@
       <h1 class="text-2xl font-black text-slate-800 mb-2">
         Payment Successful!
       </h1>
-      <p class="text-slate-500 mb-8 font-medium">
-        Your order has been placed and payment was received.
-      </p>
+      <div id="payment-status" class="mb-8"></div>
       <div class="space-y-3">
         <a
           href="/"
@@ -44,6 +42,19 @@
           >View My Orders</a
         >
       </div>
+      <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          const method = sessionStorage.getItem("lastPaymentMethod") || "cod";
+          const statusDiv = document.getElementById("payment-status");
+          if (method === "cod") {
+            statusDiv.innerHTML =
+              '<div class="text-rose-600 font-bold text-lg flex items-center justify-center gap-2"><i class="fa-solid fa-money-bill-wave"></i> Payment Pending (Cash on Delivery)</div>';
+          } else {
+            statusDiv.innerHTML =
+              '<div class="text-green-600 font-bold text-lg flex items-center justify-center gap-2"><i class="fa-solid fa-circle-check"></i> Payment Received</div>';
+          }
+        });
+      </script>
     </div>
   </body>
 </html>

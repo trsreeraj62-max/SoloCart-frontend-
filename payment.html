@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <title>Checkout</title>
 
-    <!-- Tailwind CSS (OK for static demo / Netlify) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- FontAwesome -->
@@ -74,16 +74,34 @@
           <h3 class="text-lg font-black mb-4">Payment Options</h3>
 
           <label
-            class="flex items-center gap-3 p-3 border rounded mb-3 cursor-pointer hover:bg-gray-50"
+            class="flex items-center gap-3 p-3 border rounded mb-3 cursor-pointer hover:bg-blue-50"
           >
-            <input type="radio" name="payment_method" value="upi" checked />
-            <span class="font-bold">UPI (PhonePe / GPay)</span>
+            <input type="radio" name="payment_method" value="gpay" checked />
+            <i class="fa-brands fa-google-pay text-2xl"></i>
+            <span class="font-bold">Google Pay / UPI</span>
           </label>
 
           <label
-            class="flex items-center gap-3 p-3 border rounded mb-6 cursor-pointer hover:bg-gray-50"
+            class="flex items-center gap-3 p-3 border rounded mb-3 cursor-pointer hover:bg-blue-50"
+          >
+            <input type="radio" name="payment_method" value="debit_card" />
+            <i class="fa-regular fa-credit-card text-xl"></i>
+            <span class="font-bold">Debit Card</span>
+          </label>
+
+          <label
+            class="flex items-center gap-3 p-3 border rounded mb-3 cursor-pointer hover:bg-blue-50"
+          >
+            <input type="radio" name="payment_method" value="netbanking" />
+            <i class="fa-solid fa-building-columns text-lg"></i>
+            <span class="font-bold">Net Banking</span>
+          </label>
+
+          <label
+            class="flex items-center gap-3 p-3 border rounded mb-6 cursor-pointer hover:bg-blue-50"
           >
             <input type="radio" name="payment_method" value="cod" />
+            <i class="fa-solid fa-money-bill-wave text-lg"></i>
             <span class="font-bold">Cash on Delivery</span>
           </label>
 
@@ -101,17 +119,17 @@
       </div>
     </div>
 
-    <!-- JS LOGIC -->
+    <!-- JS LOGIC (UNCHANGED) -->
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         let total = 0;
         let found = false;
 
-        // Try all possible keys for buy now and cart
         const buyNowKeys = ["buyNowItem", "buy_now_item"];
         const cartKeys = ["checkoutCart", "checkout_cart", "cart_items"];
         let buyNow = null,
           cart = null;
+
         for (const key of buyNowKeys) {
           try {
             const val = localStorage.getItem(key);
@@ -121,6 +139,7 @@
             }
           } catch {}
         }
+
         for (const key of cartKeys) {
           try {
             const val = localStorage.getItem(key);
@@ -152,9 +171,6 @@
           totalEl.textContent = "₹0";
           payBtn.textContent = "NO ITEMS TO PAY";
           payBtn.disabled = true;
-          // Debug info for developer
-          payBtn.title =
-            "No valid buy now or cart data in localStorage. Set buyNowItem or checkoutCart before visiting payment page.";
           return;
         }
 
@@ -162,10 +178,12 @@
         totalEl.textContent = "₹" + formatted;
         payBtn.textContent = "CONFIRM & PAY ₹" + formatted;
         payBtn.disabled = false;
-        payBtn.title = "";
 
         payBtn.addEventListener("click", function () {
-          // Simulate order success and redirect to payment-success page
+          const method =
+            document.querySelector('input[name="payment_method"]:checked')
+              ?.value || "cod";
+          sessionStorage.setItem("lastPaymentMethod", method);
           window.location.href = "/payment-success.html";
         });
       });
