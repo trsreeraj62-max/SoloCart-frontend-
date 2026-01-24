@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <title>Checkout</title>
 
-    <!-- Tailwind CDN (OK for now) -->
+    <!-- Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- FontAwesome -->
@@ -13,6 +13,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
   </head>
+
   <body class="bg-[#f1f3f6] min-h-screen">
     <div class="max-w-5xl mx-auto py-8 px-4">
       <!-- STEP INDICATOR -->
@@ -49,148 +50,85 @@
 
       <!-- MAIN GRID -->
       <div class="grid md:grid-cols-3 gap-6">
-        <!-- LEFT : ORDER SUMMARY -->
-        <div class="md:col-span-2 space-y-4">
-          <div class="bg-white border shadow-sm p-6">
-            <h2 class="text-lg font-black mb-4">ORDER SUMMARY</h2>
+        <!-- LEFT : TOTAL ONLY -->
+        <div class="md:col-span-2">
+          <div class="bg-white border shadow-sm p-6 text-center">
+            <h2
+              class="text-lg font-black mb-3 uppercase tracking-widest text-gray-700"
+            >
+              Total Payable Amount
+            </h2>
 
-            <div class="flex gap-4 border-b pb-4">
-              <img
-                src="{{ asset('storage/'.$item['image']) }}"
-                class="w-24 h-24 object-cover rounded border"
-              />
-
-              <div class="flex-1">
-                <h3 class="font-bold text-gray-800">{{ $item['name'] }}</h3>
-                <p class="text-sm text-gray-500 mt-1">
-                  Quantity: {{ $item['qty'] }}
-                </p>
-                <p class="text-sm text-green-600 font-bold mt-1">In Stock</p>
-              </div>
-
-              <div class="font-black text-lg">
-                ₹{{ number_format($item['price']) }}
-              </div>
+            <div
+              id="payment-total-amount"
+              class="text-4xl font-black text-[#2874f0]"
+            >
+              ₹0
             </div>
 
-            <div class="flex justify-between mt-4 text-lg font-black">
-              <span>Total Amount</span>
-              <span class="text-blue-600"
-                >₹{{ number_format($totalPrice) }}</span
-              >
-            </div>
-            <div id="payment-order-list" class="mb-8">
-              <!-- Product summary will be rendered here by JS. Do NOT use Blade/PHP here. -->
-            </div>
+            <p class="text-xs text-gray-400 mt-2">
+              Inclusive of all taxes & charges
+            </p>
           </div>
         </div>
 
-        <!-- RIGHT : PAYMENT -->
+        <!-- RIGHT : PAYMENT OPTIONS -->
         <div class="bg-white border shadow-sm p-6 h-fit">
-          <form action="{{ route('checkout.success.post') }}" method="POST">
-            @csrf
+          <h3 class="text-lg font-black mb-4">PAYMENT OPTIONS</h3>
 
-            <h3 class="text-lg font-black mb-4">PAYMENT OPTIONS</h3>
+          <!-- UPI -->
+          <label
+            class="flex items-center gap-3 p-3 border rounded mb-3 cursor-pointer hover:bg-gray-50"
+          >
+            <input type="radio" name="method" value="upi" checked />
+            <span class="font-bold">UPI (PhonePe / GPay)</span>
+          </label>
 
-            <!-- UPI -->
-            <label
-              class="flex items-center gap-3 p-3 border rounded mb-3 cursor-pointer hover:bg-gray-50"
-            >
-              <input type="radio" name="method" value="upi" checked />
-              <span class="font-bold">UPI (PhonePe / GPay)</span>
-            </label>
+          <!-- COD -->
+          <label
+            class="flex items-center gap-3 p-3 border rounded mb-6 cursor-pointer hover:bg-gray-50"
+          >
+            <input type="radio" name="method" value="cod" />
+            <span class="font-bold">Cash on Delivery</span>
+          </label>
 
-            <!-- COD -->
-            <label
-              class="flex items-center gap-3 p-3 border rounded mb-6 cursor-pointer hover:bg-gray-50"
-            >
-              <input type="radio" name="method" value="cod" />
-              <span class="font-bold">Cash on Delivery</span>
-            </label>
-            <div id="card-fields" class="ml-4 mt-4 hidden space-y-3">
-              <div class="relative">
-                <input
-                  id="card-number"
-                  type="text"
-                  class="w-full border p-3 rounded-lg pl-12 tracking-widest text-lg"
-                  placeholder="Card number (xxxx xxxx xxxx xxxx)"
-                  maxlength="19"
-                  autocomplete="cc-number"
-                  inputmode="numeric"
-                />
-                <span
-                  class="absolute left-3 top-1/2 -translate-y-1/2 text-[#fb641b] text-xl"
-                  ><i class="fa-regular fa-credit-card"></i
-                ></span>
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <input
-                  id="card-expiry"
-                  type="text"
-                  class="border p-3 rounded-lg"
-                  placeholder="MM/YY"
-                  maxlength="5"
-                  autocomplete="cc-exp"
-                  inputmode="numeric"
-                />
-                <input
-                  id="card-cvv"
-                  type="password"
-                  class="border p-3 rounded-lg"
-                  placeholder="CVV"
-                  maxlength="4"
-                  autocomplete="cc-csc"
-                  inputmode="numeric"
-                />
-              </div>
-              <div class="flex gap-2 mt-2">
-                <span
-                  class="bg-slate-100 px-2 py-1 rounded text-xs font-bold text-slate-500"
-                  >Visa</span
-                >
-                <span
-                  class="bg-slate-100 px-2 py-1 rounded text-xs font-bold text-slate-500"
-                  >Mastercard</span
-                >
-                <span
-                  class="bg-slate-100 px-2 py-1 rounded text-xs font-bold text-slate-500"
-                  >RuPay</span
-                >
-              </div>
-            </div>
+          <button
+            id="pay-now-btn"
+            class="w-full bg-[#fb641b] text-white py-4 font-black tracking-wider hover:bg-[#ff4500] transition"
+          >
+            CONFIRM & PAY
+          </button>
 
-            <button
-              type="submit"
-              class="w-full bg-[#fb641b] text-white py-4 font-black tracking-wider hover:bg-[#ff4500] transition"
-            >
-              CONFIRM & PAY ₹{{ number_format($totalPrice) }}
-            </button>
-
-            <p class="text-[11px] text-gray-400 text-center mt-4">
-              <i class="fas fa-lock mr-1"></i> Secure Payment
-            </p>
-            <div id="netbank-fields" class="ml-4 mt-4 hidden">
-              <select id="netbank-select" class="w-full border p-3 rounded-lg">
-                <option value="">Select Bank</option>
-                <option value="sbi">State Bank of India</option>
-                <option value="hdfc">HDFC Bank</option>
-                <option value="icici">ICICI Bank</option>
-                <option value="axis">Axis Bank</option>
-                <option value="kotak">Kotak Mahindra Bank</option>
-                <option value="bob">Bank of Baroda</option>
-                <option value="pnb">Punjab National Bank</option>
-                <option value="yes">YES Bank</option>
-                <option value="canara">Canara Bank</option>
-                <option value="idfc">IDFC FIRST Bank</option>
-                <option value="indusind">IndusInd Bank</option>
-                <option value="federal">Federal Bank</option>
-                <option value="union">Union Bank of India</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-          </form>
+          <p class="text-[11px] text-gray-400 text-center mt-4">
+            <i class="fas fa-lock mr-1"></i> Secure Payment
+          </p>
         </div>
       </div>
     </div>
+
+    <!-- PAYMENT LOGIC -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const buyNowItem = JSON.parse(localStorage.getItem("buyNowItem"));
+        const checkoutCart = JSON.parse(localStorage.getItem("checkoutCart"));
+
+        let total = 0;
+
+        if (buyNowItem) {
+          total = buyNowItem.price * (buyNowItem.quantity || 1);
+        } else if (Array.isArray(checkoutCart)) {
+          total = checkoutCart.reduce(
+            (sum, item) => sum + item.price * item.quantity,
+            0,
+          );
+        }
+
+        document.getElementById("payment-total-amount").innerText =
+          "₹" + total.toLocaleString("en-IN");
+
+        document.getElementById("pay-now-btn").innerText =
+          "CONFIRM & PAY ₹" + total.toLocaleString("en-IN");
+      });
+    </script>
   </body>
 </html>
