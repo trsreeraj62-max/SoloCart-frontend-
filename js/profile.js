@@ -110,10 +110,19 @@ export async function loadProfile() {
       avatarUrl = String(avatarUrl).replace(/^http:/, "https:");
       console.log("[Profile] Using avatar URL:", avatarUrl);
       if (profileImg) profileImg.src = avatarUrl;
+      const sidebarImg = document.getElementById("user-profile-circle");
+      if (sidebarImg) {
+        sidebarImg.src = avatarUrl;
+        sidebarImg.classList.remove("hidden");
+      }
+      if (initials) initials.classList.add("hidden");
     } else {
       if (profileImg)
         profileImg.src =
           profileImg.src || "https://placehold.co/80x80?text=Preview";
+      const sidebarImg = document.getElementById("user-profile-circle");
+      if (sidebarImg) sidebarImg.classList.add("hidden");
+      if (initials) initials.classList.remove("hidden");
     }
   } catch (e) {
     console.error("[Profile] Failed to load profile", e);
