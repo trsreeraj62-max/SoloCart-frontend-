@@ -105,40 +105,64 @@
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         let total = 0;
+        let found = false;
 
-        try {
-          const buyNow = JSON.parse(localStorage.getItem("buyNowItem"));
-          const cart = JSON.parse(localStorage.getItem("checkoutCart"));
+        // Try all possible keys for buy now and cart
+        const buyNowKeys = ["buyNowItem", "buy_now_item"];
+        const cartKeys = ["checkoutCart", "checkout_cart", "cart_items"];
+        let buyNow = null,
+          cart = null;
+        for (const key of buyNowKeys) {
+          try {
+            const val = localStorage.getItem(key);
+            if (val) {
+              buyNow = JSON.parse(val);
+              break;
+            }
+          } catch {}
+        }
+        for (const key of cartKeys) {
+          try {
+            const val = localStorage.getItem(key);
+            if (val) {
+              cart = JSON.parse(val);
+              break;
+            }
+          } catch {}
+        }
 
-          if (buyNow && typeof buyNow === "object") {
-            const price = Number(buyNow.price) || 0;
-            const qty = Number(buyNow.quantity) || 1;
-            total = price * qty;
-          } else if (Array.isArray(cart) && cart.length > 0) {
-            total = cart.reduce((sum, item) => {
-              const price = Number(item.price) || 0;
-              const qty = Number(item.quantity) || 1;
-              return sum + price * qty;
-            }, 0);
-          }
-        } catch (e) {
-          total = 0;
+        if (buyNow && typeof buyNow === "object" && buyNow.price) {
+          const price = Number(buyNow.price) || 0;
+          const qty = Number(buyNow.quantity) || 1;
+          total = price * qty;
+          found = true;
+        } else if (Array.isArray(cart) && cart.length > 0) {
+          total = cart.reduce((sum, item) => {
+            const price = Number(item.price) || 0;
+            const qty = Number(item.quantity) || 1;
+            return sum + price * qty;
+          }, 0);
+          found = true;
         }
 
         const totalEl = document.getElementById("payment-total");
         const payBtn = document.getElementById("pay-btn");
 
-        if (total <= 0) {
+        if (!found || total <= 0) {
           totalEl.textContent = "₹0";
           payBtn.textContent = "NO ITEMS TO PAY";
           payBtn.disabled = true;
+          // Debug info for developer
+          payBtn.title =
+            "No valid buy now or cart data in localStorage. Set buyNowItem or checkoutCart before visiting payment page.";
           return;
         }
 
         const formatted = total.toLocaleString("en-IN");
-
         totalEl.textContent = "₹" + formatted;
         payBtn.textContent = "CONFIRM & PAY ₹" + formatted;
+        payBtn.disabled = false;
+        payBtn.title = "";
 
         payBtn.addEventListener("click", function () {
           alert("Order confirmed. Call backend API here.");
