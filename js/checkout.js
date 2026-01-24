@@ -31,10 +31,26 @@ async function initCheckout() {
 
 function renderBuyNow() {
   const item = JSON.parse(localStorage.getItem("buy_now_item") || "null");
+  console.log("[Checkout] Buy Now item:", item);
+  
   if (!item) {
+    console.warn("[Checkout] No buy_now_item found, redirecting to cart");
     window.location.href = "/cart.html";
     return;
   }
+  
+  // Save to checkout_data
+  try {
+    const checkoutData = {
+      items: [item],
+      is_buy_now: true
+    };
+    localStorage.setItem(CHECKOUT_KEY, JSON.stringify(checkoutData));
+    console.log("[Checkout] Saved Buy Now item to checkout_data");
+  } catch (e) {
+    console.error("[Checkout] Failed to save Buy Now checkout data:", e);
+  }
+  
   const container = document.getElementById("checkout-items-list");
   if (!container) return;
   container.innerHTML = `
@@ -57,6 +73,7 @@ function renderBuyNow() {
   `;
   // Render price details
   renderBuyNowPrice(item);
+  console.log("[Checkout] Buy Now rendering complete");
 }
 
 function renderBuyNowPrice(item) {
@@ -76,7 +93,10 @@ async function fetchCartOnce() {
   if (_fetchInFlight) return;
   _fetchInFlight = true;
   try {
+    console.log("[Checkout] Fetching cart data...");
     const data = await apiCall("/cart", { requireAuth: true });
+    console.log("[Checkout] Raw cart response:", data);
+    
     if (!data || data.success === false) {
       if (data && data.statusCode === 401) {
         if (window.showToast) window.showToast("Session expired", "error");
@@ -101,15 +121,32 @@ async function fetchCartOnce() {
     else if (Array.isArray(data.data)) items = data.data;
     else items = data.items || data.data || [];
 
+    console.log("[Checkout] Extracted items:", items.length, "items");
+
     // If no items, redirect to cart page
     if (!items || items.length === 0) {
+      console.warn("[Checkout] No items in cart, redirecting...");
       window.location.href = "/cart.html";
       return;
+    }
+
+    // Save items to checkout_data for the Continue button
+    try {
+      const checkoutData = {
+        items: items,
+        cart_data: data
+      };
+      localStorage.setItem(CHECKOUT_KEY, JSON.stringify(checkoutData));
+      console.log("[Checkout] Saved", items.length, "items to checkout_data");
+    } catch (e) {
+      console.error("[Checkout] Failed to save checkout data:", e);
     }
 
     renderCartItems(items);
     // Render totals strictly from backend fields only
     renderPriceDetails(data);
+    
+    console.log("[Checkout] Cart rendering complete");
   } catch (err) {
     console.error("Failed to fetch cart once", err);
     if (window.showToast) window.showToast("Failed to load cart", "error");
@@ -353,27 +390,43 @@ function setupEventListeners() {
   document
     .getElementById("confirm-summary-btn")
     ?.addEventListener("click", () => {
+      console.log("[Checkout] Continue button clicked");
+      
       // Ensure checkout_data contains address and items
       const raw = localStorage.getItem(CHECKOUT_KEY);
+      console.log("[Checkout] Checkout data from localStorage:", raw ? "exists" : "missing");
+      
       if (!raw) {
+        console.error("[Checkout] No checkout_data in localStorage!");
         if (window.showToast)
           window.showToast("Checkout data missing", "error");
         return;
       }
+      
       try {
         const checkout = JSON.parse(raw);
+        console.log("[Checkout] Parsed checkout data:", checkout);
+        console.log("[Checkout] Items count:", checkout.items?.length || 0);
+        console.log("[Checkout] Has address:", !!checkout.address);
+        
         if (!checkout.items || checkout.items.length === 0) {
+          console.error("[Checkout] No items in checkout data!");
           if (window.showToast) window.showToast("No items selected", "error");
           return;
         }
+        
         if (!checkout.address) {
+          console.error("[Checkout] No address in checkout data!");
           if (window.showToast)
             window.showToast("Please provide delivery address", "error");
           return;
         }
-        // proceed to payment
+        
+        // All checks passed, proceed to payment
+        console.log("[Checkout] All validations passed, redirecting to payment...");
         window.location.href = "/payment.html";
       } catch (e) {
+        console.error("[Checkout] Failed to parse checkout data:", e);
         if (window.showToast)
           window.showToast("Invalid checkout data", "error");
       }
