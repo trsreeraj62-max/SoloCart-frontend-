@@ -50,7 +50,14 @@ async function initPayment() {
       "cod",
   );
 
-  document.getElementById("pay-now-btn").addEventListener("click", async () => {
+  const payBtn = document.getElementById("pay-now-btn");
+  payBtn.addEventListener("click", async () => {
+    if (payBtn.disabled) return;
+    payBtn.disabled = true;
+    const origText = payBtn.innerHTML;
+    payBtn.innerHTML =
+      '<i class="fa fa-spinner fa-spin mr-2"></i>Processing...';
+
     const methodEl = document.querySelector(
       'input[name="payment_method"]:checked',
     );
@@ -58,7 +65,11 @@ async function initPayment() {
 
     // Validate inputs based on method
     const valid = validatePaymentMethod(payment_method);
-    if (!valid) return;
+    if (!valid) {
+      payBtn.disabled = false;
+      payBtn.innerHTML = origText;
+      return;
+    }
 
     // Build order payload from checkout_data
     try {
@@ -81,18 +92,24 @@ async function initPayment() {
       if (resp && (resp.order || resp.success)) {
         if (window.showToast) window.showToast("Order Successful!");
         const orderId = resp.order?.order_number || resp.order?.id || "SUCCESS";
-        // clear checkout_data
+        // clear checkout_data and buy-now keys
         localStorage.removeItem(CHECKOUT_KEY);
+        localStorage.removeItem("buy_now_item");
+        localStorage.removeItem("checkout_type");
         setTimeout(() => {
           window.location.href = `/checkout-success.html?order_id=${orderId}`;
         }, 900);
       } else {
         if (window.showToast)
           window.showToast(resp?.message || "Order failed", "error");
+        payBtn.disabled = false;
+        payBtn.innerHTML = origText;
       }
     } catch (e) {
       console.error("Payment/order failed", e);
       if (window.showToast) window.showToast("Server error", "error");
+      payBtn.disabled = false;
+      payBtn.innerHTML = origText;
     }
   });
 }
@@ -114,7 +131,23 @@ function renderOrder(items) {
         it.price || (it.product && (it.product.price || 0)) || 0,
       );
       total += price * qty;
-      return `<div class="flex items-center gap-4 py-3 border-b"><div class="flex-1"><div class="font-bold">${escapeHtml(productName)}</div><div class="text-sm text-slate-500">Qty: ${qty}</div></div><div class="font-black">₹${(price * qty).toLocaleString()}</div></div>`;
+      // Product image
+      let imageUrl =
+        it.image ||
+        (it.product && (it.product.image_url || it.product.image)) ||
+        "https://placehold.co/80x80?text=No+Image";
+      if (imageUrl && !/^https?:\/\//.test(imageUrl)) {
+        imageUrl = imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl;
+      }
+      return `<div class="flex items-center gap-4 py-3 border-b">
+      <img src="${imageUrl}" class="w-16 h-16 object-cover rounded border" onerror="this.onerror=null;this.src='https://placehold.co/80x80?text=No+Image'">
+      <div class="flex-1">
+        <div class="font-bold text-base mb-1">${escapeHtml(productName)}</div>
+        <div class="text-xs text-slate-500 mb-1">Qty: <span class="font-bold">${qty}</span></div>
+        <div class="text-xs text-green-600 font-bold">In Stock</div>
+      </div>
+      <div class="font-black text-lg">₹${(price * qty).toLocaleString()}</div>
+    </div>`;
     })
     .join("");
 
@@ -196,3 +229,14 @@ function escapeHtml(s) {
 }
 
 document.addEventListener("DOMContentLoaded", initPayment);
+// Card input auto-formatting
+document.addEventListener("DOMContentLoaded", () => {
+  const cardInput = document.getElementById("card-number");
+  if (cardInput) {
+    cardInput.addEventListener("input", (e) => {
+      let val = cardInput.value.replace(/\D/g, "").slice(0, 16);
+      let formatted = val.replace(/(.{4})/g, "$1 ").trim();
+      cardInput.value = formatted;
+    });
+  }
+});
