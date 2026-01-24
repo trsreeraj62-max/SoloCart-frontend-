@@ -33,44 +33,89 @@ async function initAdminDashboard() {
 
 async function fetchDashboardStats() {
   try {
+    console.log("[Dashboard] Fetching stats from /admin/dashboard-stats...");
     const data = await apiCall("/admin/dashboard-stats");
+    
+    console.log("[Dashboard] Raw API response:", data);
 
-    // Allow rendering if data is partial, but data must exist
-    if (!data || data.success === false) {
-      console.warn("Dashboard stats failed/empty:", data?.message);
-      // Use 0 values if failed
+    // Check if we have data
+    if (!data) {
+      console.error("[Dashboard] No data received from API");
+      return;
     }
 
-    const validData = data || {};
+    // Handle different response structures
+    // Could be: { data: {...} } or direct { total_revenue, ... }
+    let stats = data;
+    if (data.data && typeof data.data === 'object') {
+      stats = data.data;
+      console.log("[Dashboard] Using nested data:", stats);
+    }
 
+    console.log("[Dashboard] Extracted stats:", {
+      revenue: stats.total_revenue,
+      orders: stats.total_orders,
+      users: stats.total_users,
+      products: stats.active_products || stats.total_products
+    });
+
+    // Update stat cards
     const revEl = document.getElementById("stat-revenue");
     const ordEl = document.getElementById("stat-orders");
     const usrEl = document.getElementById("stat-users");
     const prdEl = document.getElementById("stat-products");
 
-    if (revEl)
-      revEl.innerText = `₹${Number(validData.total_revenue || 0).toLocaleString()}`;
-    if (ordEl) ordEl.innerText = validData.total_orders || 0;
-    if (usrEl) usrEl.innerText = validData.total_users || 0;
-    if (prdEl)
-      prdEl.innerText =
-        (validData.active_products ?? validData.total_products) || 0;
-
-    if (validData.recent_orders) {
-      renderRecentOrders(validData.recent_orders);
+    if (revEl) {
+      const revenue = Number(stats.total_revenue || 0);
+      revEl.innerText = `₹${revenue.toLocaleString()}`;
+      console.log("[Dashboard] Updated revenue:", revenue);
+    }
+    
+    if (ordEl) {
+      const orders = Number(stats.total_orders || 0);
+      ordEl.innerText = orders;
+      console.log("[Dashboard] Updated orders:", orders);
+    }
+    
+    if (usrEl) {
+      const users = Number(stats.total_users || 0);
+      usrEl.innerText = users;
+      console.log("[Dashboard] Updated users:", users);
+    }
+    
+    if (prdEl) {
+      const products = Number(stats.active_products ?? stats.total_products ?? 0);
+      prdEl.innerText = products;
+      console.log("[Dashboard] Updated products:", products);
     }
 
-    // Pass real data to charts.
-    // Expecting { revenue_chart: { labels:[], data:[] }, category_chart: { labels:[], data:[] } }
+    // Render recent orders if available
+    if (stats.recent_orders && Array.isArray(stats.recent_orders)) {
+      console.log("[Dashboard] Rendering", stats.recent_orders.length, "recent orders");
+      renderRecentOrders(stats.recent_orders);
+    } else {
+      console.warn("[Dashboard] No recent_orders in response");
+    }
+
+    // Initialize charts with real data
     if (window.Chart) {
-      initCharts(validData);
+      console.log("[Dashboard] Initializing charts");
+      initCharts(stats);
     }
+    
     // Update last-updated timestamp
     try {
-      setLastUpdated(validData.updated_at || Date.now());
-    } catch (e) {}
+      setLastUpdated(stats.updated_at || Date.now());
+    } catch (e) {
+      console.error("[Dashboard] Failed to set timestamp:", e);
+    }
+    
+    console.log("[Dashboard] Stats update complete!");
   } catch (e) {
-    console.error("Stats fetch error", e);
+    console.error("[Dashboard] Fatal error fetching stats:", e);
+    if (window.showToast) {
+      window.showToast("Failed to load dashboard statistics", "error");
+    }
   }
 }
 
