@@ -15,98 +15,122 @@
   </head>
 
   <body class="bg-[#f1f3f6] min-h-screen">
+    <!-- Navbar (Optional, or match other pages) -->
+    
     <div class="max-w-5xl mx-auto py-8 px-4">
       <!-- STEP INDICATOR -->
       <div class="flex items-center justify-center mb-8 gap-6">
         <div class="flex items-center gap-2">
-          <span
-            class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center"
-          >
+          <span class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center">
             <i class="fas fa-check text-xs"></i>
           </span>
           <span class="text-xs font-bold text-gray-400 uppercase">Summary</span>
         </div>
-
         <div class="w-12 h-[2px] bg-green-200"></div>
-
         <div class="flex items-center gap-2">
-          <span
-            class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold"
-            >2</span
-          >
+          <span class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">2</span>
           <span class="text-xs font-bold text-gray-800 uppercase">Payment</span>
         </div>
-
         <div class="w-12 h-[2px] bg-gray-200"></div>
-
         <div class="flex items-center gap-2 opacity-40">
-          <span
-            class="w-8 h-8 rounded-full bg-gray-300 text-white flex items-center justify-center font-bold"
-            >3</span
-          >
+          <span class="w-8 h-8 rounded-full bg-gray-300 text-white flex items-center justify-center font-bold">3</span>
           <span class="text-xs font-bold text-gray-400 uppercase">Finish</span>
         </div>
       </div>
 
       <!-- MAIN GRID -->
       <div class="grid md:grid-cols-3 gap-6">
-        <!-- LEFT -->
-        <div class="md:col-span-2">
-          <div class="bg-white border shadow-sm p-6 text-center">
-            <h2
-              class="text-lg font-black mb-3 uppercase tracking-widest text-gray-700"
-            >
-              Total Payable Amount
-            </h2>
-
-            <div id="payment-total" class="text-4xl font-black text-[#2874f0]">
-              ₹0
+        <!-- LEFT: Address & Order Summary -->
+        <div class="md:col-span-2 space-y-4">
+            <!-- Address Display -->
+            <div class="bg-white border shadow-sm p-4">
+                <h3 class="font-bold text-gray-500 uppercase text-xs mb-2">Deliver To:</h3>
+                <div id="payment-address" class="font-bold text-gray-800">
+                    <!-- JS Injected -->
+                </div>
             </div>
 
-            <p class="text-xs text-gray-400 mt-2">
-              Inclusive of all taxes & charges
-            </p>
-          </div>
+            <!-- Items -->
+            <div class="bg-white border shadow-sm p-4">
+                 <h3 class="font-bold text-gray-500 uppercase text-xs mb-2">Order Items</h3>
+                 <div id="payment-order-list">
+                     <!-- JS Injected -->
+                 </div>
+            </div>
+
+            <!-- Total -->
+            <div class="bg-white border shadow-sm p-6 text-center">
+                <h2 class="text-lg font-black mb-3 uppercase tracking-widest text-gray-700">
+                Total Payable Amount
+                </h2>
+                <div id="payment-total-amount" class="text-4xl font-black text-[#2874f0]">
+                ₹0
+                </div>
+                <p class="text-xs text-gray-400 mt-2">Inclusive of all taxes & charges</p>
+            </div>
         </div>
 
-        <!-- RIGHT -->
+        <!-- RIGHT: Payment Options -->
         <div class="bg-white border shadow-sm p-6 h-fit">
           <h3 class="text-lg font-black mb-4">Payment Options</h3>
 
-          <label
-            class="flex items-center gap-3 p-3 border rounded mb-3 cursor-pointer hover:bg-blue-50"
-          >
-            <input type="radio" name="payment_method" value="gpay" checked />
-            <i class="fa-brands fa-google-pay text-2xl"></i>
-            <span class="font-bold">Google Pay / UPI</span>
+          <!-- UPI -->
+          <label class="block mb-3">
+              <div class="flex items-center gap-3 p-3 border rounded cursor-pointer hover:bg-blue-50">
+                <input type="radio" name="payment_method" value="upi" />
+                <i class="fa-brands fa-google-pay text-2xl"></i>
+                <span class="font-bold">Google Pay / UPI</span>
+              </div>
+              <div id="upi-fields" class="hidden mt-2 p-2 bg-gray-50 border rounded text-sm">
+                  <input type="text" id="upi-id" placeholder="Enter UPI ID (e.g. name@oksbi)" class="w-full p-2 border rounded">
+              </div>
           </label>
 
-          <label
-            class="flex items-center gap-3 p-3 border rounded mb-3 cursor-pointer hover:bg-blue-50"
-          >
-            <input type="radio" name="payment_method" value="debit_card" />
-            <i class="fa-regular fa-credit-card text-xl"></i>
-            <span class="font-bold">Debit Card</span>
+          <!-- Card -->
+          <label class="block mb-3">
+              <div class="flex items-center gap-3 p-3 border rounded cursor-pointer hover:bg-blue-50">
+                <input type="radio" name="payment_method" value="card" />
+                <i class="fa-regular fa-credit-card text-xl"></i>
+                <span class="font-bold">Credit / Debit Card</span>
+              </div>
+              <div id="card-fields" class="hidden mt-2 p-2 bg-gray-50 border rounded text-sm space-y-2">
+                  <input type="text" id="card-number" placeholder="Card Number" class="w-full p-2 border rounded">
+                  <div class="flex gap-2">
+                       <input type="text" id="card-expiry" placeholder="MM/YY" class="w-1/2 p-2 border rounded">
+                       <input type="text" id="card-cvv" placeholder="CVV" class="w-1/2 p-2 border rounded">
+                  </div>
+              </div>
           </label>
 
-          <label
-            class="flex items-center gap-3 p-3 border rounded mb-3 cursor-pointer hover:bg-blue-50"
-          >
-            <input type="radio" name="payment_method" value="netbanking" />
-            <i class="fa-solid fa-building-columns text-lg"></i>
-            <span class="font-bold">Net Banking</span>
+          <!-- Netbanking -->
+          <label class="block mb-3">
+              <div class="flex items-center gap-3 p-3 border rounded cursor-pointer hover:bg-blue-50">
+                <input type="radio" name="payment_method" value="netbanking" />
+                <i class="fa-solid fa-building-columns text-lg"></i>
+                <span class="font-bold">Net Banking</span>
+              </div>
+              <div id="netbank-fields" class="hidden mt-2 p-2 bg-gray-50 border rounded text-sm">
+                   <select id="netbank-select" class="w-full p-2 border rounded">
+                       <option value="">Select Bank</option>
+                       <option value="sbi">SBI</option>
+                       <option value="hdfc">HDFC</option>
+                       <option value="icici">ICICI</option>
+                       <option value="axis">Axis</option>
+                   </select>
+              </div>
           </label>
 
-          <label
-            class="flex items-center gap-3 p-3 border rounded mb-6 cursor-pointer hover:bg-blue-50"
-          >
-            <input type="radio" name="payment_method" value="cod" />
-            <i class="fa-solid fa-money-bill-wave text-lg"></i>
-            <span class="font-bold">Cash on Delivery</span>
+          <!-- COD -->
+          <label class="block mb-6">
+              <div class="flex items-center gap-3 p-3 border rounded cursor-pointer hover:bg-blue-50">
+                <input type="radio" name="payment_method" value="cod" checked />
+                <i class="fa-solid fa-money-bill-wave text-lg"></i>
+                <span class="font-bold">Cash on Delivery</span>
+              </div>
           </label>
 
           <button
-            id="pay-btn"
+            id="pay-now-btn"
             class="w-full bg-[#fb641b] text-white py-4 font-black tracking-wider hover:bg-[#ff4500] transition disabled:opacity-50"
           >
             CONFIRM & PAY
@@ -119,74 +143,19 @@
       </div>
     </div>
 
-    <!-- JS LOGIC (UNCHANGED) -->
+    <!-- MAIN APP SCRIPT -->
+    <script type="module" src="./js/payment.js"></script>
+    <!-- TOAST UTILITY (IF NOT IN MAIN) -->
+    <div id="toast-container" class="fixed bottom-4 right-4 flex flex-col gap-2 z-50"></div>
     <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        let total = 0;
-        let found = false;
-
-        const buyNowKeys = ["buyNowItem", "buy_now_item"];
-        const cartKeys = ["checkoutCart", "checkout_cart", "cart_items"];
-        let buyNow = null,
-          cart = null;
-
-        for (const key of buyNowKeys) {
-          try {
-            const val = localStorage.getItem(key);
-            if (val) {
-              buyNow = JSON.parse(val);
-              break;
-            }
-          } catch {}
+        window.showToast = function(msg, type="success") {
+            const container = document.getElementById("toast-container");
+            const div = document.createElement("div");
+            div.className = `px-4 py-3 rounded shadow-lg text-white font-bold text-sm ${type==='error'?'bg-red-500':'bg-gray-800'}`;
+            div.innerText = msg;
+            container.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
         }
-
-        for (const key of cartKeys) {
-          try {
-            const val = localStorage.getItem(key);
-            if (val) {
-              cart = JSON.parse(val);
-              break;
-            }
-          } catch {}
-        }
-
-        if (buyNow && typeof buyNow === "object" && buyNow.price) {
-          const price = Number(buyNow.price) || 0;
-          const qty = Number(buyNow.quantity) || 1;
-          total = price * qty;
-          found = true;
-        } else if (Array.isArray(cart) && cart.length > 0) {
-          total = cart.reduce((sum, item) => {
-            const price = Number(item.price) || 0;
-            const qty = Number(item.quantity) || 1;
-            return sum + price * qty;
-          }, 0);
-          found = true;
-        }
-
-        const totalEl = document.getElementById("payment-total");
-        const payBtn = document.getElementById("pay-btn");
-
-        if (!found || total <= 0) {
-          totalEl.textContent = "₹0";
-          payBtn.textContent = "NO ITEMS TO PAY";
-          payBtn.disabled = true;
-          return;
-        }
-
-        const formatted = total.toLocaleString("en-IN");
-        totalEl.textContent = "₹" + formatted;
-        payBtn.textContent = "CONFIRM & PAY ₹" + formatted;
-        payBtn.disabled = false;
-
-        payBtn.addEventListener("click", function () {
-          const method =
-            document.querySelector('input[name="payment_method"]:checked')
-              ?.value || "cod";
-          sessionStorage.setItem("lastPaymentMethod", method);
-          window.location.href = "/payment-success.html";
-        });
-      });
     </script>
   </body>
 </html>
