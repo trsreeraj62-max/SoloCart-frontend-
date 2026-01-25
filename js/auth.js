@@ -1,5 +1,5 @@
 import CONFIG from "./config.js";
-import { apiCall } from "./main.js";
+import { apiCall, validatePassword, validatePhone } from "./main.js";
 
 // Email validation utility
 function isValidEmail(email) {
@@ -13,10 +13,12 @@ async function handleLogin(e) {
   const password = document.getElementById("password").value;
   const btn = document.getElementById("login-btn");
 
-  // Validate email format
   if (!email || !isValidEmail(email)) {
-    if (window.showToast)
-      window.showToast("Please enter a valid email address", "error");
+    if (window.showToast) window.showToast("Please enter a valid email address", "error");
+    return;
+  }
+  if (!password) {
+    if (window.showToast) window.showToast("Password is required", "error");
     return;
   }
 
@@ -116,12 +118,21 @@ async function handleRegister(e) {
   }
 
   // Validate phone number
-  if (!phone || phone.length < 10) {
-    if (window.showToast)
-      window.showToast(
-        "Please enter a valid phone number (at least 10 digits)",
-        "error",
-      );
+  const phoneCheck = validatePhone(phone);
+  if (!phoneCheck.valid) {
+    if (window.showToast) window.showToast(phoneCheck.message, "error");
+    return;
+  }
+
+  // Validate password
+  const passCheck = validatePassword(password);
+  if (!passCheck.valid) {
+    if (window.showToast) window.showToast(passCheck.message, "error");
+    return;
+  }
+
+  if (password !== password_confirmation) {
+    if (window.showToast) window.showToast("Passwords do not match", "error");
     return;
   }
 
