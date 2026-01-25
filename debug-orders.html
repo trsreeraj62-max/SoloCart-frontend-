@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Debug Orders</title>
+</head>
+<body>
+    <h1>Order Debugger</h1>
+    <button id="fetch-btn">Fetch All Orders</button>
+    <pre id="output" style="background: #f0f0f0; padding: 10px;"></pre>
+
+    <script type="module">
+        import CONFIG from "./js/config.js";
+        
+        document.getElementById('fetch-btn').addEventListener('click', async () => {
+            const out = document.getElementById('output');
+            out.innerText = "Fetching...";
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                if (!token) {
+                    out.innerText = "No auth token found. Log in first.";
+                    return;
+                }
+
+                const res = await fetch(`${CONFIG.API_BASE_URL}/orders?t=${Date.now()}`, {
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await res.json();
+                
+                let html = `Status: ${res.status}\n`;
+                html += `Count: ${data.data ? data.data.length : 'N/A'}\n`;
+                html += `Raw Data:\n${JSON.stringify(data, null, 2)}`;
+                
+                out.innerText = html;
+            } catch (e) {
+                out.innerText = "Error: " + e.message;
+            }
+        });
+    </script>
+</body>
+</html>
