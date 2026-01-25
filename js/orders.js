@@ -153,31 +153,49 @@ function renderOrders(orders) {
         0,
     ).toLocaleString();
 
+    // Determine available actions
+    let actionButtons = '';
+    const s = String(order.status || "").toLowerCase();
+
+    // Cancel Button
+    if (canCancel(s)) {
+        actionButtons += `<button data-id="${order.id}" class="cancel-order-btn text-xs bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded font-bold uppercase transition mt-2">Cancel Order</button> `;
+    }
+
+    // Return Button
+    if (s === 'delivered') {
+        actionButtons += `<button data-id="${order.id}" class="return-order-btn text-xs bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded font-bold uppercase transition mt-2 mr-2">Return</button> `;
+        // Invoice Button
+         actionButtons += `<button data-id="${order.id}" class="invoice-btn text-xs bg-[#2874f0] hover:bg-blue-600 text-white px-4 py-2 rounded font-bold uppercase transition mt-2"><i class="fas fa-file-download mr-1"></i> Invoice</button> `;
+    }
+
+    // Main Row
     return `
-      <a href="/order-details.html?id=${order.id}" class="bg-white p-4 rounded-sm shadow-sm border border-slate-100 flex gap-6 hover:shadow-md transition-shadow no-underline text-inherit group mb-3 block">
-          <div class="w-16 h-16 flex-shrink-0 border rounded-sm p-1">
+      <div class="bg-white p-4 rounded-sm shadow-sm border border-slate-100 flex gap-6 hover:shadow-md transition-shadow mb-3 relative group">
+          <a href="/order-details.html?id=${order.id}" class="absolute inset-0 z-0 text-transparent">View</a>
+          <div class="w-20 h-20 flex-shrink-0 border rounded-sm p-1 z-10 bg-white relative">
               <img src="${imageUrl}" class="h-full w-full object-contain">
           </div>
-          <div class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                  <h4 class="text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-[#2874f0]">${escapeHtml(title)} ${(items.length || 0) > 1 ? `+${items.length - 1} more` : ""}</h4>
+          <div class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-4 z-10 relative pointer-events-none">
+              <div class="pointer-events-auto">
+                  <h4 class="text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-[#2874f0]"><a href="/order-details.html?id=${order.id}">${escapeHtml(title)}</a> ${(items.length || 0) > 1 ? `+${items.length - 1} more` : ""}</h4>
                   <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">Order ID: #${order.order_number || order.id}</p>
               </div>
-              <div>
-                  <span class="text-sm font-bold text-slate-900">₹${price}</span>
+              <div class="pointer-events-auto">
+                  <span class="text-md font-bold text-slate-900">₹${price}</span>
               </div>
-              <div>
+              <div class="pointer-events-auto">
                   <div class="flex items-center gap-2">
                           <div class="w-2 h-2 rounded-full ${getStatusColor(order.status || "pending")}"></div>
                           <span class="text-xs font-black uppercase tracking-widest text-slate-700">${order.status || "PENDING"}</span>
                       </div>
-                      <p class="text-[10px] font-bold text-slate-400 mt-1">${order.status_date || "Status updated today"}</p>
-                      <div class="mt-2">
-                        ${canCancel(order.status) ? `<button data-id="${order.id}" class="cancel-order-btn text-xs bg-rose-500 text-white px-3 py-1 rounded-sm">Cancel Order</button>` : ``}
+                      <p class="text-[10px] font-bold text-slate-400 mt-1">${order.status_date || "Last updated recently"}</p>
+                      <div class="mt-2 text-right md:text-left">
+                        ${actionButtons}
                       </div>
               </div>
           </div>
-      </a>
+      </div>
     `;
   });
 
@@ -185,38 +203,110 @@ function renderOrders(orders) {
   console.log(`[Orders] Set innerHTML with ${rows.length} order HTML blocks`);
   console.log(`[Orders] Container now has ${container.children.length} child elements`);
 
-  // Attach cancel handlers
+  // Attach Event Listeners
+  
+  // 1. Cancel
   container.querySelectorAll(".cancel-order-btn").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
-      e.preventDefault();
+      e.stopPropagation(); // Stop bubbling to link
+      e.preventDefault(); 
       const id = btn.dataset.id;
-      if (!id) return;
       if (!confirm("Are you sure you want to cancel this order?")) return;
       btn.disabled = true;
-      btn.innerText = "Cancelling...";
+      btn.innerText = "Processing...";
       try {
-        const res = await apiCall(`/orders/${id}/cancel`, {
-          method: "POST",
-          requireAuth: true,
-        });
+        const res = await apiCall(`/orders/${id}/cancel`, { method: "POST", requireAuth: true });
         if (res && (res.success || res.status === "cancelled" || res.order)) {
           if (window.showToast) window.showToast("Order cancelled");
-          // Optimistically update UI by re-fetching orders
           await fetchOrders();
         } else {
-          if (window.showToast)
-            window.showToast(res?.message || "Failed to cancel", "error");
-          btn.disabled = false;
-          btn.innerText = "Cancel Order";
+             if (window.showToast) window.showToast(res?.message || "Failed to cancel", "error");
+             btn.disabled = false;
+             btn.innerText = "Cancel Order";
         }
       } catch (err) {
-        console.error("Cancel failed", err);
-        if (window.showToast)
-          window.showToast("Network error while cancelling", "error");
+        console.error(err);
         btn.disabled = false;
         btn.innerText = "Cancel Order";
       }
     });
+  });
+
+  // 2. Return
+  container.querySelectorAll(".return-order-btn").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const id = btn.dataset.id;
+          const reason = prompt("Please enter a reason for returning this item:");
+          if (reason === null) return; // Cancelled prompt
+          if (!reason.trim()) { alert("Reason is required."); return; }
+          
+          btn.disabled = true;
+          btn.innerText = "Processing...";
+          try {
+             // Pass reason in body
+             const res = await apiCall(`/orders/${id}/return`, { 
+                 method: "POST", 
+                 requireAuth: true,
+                 body: JSON.stringify({ reason: reason })
+             });
+             
+             if (res && res.success) {
+                 if(window.showToast) window.showToast("Return request submitted");
+                 await fetchOrders();
+             } else {
+                 alert(res?.message || "Failed to submit return request");
+                 btn.disabled = false; 
+                 btn.innerText = "Return";
+             }
+          } catch(err) {
+             console.error(err);
+             alert("Error submitting return request");
+             btn.disabled = false;
+             btn.innerText = "Return";
+          }
+      });
+  });
+
+  // 3. Invoice
+  container.querySelectorAll(".invoice-btn").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const id = btn.dataset.id;
+          btn.disabled = true;
+          const prevHTML = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+          
+          try {
+             const token = getAuthToken();
+             const response = await fetch(`${CONFIG.API_BASE_URL}/orders/${id}/invoice`, {
+                 headers: { 'Authorization': `Bearer ${token}` }
+             });
+             
+             if(response.ok) {
+                 const blob = await response.blob();
+                 const url = window.URL.createObjectURL(blob);
+                 const a = document.createElement('a');
+                 a.href = url;
+                 a.download = `Invoice_Order_${id}.pdf`;
+                 document.body.appendChild(a);
+                 a.click();
+                 a.remove();
+                 window.URL.revokeObjectURL(url);
+             } else {
+                 const json = await response.json();
+                 alert(json.message || "Failed to download invoice");
+             }
+          } catch(err) {
+             console.error(err);
+             alert("Error downloading invoice");
+          } finally {
+             btn.disabled = false;
+             btn.innerHTML = prevHTML;
+          }
+      });
   });
 }
 
