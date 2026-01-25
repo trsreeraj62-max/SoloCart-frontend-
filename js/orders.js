@@ -14,8 +14,18 @@ async function fetchOrders() {
   try {
     console.log("[Orders] Fetching orders from /orders...");
     console.log("[Orders] Auth token:", getAuthToken() ? "present" : "missing");
-    const res = await apiCall("/orders", { requireAuth: true });
+    // Add a timestamp to bypass caches and request more items per page
+    const res = await apiCall(`/orders?t=${Date.now()}&per_page=50`, {
+      requireAuth: true,
+    });
     console.log("[Orders] Raw API response:", res);
+
+    // Log pagination metadata when present to help diagnose missing orders
+    let paginationMeta = null;
+    if (res && res.meta) paginationMeta = res.meta;
+    else if (res && res.data && res.data.meta) paginationMeta = res.data.meta;
+    else if (res && res.pagination) paginationMeta = res.pagination;
+    console.log("[Orders] Pagination meta:", paginationMeta);
 
     // Handle multiple possible response structures
     let orders = [];
@@ -86,46 +96,55 @@ async function fetchOrders() {
 function renderOrders(orders) {
   const container = document.getElementById("orders-list");
   if (!container || !Array.isArray(orders)) return;
+  // Render each order using the first item as preview, but handle missing product objects.
+  const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
+  const rows = orders.map((order) => {
+    const items = Array.isArray(order.items) ? order.items : [];
+    const firstItem = items[0] || {};
+    const productObj = extractProductFromItem(firstItem, backendBase);
 
-  container.innerHTML = orders
-    .map((order) => {
-      const firstItem = order.items?.[0] || {};
-      const product = firstItem.product || {};
-      const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
-      const imageUrl = product.image_url
-        ? product.image_url.replace(/^http:/, "https:")
-        : product.image
-          ? `${backendBase}/storage/${product.image}`
-          : "https://placehold.co/400x400?text=No+Image";
+    const imageUrl =
+      productObj.image_url ||
+      productObj.image ||
+      "https://placehold.co/400x400?text=No+Image";
+    const title = productObj.name || productObj.title || "Order Item";
+    const price = Number(
+      firstItem.price ||
+        productObj.price ||
+        order.total ||
+        order.total_amount ||
+        0,
+    ).toLocaleString();
 
-      return `
-        <a href="/order-details.html?id=${order.id}" class="bg-white p-4 rounded-sm shadow-sm border border-slate-100 flex gap-6 hover:shadow-md transition-shadow no-underline text-inherit group mb-3 block">
-            <div class="w-16 h-16 flex-shrink-0 border rounded-sm p-1">
-                <img src="${imageUrl}" class="h-full w-full object-contain">
-            </div>
-            <div class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <h4 class="text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-[#2874f0]">${product.name || "Order Item"} ${(order.items?.length || 0) > 1 ? `+${order.items.length - 1} more` : ""}</h4>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">Order ID: #${order.order_number || order.id}</p>
-                </div>
-                <div>
-                    <span class="text-sm font-bold text-slate-900">₹${Number(order.total || order.total_amount || 0).toLocaleString()}</span>
-                </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                            <div class="w-2 h-2 rounded-full ${getStatusColor(order.status || "pending")}"></div>
-                            <span class="text-xs font-black uppercase tracking-widest text-slate-700">${order.status || "PENDING"}</span>
-                        </div>
-                        <p class="text-[10px] font-bold text-slate-400 mt-1">${order.status_date || "Status updated today"}</p>
-                        <div class="mt-2">
-                          ${canCancel(order.status) ? `<button data-id="${order.id}" class="cancel-order-btn text-xs bg-rose-500 text-white px-3 py-1 rounded-sm">Cancel Order</button>` : ``}
-                        </div>
-                </div>
-            </div>
-        </a>
+    return `
+      <a href="/order-details.html?id=${order.id}" class="bg-white p-4 rounded-sm shadow-sm border border-slate-100 flex gap-6 hover:shadow-md transition-shadow no-underline text-inherit group mb-3 block">
+          <div class="w-16 h-16 flex-shrink-0 border rounded-sm p-1">
+              <img src="${imageUrl}" class="h-full w-full object-contain">
+          </div>
+          <div class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                  <h4 class="text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-[#2874f0]">${escapeHtml(title)} ${(items.length || 0) > 1 ? `+${items.length - 1} more` : ""}</h4>
+                  <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">Order ID: #${order.order_number || order.id}</p>
+              </div>
+              <div>
+                  <span class="text-sm font-bold text-slate-900">₹${price}</span>
+              </div>
+              <div>
+                  <div class="flex items-center gap-2">
+                          <div class="w-2 h-2 rounded-full ${getStatusColor(order.status || "pending")}"></div>
+                          <span class="text-xs font-black uppercase tracking-widest text-slate-700">${order.status || "PENDING"}</span>
+                      </div>
+                      <p class="text-[10px] font-bold text-slate-400 mt-1">${order.status_date || "Status updated today"}</p>
+                      <div class="mt-2">
+                        ${canCancel(order.status) ? `<button data-id="${order.id}" class="cancel-order-btn text-xs bg-rose-500 text-white px-3 py-1 rounded-sm">Cancel Order</button>` : ``}
+                      </div>
+              </div>
+          </div>
+      </a>
     `;
-    })
-    .join("");
+  });
+
+  container.innerHTML = rows.join("");
 
   // Attach cancel handlers
   container.querySelectorAll(".cancel-order-btn").forEach((btn) => {
@@ -176,6 +195,51 @@ function getStatusColor(status) {
     default:
       return "bg-slate-400";
   }
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str).replace(/[&<>\"]/g, function (s) {
+    return {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+    }[s];
+  });
+}
+
+function extractProductFromItem(item, backendBase) {
+  if (!item) return {};
+  const product = item.product || item.product_data || item.productInfo || null;
+  if (product) {
+    const img = product.image_url
+      ? product.image_url.replace(/^http:/, "https:")
+      : product.image
+        ? `${backendBase}/storage/${product.image}`
+        : product.image;
+    return {
+      name: product.name || product.title || product.product_name,
+      image_url: img,
+      price: product.price || product.selling_price || item.price,
+    };
+  }
+
+  const fallbackImage = item.image_url
+    ? item.image_url.replace(/^http:/, "https:")
+    : item.image
+      ? `${backendBase}/storage/${item.image}`
+      : null;
+
+  return {
+    name: item.name || item.title || item.product_name,
+    image_url: fallback_image_or_default(fallbackImage),
+    price: item.price || item.unit_price || item.amount,
+  };
+}
+
+function fallback_image_or_default(img) {
+  return img || "https://placehold.co/400x400?text=No+Image";
 }
 
 function canCancel(status) {
