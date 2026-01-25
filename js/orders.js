@@ -96,6 +96,29 @@ async function fetchOrders() {
 function renderOrders(orders) {
   const container = document.getElementById("orders-list");
   if (!container || !Array.isArray(orders)) return;
+
+  // Diagnostic logs to trace why an order may be dropped between fetch and render
+  try {
+    console.log(
+      "[Orders] renderOrders input count:",
+      Array.isArray(orders) ? orders.length : typeof orders,
+      orders,
+    );
+    const summary = orders.map((o) => ({
+      id: o?.id ?? null,
+      order_number: o?.order_number ?? null,
+      items_length: Array.isArray(o?.items) ? o.items.length : null,
+    }));
+    console.log("[Orders] renderOrders summary:", summary);
+    const invalids = orders.filter((o) => !o || typeof o !== "object");
+    if (invalids.length)
+      console.warn("[Orders] renderOrders found invalid entries:", invalids);
+    const ids = summary.map((s) => s.id).filter((v) => v != null);
+    const dup = ids.filter((v, i, a) => a.indexOf(v) !== i);
+    if (dup.length) console.warn("[Orders] Duplicate order ids detected:", dup);
+  } catch (dbgErr) {
+    console.error("[Orders] Diagnostics failed:", dbgErr);
+  }
   // Render each order using the first item as preview, but handle missing product objects.
   const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
   const rows = orders.map((order) => {
