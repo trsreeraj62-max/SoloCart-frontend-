@@ -238,9 +238,11 @@ function renderCategories(categories) {
   container.innerHTML = categories
     .map((c) => {
       const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
-      const imageUrl = c.image
-        ? `${backendBase}/storage/${c.image}`
-        : "https://placehold.co/100x100?text=Category";
+      const imageUrl = c.image_url
+        ? c.image_url.replace(/^http:/, "https:")
+        : c.image
+          ? `${backendBase}/storage/${c.image}`
+          : "https://placehold.co/100x100?text=Category";
 
       return `
         <a href="/shop.html?category=${c.id}" class="flex flex-col items-center gap-2 no-underline group min-w-[80px]">
