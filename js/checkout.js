@@ -18,6 +18,9 @@ async function initCheckout() {
   if (authStatusInfo) {
     authStatusInfo.innerText = userData.name || userData.email || "Logged In";
   }
+  
+  // Auto-fill address form
+  autoFillUserData(userData);
 
   // Detect buy now vs cart checkout
   const checkoutType = localStorage.getItem("checkout_type");
@@ -29,51 +32,97 @@ async function initCheckout() {
   setupEventListeners();
 }
 
+// Auto-fill form from user profile or saved address
+function autoFillUserData(userData) {
+  if (!userData) return;
+  console.log("[Checkout] Auto-filling user data:", userData);
+  
+  const setIfEmpty = (id, val) => {
+    const el = document.getElementById(id);
+    if(el && !el.value && val) el.value = val;
+  };
+
+  setIfEmpty("name", userData.name || "");
+  setIfEmpty("email", userData.email || "");
+  setIfEmpty("phone", userData.phone || "");
+  
+  // Try to parse address if stored as object or string
+  if (userData.address) {
+      if (typeof userData.address === 'string') {
+           setIfEmpty("address", userData.address);
+      } else {
+           setIfEmpty("address", userData.address.address || "");
+           setIfEmpty("locality", userData.address.locality || "");
+           setIfEmpty("city", userData.address.city || "");
+           setIfEmpty("state", userData.address.state || "");
+           setIfEmpty("pincode", userData.address.pincode || "");
+      }
+  }
+}
+
 function renderBuyNow() {
-  const item = JSON.parse(localStorage.getItem("buy_now_item") || "null");
-  console.log("[Checkout] Buy Now item:", item);
-  
-  if (!item) {
-    console.warn("[Checkout] No buy_now_item found, redirecting to cart");
-    window.location.href = "/cart.html";
-    return;
+  const rawItem = localStorage.getItem("buy_now_item");
+  if (!rawItem) {
+      window.location.href = "/cart.html";
+      return;
   }
-  
-  // Save to checkout_data
-  try {
-    const checkoutData = {
-      items: [item],
-      is_buy_now: true
-    };
-    localStorage.setItem(CHECKOUT_KEY, JSON.stringify(checkoutData));
-    console.log("[Checkout] Saved Buy Now item to checkout_data");
-  } catch (e) {
-    console.error("[Checkout] Failed to save Buy Now checkout data:", e);
-  }
+  const item = JSON.parse(rawItem);
+  console.log("[Checkout] Rendering Buy Now Item");
   
   const container = document.getElementById("checkout-items-list");
-  if (!container) return;
-  container.innerHTML = `
-    <div class="py-4 flex gap-4 border-b last:border-0 checkout-item">
-      <div class="w-16 h-16 border rounded-sm p-1">
-        <img src="${item.image || "https://placehold.co/400x400?text=No+Image"}" class="h-full w-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
-      </div>
-      <div class="flex-grow">
-        <div class="flex justify-between items-start">
-          <div>
-            <h4 class="text-xs font-bold text-slate-800 line-clamp-1">${item.name || "Unavailable"}</h4>
-            <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">₹${Number(item.price).toLocaleString()}</div>
+  if (container) {
+      container.innerHTML = `
+        <div class="py-4 flex gap-4 border-b last:border-0 checkout-item">
+          <div class="w-16 h-16 border rounded-sm p-1">
+            <img src="${item.image || "https://placehold.co/400x400?text=No+Image"}" class="h-full w-full object-cover">
           </div>
-          <div class="text-right">
-            <div class="text-sm font-black mt-2">Subtotal: <span class="item-subtotal">₹${Number(item.price * item.quantity).toLocaleString()}</span></div>
+          <div class="flex-grow">
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="text-xs font-bold text-slate-800 line-clamp-1">${item.name}</h4>
+                <div class="text-[10px] text-slate-400 font-bold uppercase mt-1">₹${Number(item.price).toLocaleString()}</div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm font-black mt-2">Subtotal: <span class="item-subtotal">₹${Number(item.price * item.quantity).toLocaleString()}</span></div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  `;
-  // Render price details
-  renderBuyNowPrice(item);
-  console.log("[Checkout] Buy Now rendering complete");
+      `;
+  }
+  
+  // Calculate specific totals for Buy Now
+  const total = item.price * item.quantity;
+  // Assume generic 25% markup for MRP display if not provided
+  const mrp = item.mrp || (total * 1.25);
+  const discount = mrp - total;
+  
+  const countEl = document.getElementById("price-details-count");
+  const mrpEl = document.getElementById("total-mrp");
+  const discEl = document.getElementById("total-discount");
+  const grandEl = document.getElementById("grand-total");
+  const savingsEl = document.getElementById("savings-amount");
+
+  if (countEl) countEl.innerText = 1;
+  if (mrpEl) mrpEl.innerText = `₹${Number(mrp).toLocaleString()}`;
+  if (discEl) {
+      if (discount > 0) {
+        discEl.innerText = `- ₹${Number(discount).toLocaleString()}`;
+        discEl.parentElement.classList.remove("hidden");
+      } else {
+        discEl.innerText = "₹0";
+        discEl.parentElement.classList.add("hidden");
+      }
+  }
+  if (grandEl) grandEl.innerText = `₹${Number(total).toLocaleString()}`;
+  if (savingsEl) {
+      if (discount > 0) {
+        savingsEl.innerText = `You Save: ₹${Number(discount).toLocaleString()}`;
+        savingsEl.parentElement.classList.remove("hidden");
+      } else {
+        savingsEl.parentElement.classList.add("hidden");
+      }
+  }
 }
 
 function renderBuyNowPrice(item) {
@@ -209,11 +258,27 @@ function renderPriceDetails(data) {
 
   if (countEl) countEl.innerText = totalItems;
   if (mrpEl) mrpEl.innerText = `₹${Number(totalMrp || 0).toLocaleString()}`;
-  if (discEl)
-    discEl.innerText =
-      discount !== null ? `- ₹${Number(discount).toLocaleString()}` : `- ₹0`;
+  if (discEl) {
+    if (discount > 0) {
+      discEl.innerText = `- ₹${Number(discount).toLocaleString()}`;
+      discEl.parentElement.classList.remove("hidden");
+    } else {
+      discEl.innerText = "₹0";
+      discEl.parentElement.classList.add("hidden");
+    }
+  }
   if (grandEl)
     grandEl.innerText = `₹${Number(totalPrice || 0).toLocaleString()}`;
+    
+  const savingsEl = document.getElementById("savings-amount");
+  if (savingsEl) {
+      if (discount > 0) {
+          savingsEl.innerText = `You Save: ₹${Number(discount).toLocaleString()}`;
+          savingsEl.parentElement.classList.remove("hidden");
+      } else {
+          savingsEl.parentElement.classList.add("hidden");
+      }
+  }
 }
 
 function renderCartItems(items) {
