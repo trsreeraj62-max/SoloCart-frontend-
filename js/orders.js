@@ -38,9 +38,10 @@ async function fetchOrders() {
       console.log("[Orders] Response is direct array");
       orders = res;
     } else if (res.data && Array.isArray(res.data)) {
-      // { data: [order1, order2, ...] }
+      // { data: [order1, order2, ...] } - THIS IS THE CORRECT FORMAT
       console.log("[Orders] Response has data array");
       orders = res.data;
+      console.log("[Orders] Raw data array:", JSON.stringify(res.data));
     } else if (res.data && res.data.data && Array.isArray(res.data.data)) {
       // { data: { data: [order1, order2, ...] } }
       console.log("[Orders] Response has nested data.data");
@@ -51,11 +52,23 @@ async function fetchOrders() {
       orders = res.orders;
     } else {
       console.warn("[Orders] Unknown response structure, trying to extract...");
+      console.log("[Orders] Full response object:", res);
       orders = [];
     }
 
     console.log("[Orders] Extracted orders count:", orders.length);
     console.log("[Orders] Orders data:", orders);
+    
+    // Debug each order
+    orders.forEach((order, index) => {
+      console.log(`[Orders] Order ${index + 1}:`, {
+        id: order.id,
+        status: order.status,
+        total: order.total,
+        items_count: order.items?.length || 0,
+        created_at: order.created_at
+      });
+    });
 
     const container = document.getElementById("orders-list");
     if (!container) {
