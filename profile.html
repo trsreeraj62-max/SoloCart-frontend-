@@ -73,7 +73,7 @@
               <span id="user-initials">?</span>
             </div>
             <div>
-              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Operator</span>
+              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">User</span>
               <h2
                 class="text-base font-bold text-slate-800 truncate max-w-[150px]"
                 id="user-display-name"
@@ -90,7 +90,7 @@
               <div class="flex items-center gap-3 text-indigo-600">
                 <i class="fas fa-terminal text-xs"></i>
                 <span class="text-[10px] font-black uppercase tracking-[0.2em]"
-                  >Control Center</span
+                  >User Menu</span
                 >
               </div>
             </div>
@@ -100,17 +100,15 @@
                 class="px-6 py-4 text-sm font-bold bg-indigo-50 text-indigo-600 rounded-2xl no-underline flex items-center gap-3"
                 >
                 <i class="fas fa-user-circle"></i>
-                Profile Identity
-                </a
-              >
+                My Profile
+                </a>
               <a
                 href="/orders"
                 class="px-6 py-4 text-sm font-bold text-slate-500 hover:text-indigo-600 hover:bg-slate-50 rounded-2xl no-underline transition-all flex items-center gap-3"
                 >
                 <i class="fas fa-box"></i>
-                Acquisition History
-                </a
-              >
+                My Orders
+                </a>
               <div class="my-4 border-t border-slate-50"></div>
               <a
                 href="#"
@@ -118,9 +116,8 @@
                 class="px-6 py-4 text-sm font-bold text-rose-500 hover:bg-rose-50 rounded-2xl no-underline transition-all flex items-center gap-3"
                 >
                 <i class="fas fa-power-off"></i>
-                Terminate Session
-                </a
-              >
+                Logout
+                </a>
             </div>
           </div>
         </aside>
@@ -131,15 +128,15 @@
         >
           <div class="mb-12">
             <h1 class="text-3xl font-black text-slate-900 tracking-tight italic mb-2">
-              Personal Identity Matrix
+              My Profile Settings
             </h1>
-            <p class="text-slate-400 text-sm font-medium uppercase tracking-widest">Configure your core system parameters</p>
+            <p class="text-slate-400 text-sm font-medium uppercase tracking-widest">Manage your personal information and preferences.</p>
           </div>
 
           <form id="profile-form" class="max-w-2xl space-y-10">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="space-y-3">
-                  <label for="p-name" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Legal Alias</label>
+                  <label for="p-name" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
                   <input
                     type="text"
                     id="p-name"
@@ -149,7 +146,7 @@
                 </div>
 
                 <div class="space-y-3">
-                  <label for="p-phone" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Comms Signal (10-Digit Mobile)</label>
+                  <label for="p-phone" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number (10-Digit Mobile)</label>
                   <input
                     type="tel"
                     id="p-phone"
@@ -162,7 +159,7 @@
                 </div>
 
                 <div class="space-y-3 col-span-2">
-                  <label for="p-email" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Protocol Identifier (Email)</label>
+                  <label for="p-email" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
                   <div class="relative">
                     <input
                         type="email"
@@ -176,7 +173,7 @@
                 </div>
 
                 <div class="space-y-3 col-span-2 pt-4">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Matrix Representation (Avatar)</label>
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Profile Picture</label>
                   <div class="flex items-center gap-8 p-6 rounded-[2rem] bg-slate-50 border border-slate-100">
                     <div class="w-20 h-20 rounded-2xl overflow-hidden border-2 border-white shadow-xl bg-white relative group">
                         <img
@@ -196,7 +193,7 @@
                           accept="image/*"
                           class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:bg-indigo-600 file:text-white hover:file:bg-slate-900 transition-all cursor-pointer"
                         />
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter italic ml-1">Max 2MB. Format: Sync-compatible (JPG, PNG, WEBP)</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter italic ml-1">Max 2MB. Formats: JPG, PNG, WEBP</p>
                     </div>
                   </div>
                 </div>
@@ -207,18 +204,18 @@
                 type="submit"
                 class="bg-slate-900 text-white px-12 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 hover:shadow-indigo-100 transition-all transform active:scale-95"
               >
-                UPDATE MATRIX
+                SAVE SETTINGS
               </button>
             </div>
           </form>
 
           <div class="mt-24 p-8 rounded-[2rem] bg-rose-50/30 border border-rose-50 flex items-center justify-between">
             <div class="space-y-1">
-              <h4 class="text-xs font-black text-rose-500 uppercase tracking-widest italic">Danger Frequency</h4>
-              <p class="text-xs text-slate-400 font-bold uppercase tracking-tighter">Permanently delete your node from the SoloCart network</p>
+              <h4 class="text-xs font-black text-rose-500 uppercase tracking-widest italic">Danger Zone</h4>
+              <p class="text-xs text-slate-400 font-bold uppercase tracking-tighter">Permanently delete your account and all data</p>
             </div>
             <button class="px-6 py-3 rounded-xl text-[10px] font-black uppercase text-rose-500 hover:bg-rose-500 hover:text-white transition-all border border-rose-100">
-              Deactivate Node
+              Delete Account
             </button>
           </div>
         </div>

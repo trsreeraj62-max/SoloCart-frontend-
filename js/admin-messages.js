@@ -19,13 +19,13 @@ async function initAdminMessages() {
 async function fetchMessages() {
   const tbody = document.getElementById("messages-table");
   if (!tbody) return;
-  tbody.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-xs animate-pulse">Synchronizing Signals...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-xs animate-pulse">Loading Messages...</td></tr>`;
 
   try {
     const data = await apiCall("/admin/contacts", { requireAuth: true });
     
     if (!data || data.success === false) {
-      tbody.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-rose-500 font-black uppercase tracking-widest text-xs">Signal Breach: ${escapeHtml(data?.message || "Extraction Failed")}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-rose-500 font-black uppercase tracking-widest text-xs">Error: ${escapeHtml(data?.message || "Failed to load")}</td></tr>`;
       return;
     }
 
@@ -39,7 +39,7 @@ async function fetchMessages() {
     messages = list;
     renderMessages(messages);
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-rose-500 font-black uppercase tracking-widest text-xs">Network Link Failure</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-rose-500 font-black uppercase tracking-widest text-xs">Connection Error</td></tr>`;
   }
 }
 
@@ -47,15 +47,15 @@ function renderMessages(list) {
   const tbody = document.getElementById("messages-table");
   if (!tbody) return;
   if (!Array.isArray(list) || list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-slate-300 font-black uppercase tracking-widest text-xs">Matrix Quiet: No Signals Detected</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-slate-300 font-black uppercase tracking-widest text-xs">No Messages Found</td></tr>`;
     return;
   }
 
   tbody.innerHTML = list
     .map((m) => {
-      const name = m.name || m.full_name || m.from_name || "Unknown Entity";
+      const name = m.name || m.full_name || m.from_name || "Anonymous";
       const email = m.email || m.from_email || "N/A";
-      const rawMsg = m.message || m.body || m.content || "Empty Packet";
+      const rawMsg = m.message || m.body || m.content || "Empty";
       const date = m.created_at || m.date || m.created || "Unknown Time";
       
       return `

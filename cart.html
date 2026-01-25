@@ -62,8 +62,8 @@
                 <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
                     <div class="p-8 border-b border-slate-50 flex items-center justify-between">
                         <div class="space-y-1">
-                            <h2 class="text-2xl font-black text-slate-900 tracking-tight">Cart Inventory</h2>
-                            <p class="text-slate-400 text-xs font-bold uppercase tracking-widest"><span id="cart-count-title">0</span> Protocols Active</p>
+                            <h2 class="text-2xl font-black text-slate-900 tracking-tight">Shopping Cart</h2>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-widest"><span id="cart-count-title">0</span> Items in Cart</p>
                         </div>
                         <div class="hidden md:flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-2xl">
                              <i class="fas fa-satellite-dish text-indigo-500"></i>
@@ -80,7 +80,7 @@
                     </div>
 
                     <div class="p-8 bg-slate-50/50 flex justify-end sticky bottom-0 backdrop-blur-sm border-t border-slate-100">
-                        <button id="place-order-btn" class="bg-slate-900 text-white px-12 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 hover:shadow-indigo-100 transition-all transform active:scale-95">Complete Acquisition</button>
+                        <button id="place-order-btn" class="bg-slate-900 text-white px-12 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 hover:shadow-indigo-100 transition-all transform active:scale-95">Place Order</button>
                     </div>
                 </div>
             </div>
@@ -89,29 +89,29 @@
             <div class="lg:w-4/12 flex-shrink-0">
                 <div class="sticky top-28 space-y-6">
                     <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-8 space-y-6">
-                        <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.3em] mb-4">Value Assessment</h3>
+                        <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.3em] mb-4">Price Details</h3>
                         
                         <div class="space-y-4">
                             <div class="flex justify-between text-sm font-semibold text-slate-500">
-                                <span>Total MSRP (<span id="price-details-count">0</span>)</span>
+                                <span>Price (<span id="price-details-count">0</span> items)</span>
                                 <span id="total-mrp">₹0</span>
                             </div>
                             <div class="flex justify-between text-sm font-semibold">
-                                <span>Sync Credit</span>
+                                <span>Discount</span>
                                 <span class="text-emerald-500" id="total-discount">- ₹0</span>
                             </div>
                             <div class="flex justify-between text-sm font-semibold">
-                                <span>Platform Logistics</span>
-                                <span class="text-indigo-500">COMPLIMENTARY</span>
+                                <span>Delivery Charges</span>
+                                <span class="text-indigo-500 uppercase">Free</span>
                             </div>
                             
                             <div class="pt-6 border-t border-slate-50">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-lg font-black text-slate-900 tracking-tight">Total Sync Value</span>
+                                    <span class="text-lg font-black text-slate-900 tracking-tight">Total Amount</span>
                                     <span id="grand-total" class="text-2xl font-black text-slate-900 tracking-tighter">₹0</span>
                                 </div>
                                 <div class="mt-4 p-4 rounded-xl bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest text-center">
-                                    Projected Savings: <span id="savings-amount">₹0</span>
+                                    You Save: <span id="savings-amount">₹0</span>
                                 </div>
                             </div>
                         </div>
@@ -122,8 +122,8 @@
                             <i class="fas fa-shield-halved"></i>
                         </div>
                         <div class="space-y-1">
-                            <p class="text-[10px] font-black text-indigo-900 uppercase tracking-widest">Secure Matrix</p>
-                            <p class="text-[10px] font-bold text-indigo-600/70 leading-relaxed uppercase tracking-tighter">Encrypted Transactions. Synchronized Returns. Authentic Protocol Origins.</p>
+                            <p class="text-[10px] font-black text-indigo-900 uppercase tracking-widest">Secure Shopping</p>
+                            <p class="text-[10px] font-bold text-indigo-600/70 leading-relaxed uppercase tracking-tighter">Safe Payments. Easy Returns. 100% Authentic Products.</p>
                         </div>
                     </div>
                 </div>
@@ -135,9 +135,9 @@
             <div class="w-32 h-32 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mb-8 text-slate-200 text-5xl">
                 <i class="fas fa-shopping-bag"></i>
             </div>
-            <h3 class="text-3xl font-black text-slate-900 tracking-tight mb-2">Cart Matrix Empty</h3>
-            <p class="text-slate-400 font-medium mb-10">Initialize your first product protocol today.</p>
-            <a href="/shop" class="px-12 py-4 bg-indigo-600 text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-100 hover:bg-slate-900 transition-all no-underline">Browse Collection</a>
+            <h3 class="text-3xl font-black text-slate-900 tracking-tight mb-2">Your Cart is Empty</h3>
+            <p class="text-slate-400 font-medium mb-10">Add some products to your cart to get started.</p>
+            <a href="/shop" class="px-12 py-4 bg-indigo-600 text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-100 hover:bg-slate-900 transition-all no-underline">Browse Shop</a>
         </div>
     </main>
 

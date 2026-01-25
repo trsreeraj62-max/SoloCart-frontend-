@@ -1,5 +1,5 @@
 import CONFIG from "./config.js";
-import { getAuthToken, apiCall } from "./main.js";
+import { getAuthToken, apiCall, escapeHtml } from "./main.js";
 
 async function initOrderDetails() {
   const token = getAuthToken();
@@ -171,7 +171,7 @@ async function fetchOrderDetail(id) {
   } catch (e) {
     console.error("Failed to fetch order detail", e);
     if (window.showToast)
-      window.showToast("Signal lost while retrieving order", "error");
+      window.showToast("Unable to load order details", "error");
   }
 }
 
@@ -193,7 +193,7 @@ function renderDetails(order) {
       order.payment_method || "N/A";
   if (document.getElementById("order-status-text"))
     document.getElementById("order-status-text").innerText =
-      `Current status: ${order.status || "PENDING"}`;
+      `Status: ${order.status || "PENDING"}`;
 
   // Address
   const addr = order.address || {};
@@ -208,10 +208,10 @@ function renderDetails(order) {
       .join(" ");
 
     addrEl.innerHTML = `
-            <p class="text-sm font-bold text-slate-800">${addr.name || order.user_name || "User"}</p>
-            ${addressParts.length > 0 ? `<p class="text-xs text-slate-500 font-medium">${addressParts.join(", ")}</p>` : ""}
-            ${cityStateZip ? `<p class="text-xs text-slate-500 font-medium">${cityStateZip}</p>` : ""}
-            ${phone ? `<p class="text-xs font-bold text-slate-700 mt-2">Phone: ${phone}</p>` : ""}
+            <p class="text-sm font-bold text-slate-800">${escapeHtml(addr.name || order.user_name || "User")}</p>
+            ${addressParts.length > 0 ? `<p class="text-xs text-slate-500 font-medium">${escapeHtml(addressParts.join(", "))}</p>` : ""}
+            ${cityStateZip ? `<p class="text-xs text-slate-500 font-medium">${escapeHtml(cityStateZip)}</p>` : ""}
+            ${phone ? `<p class="text-xs font-bold text-slate-700 mt-2">Phone: ${escapeHtml(phone)}</p>` : ""}
         `;
   }
 
@@ -298,7 +298,7 @@ function renderDetails(order) {
                     <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">Quantity: ${item.quantity}</p>
                     <div class="flex items-center gap-3 mt-4">
                         <span class="text-base font-black text-slate-900">₹${Number((item.price || 0) * item.quantity).toLocaleString()}</span>
-                        <span class="text-[10px] text-green-600 font-bold">Replacement Policy Available</span>
+                        <span class="text-[10px] text-green-600 font-bold">Eligible for Return</span>
                     </div>
                 </div>
                 <div class="hidden md:block">

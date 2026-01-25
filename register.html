@@ -47,29 +47,29 @@
         <div class="relative z-10 space-y-8">
             <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white font-black text-2xl">S</div>
             <div class="space-y-4">
-                <h1 class="text-4xl font-black text-white leading-tight tracking-tight italic">Protocol Initialization</h1>
-                <p class="text-indigo-100 font-medium leading-relaxed">Join the SoloCart collective and synchronize your preferences across all matrix nodes.</p>
+                <h1 class="text-4xl font-black text-white leading-tight tracking-tight italic">Join SoloCart</h1>
+                <p class="text-indigo-100 font-medium leading-relaxed">Create an account to start shopping and save your preferences.</p>
             </div>
             
             <ul class="space-y-4 pt-4">
                 <li class="flex items-center gap-4 text-white text-sm font-bold bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
                     <i class="fas fa-layer-group text-indigo-300"></i>
-                    Acquisitions Hub Access
+                    Full Access to Shop
                 </li>
                 <li class="flex items-center gap-4 text-white text-sm font-bold bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
                     <i class="fas fa-bolt text-indigo-300"></i>
-                    Priority Sync Processing
+                    Faster Checkout
                 </li>
                 <li class="flex items-center gap-4 text-white text-sm font-bold bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
                     <i class="fas fa-shield-alt text-indigo-300"></i>
-                    Encrypted Node Security
+                    Secure Account
                 </li>
             </ul>
         </div>
         
         <div class="relative z-10 flex items-center gap-4 opacity-50">
             <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-            <span class="text-[10px] font-black uppercase text-white tracking-[0.4em]">Grid Status: Online</span>
+            <span class="text-[10px] font-black uppercase text-white tracking-[0.4em]">System Status: Online</span>
         </div>
       </div>
 
@@ -77,52 +77,52 @@
       <div class="w-full lg:w-7/12 p-12 md:p-16 overflow-y-auto max-h-[85vh] custom-scrollbar">
         <div class="space-y-10">
             <div class="space-y-2">
-                <h2 class="text-3xl font-black text-slate-900 tracking-tight italic">New Entity Request</h2>
-                <p class="text-slate-400 text-sm font-medium">Transmit your data packet to establish a new protocol node.</p>
+                <h2 class="text-3xl font-black text-slate-900 tracking-tight italic">Create Account</h2>
+                <p class="text-slate-400 text-sm font-medium">Fill in your details to get started.</p>
             </div>
 
             <form id="register-form" class="space-y-8">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-2 col-span-2 md:col-span-1">
-                    <label for="name" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Entity Name</label>
+                    <label for="name" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
                     <input type="text" id="name" required placeholder="Solo Cart" class="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all text-sm font-bold">
                 </div>
                 <div class="space-y-2 col-span-2 md:col-span-1">
-                    <label for="phone" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Comms Signal (10-Digit Mobile)</label>
+                    <label for="phone" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number (10-Digit Mobile)</label>
                     <input type="tel" id="phone" required pattern="[0-9]{10}" maxlength="10" placeholder="9876543210" class="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all text-sm font-bold">
                 </div>
                 <div class="space-y-2 col-span-2">
-                    <label for="email" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Protocol Email</label>
+                    <label for="email" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
                     <input type="email" id="email" required placeholder="entity@nexus.com" class="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all text-sm font-bold">
                 </div>
                 <div class="space-y-2 col-span-2 md:col-span-1">
-                    <label for="password" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Security Key</label>
+                    <label for="password" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
                     <input type="password" id="password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all text-sm font-bold">
                 </div>
                 <div class="space-y-2 col-span-2 md:col-span-1">
-                    <label for="password_confirmation" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Verify Key</label>
+                    <label for="password_confirmation" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirm Password</label>
                     <input type="password" id="password_confirmation" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all text-sm font-bold">
                 </div>
               </div>
 
               <div class="p-5 rounded-2xl bg-indigo-50/50 text-indigo-900/60 text-[10px] font-bold leading-relaxed uppercase tracking-widest">
-                By initiating transmission, you synchronize with SoloCart's 
-                <a href="#" class="text-indigo-600 font-black hover:underline">Code of Conduct</a> and 
-                <a href="#" class="text-indigo-600 font-black hover:underline">Privacy Protocol</a>.
+                By creating an account, you agree to SoloCart's 
+                <a href="#" class="text-indigo-600 font-black hover:underline">Terms of Use</a> and 
+                <a href="#" class="text-indigo-600 font-black hover:underline">Privacy Policy</a>.
               </div>
 
               <button
                 type="submit"
                 class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 hover:shadow-indigo-100 transition-all transform active:scale-95"
               >
-                INITIALIZE PROTOCOL
+                CREATE ACCOUNT
               </button>
 
               <div class="text-center pt-2">
                 <a
                   href="/login"
                   class="text-xs text-slate-400 font-bold hover:text-indigo-600 transition-colors inline-flex items-center gap-2"
-                  >Protocol Node Already Established? <span class="text-indigo-600 font-black">BREACH NOW</span></a
+                  >Already have an account? <span class="text-indigo-600 font-black">LOGIN</span></a
                 >
               </div>
             </form>

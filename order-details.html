@@ -48,15 +48,15 @@
         <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden mb-8">
             <div class="p-8 md:p-10 border-b border-slate-50 flex flex-wrap justify-between items-center gap-6 bg-slate-50/50">
                 <div class="space-y-1">
-                    <h1 class="text-2xl font-black text-slate-900 tracking-tight">Acquisition #<span id="display-order-id">ORD-0000</span></h1>
-                    <p class="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] ml-1">Timestamp Correlation: <span id="display-order-date">...</span></p>
+                    <h1 class="text-2xl font-black text-slate-900 tracking-tight">Order #<span id="display-order-id">ORD-0000</span></h1>
+                    <p class="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] ml-1">Ordered On: <span id="display-order-date">...</span></p>
                 </div>
                 <div class="flex gap-3">
                     <button id="download-invoice-btn" class="hidden px-6 py-2.5 rounded-xl border-2 border-indigo-100 text-indigo-600 text-xs font-black uppercase tracking-widest hover:bg-indigo-50 transition-all flex items-center gap-2">
-                        <i class="fas fa-file-pdf"></i> Extract Invoice
+                        <i class="fas fa-file-pdf"></i> Download Invoice
                     </button>
                     <button id="need-help-btn" class="px-6 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg flex items-center gap-2">
-                        <i class="fas fa-headset"></i> Support Node
+                        <i class="fas fa-headset"></i> Get Support
                     </button>
                 </div>
             </div>
@@ -69,7 +69,7 @@
                     
                     <div class="relative z-20 flex flex-col items-center gap-4">
                         <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xs shadow-lg shadow-indigo-100"><i class="fas fa-check"></i></div>
-                        <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Initialized</span>
+                        <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Ordered</span>
                     </div>
                     <div class="relative z-20 flex flex-col items-center gap-4">
                         <div id="step-shipped" class="w-10 h-10 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-xs"><i class="fas fa-truck-fast"></i></div>
@@ -77,7 +77,7 @@
                     </div>
                     <div class="relative z-20 flex flex-col items-center gap-4">
                         <div id="step-delivered" class="w-10 h-10 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-xs"><i class="fas fa-box-open"></i></div>
-                        <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Synchronized</span>
+                        <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Delivered</span>
                     </div>
                 </div>
             </div>
@@ -85,7 +85,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-slate-50">
                 <!-- Delivery Details -->
                 <div class="p-10">
-                    <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 mb-6">Delivery Matrix</h3>
+                    <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 mb-6">Shipping Address</h3>
                     <div id="delivery-address" class="space-y-1">
                         <!-- Loaded via JS -->
                         <div class="animate-pulse space-y-2">
@@ -97,30 +97,30 @@
 
                 <!-- Payment Details -->
                 <div class="p-10">
-                    <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 mb-6">Transaction Profile</h3>
+                    <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 mb-6">Payment Details</h3>
                     <div class="space-y-4">
                         <div class="flex justify-between items-center">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">Protocol</span>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Method</span>
                             <span id="payment-method" class="text-xs font-black text-slate-800 uppercase tracking-tighter">...</span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">Verification</span>
-                            <span id="payment-status" class="text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-full italic">Authenticated</span>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Status</span>
+                            <span id="payment-status" class="text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-full italic">Paid</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Order Value -->
                 <div class="p-10">
-                    <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 mb-6">Net Valuation</h3>
+                    <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 mb-6">Order Summary</h3>
                     <div class="space-y-6">
                         <div class="flex justify-between items-baseline">
-                            <span class="text-xs font-bold text-slate-400 uppercase tracking-tighter">Total Sync Value</span>
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-tighter">Total Amount</span>
                             <span id="total-amount" class="text-3xl font-black text-slate-900 tracking-tighter">₹0</span>
                         </div>
                         <div class="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-50">
-                             <p class="text-[9px] font-black text-indigo-700 uppercase tracking-[0.2em] mb-1">Status Report</p>
-                             <p class="text-xs font-bold text-indigo-600 leading-relaxed italic" id="order-status-text">Synchronizing acquisition with national grid nodes.</p>
+                             <p class="text-[9px] font-black text-indigo-700 uppercase tracking-[0.2em] mb-1">Current Status</p>
+                             <p class="text-xs font-bold text-indigo-600 leading-relaxed italic" id="order-status-text">Your order is being processed for delivery.</p>
                         </div>
                     </div>
                 </div>
@@ -129,7 +129,7 @@
 
         <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
              <div class="p-8 md:px-10 border-b border-slate-50 flex items-center justify-between">
-                <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Synchronized Protocols</h3>
+                <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Items Ordered</h3>
                 <i class="fas fa-layer-group text-slate-100 text-2xl"></i>
              </div>
              <div id="order-items-list" class="divide-y divide-slate-50">
@@ -143,8 +143,8 @@
         <div class="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl transform scale-95 transition-transform duration-300 overflow-hidden border border-white">
             <div class="p-8 border-b border-slate-50 flex justify-between items-center">
                 <div class="space-y-1">
-                    <h3 class="text-2xl font-black text-slate-900 tracking-tight italic">Review Protocol</h3>
-                    <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Node Experience Calibration</p>
+                    <h3 class="text-2xl font-black text-slate-900 tracking-tight italic">Rate & Review</h3>
+                    <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Share Your Experience</p>
                 </div>
                 <button id="close-review-modal" class="w-10 h-10 rounded-full bg-slate-50 text-slate-400 hover:text-rose-500 transition-all flex items-center justify-center">
                     <i class="fas fa-times"></i>
@@ -156,7 +156,7 @@
                 <input type="hidden" id="review-order-id">
                 
                 <div class="space-y-4">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center block">Satisfaction Index</label>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center block">Product Rating</label>
                     <div class="flex justify-center gap-4 text-3xl text-slate-100 cursor-pointer" id="star-rating">
                         <i class="fas fa-star hover:scale-125 transition-transform duration-300" data-val="1"></i>
                         <i class="fas fa-star hover:scale-125 transition-transform duration-300" data-val="2"></i>
@@ -168,11 +168,11 @@
                 </div>
                 
                 <div class="space-y-3">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Narrative Experience</label>
-                    <textarea id="review-text" name="comment" rows="4" class="w-full bg-slate-50 border border-slate-100 p-6 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all text-sm font-bold resize-none" placeholder="Describe the quality of the synchronization..."></textarea>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Your Review</label>
+                    <textarea id="review-text" name="comment" rows="4" class="w-full bg-slate-50 border border-slate-100 p-6 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all text-sm font-bold resize-none" placeholder="Tell us about your experience with this product..."></textarea>
                 </div>
                 
-                <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 hover:shadow-indigo-100 transition-all transform active:scale-95">Transmit Review</button>
+                <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 hover:shadow-indigo-100 transition-all transform active:scale-95">Submit Review</button>
             </form>
         </div>
     </div>

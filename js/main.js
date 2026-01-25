@@ -11,6 +11,17 @@ export function safeJSONParse(str, fallback = {}) {
   }
 }
 
+/* ---------------- HELPERS ---------------- */
+export function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 /* ---------------- AUTH ---------------- */
 export function getAuthToken() {
   const token = localStorage.getItem("auth_token");

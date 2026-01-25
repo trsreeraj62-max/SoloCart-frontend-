@@ -46,8 +46,8 @@
       <div class="hidden lg:block w-1/2 relative bg-indigo-600 overflow-hidden p-16 flex flex-col justify-between">
         <div class="relative z-10 space-y-6">
             <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white font-black text-2xl">S</div>
-            <h1 class="text-4xl font-black text-white leading-tight tracking-tight italic">Welcome to the Matrix.</h1>
-            <p class="text-indigo-100 font-medium">Synchronize your account to manage acquisitions and track protocols in real-time.</p>
+            <h1 class="text-4xl font-black text-white leading-tight tracking-tight italic">Welcome Back.</h1>
+            <p class="text-indigo-100 font-medium">Login to your account to manage orders and track your shipments.</p>
         </div>
         
         <!-- Abstract Shape -->
@@ -60,7 +60,7 @@
 
         <div class="relative z-10 p-6 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20">
             <p class="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">System Status</p>
-            <p class="text-xs text-white font-bold italic mt-2">All protocols operational. Secure authentication enabled.</p>
+            <p class="text-xs text-white font-bold italic mt-2">Secure login active. Your data is protected.</p>
         </div>
       </div>
 
@@ -68,13 +68,13 @@
       <div class="w-full lg:w-1/2 p-12 md:p-20 flex flex-col justify-center">
         <div class="space-y-8">
             <div class="space-y-2">
-                <h2 class="text-3xl font-black text-slate-900 tracking-tight italic">Initialize Access</h2>
-                <p class="text-slate-400 text-sm font-medium">Provide your credentials to breach the secure portal.</p>
+                <h2 class="text-3xl font-black text-slate-900 tracking-tight italic">Sign In</h2>
+                <p class="text-slate-400 text-sm font-medium">Enter your email and password to access your account.</p>
             </div>
 
             <form id="login-form" class="space-y-6">
               <div class="space-y-2">
-                <label for="email" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Protocol Email</label>
+                <label for="email" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
                 <input
                   type="email"
                   id="email"
@@ -85,7 +85,7 @@
               </div>
 
               <div class="space-y-2">
-                <label for="password" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Access Phrase</label>
+                <label for="password" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
                 <input
                   type="password"
                   id="password"
@@ -98,9 +98,9 @@
               <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-tighter">
                 <label class="flex items-center gap-2 text-slate-400 cursor-pointer group">
                     <input type="checkbox" class="w-4 h-4 rounded-md border-slate-200 text-indigo-600 focus:ring-indigo-500">
-                    <span class="group-hover:text-slate-600 transition-colors">Remember Node</span>
+                    <span class="group-hover:text-slate-600 transition-colors">Remember Me</span>
                 </label>
-                <a href="#" class="text-indigo-600 hover:text-indigo-700">Lost Key?</a>
+                <a href="#" class="text-indigo-600 hover:text-indigo-700">Forgot Password?</a>
               </div>
 
               <button
@@ -108,13 +108,13 @@
                 id="login-btn"
                 class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 hover:shadow-indigo-100 transition-all transform active:scale-95"
               >
-                BREACH PORTAL
+                LOGIN
               </button>
 
               <div class="pt-8 text-center">
                 <p class="text-xs text-slate-400 font-medium">
-                  New entity? 
-                  <a href="/register" class="text-indigo-600 font-black hover:underline ml-1">Register Protocol</a>
+                  New user? 
+                  <a href="/register" class="text-indigo-600 font-black hover:underline ml-1">Create Account</a>
                 </p>
               </div>
             </form>

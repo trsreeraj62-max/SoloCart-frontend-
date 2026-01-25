@@ -190,7 +190,7 @@ async function toggleUserStatus(id, currentStatus) {
     });
     if (data && (data.success || !data.message?.includes("fail"))) {
       if (window.showToast)
-        window.showToast("Signal Frequency Reset Successful");
+        window.showToast("User status updated");
       fetchUsers();
     } else {
       throw new Error("Endpoint missing");
@@ -202,11 +202,11 @@ async function toggleUserStatus(id, currentStatus) {
 }
 
 async function deleteUser(id) {
-  if (!confirm("Permanent data erasure initiated. Confirm deletion?")) return;
+  if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
   try {
     const data = await apiCall(`/admin/users/${id}`, { method: "DELETE" });
     if (data && (data.success || !data.message?.includes("fail"))) {
-      if (window.showToast) window.showToast("Identity Erased");
+      if (window.showToast) window.showToast("User deleted");
       fetchUsers();
     } else {
       throw new Error("Endpoint missing");

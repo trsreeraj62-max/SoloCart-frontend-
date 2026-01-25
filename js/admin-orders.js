@@ -1,18 +1,10 @@
 import CONFIG from "./config.js";
-import { apiCall } from "./main.js";
+import { apiCall, escapeHtml } from "./main.js";
 
 let currentOrders = [];
 
 // Global HTML escape helper used by multiple functions
-function escapeHtml(str) {
-  if (str === null || str === undefined) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
+
 
 async function initAdminOrders() {
   const token = localStorage.getItem("auth_token");
@@ -305,19 +297,23 @@ function showOrderDetails(id) {
   content.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div>
-                <h4 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Customer Intel</h4>
+                <h4 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Customer Details</h4>
                 <div class="space-y-2">
-                    <p class="text-sm font-bold">${order.user?.name || "Customer"}</p>
-                    <p class="text-sm text-slate-600">${order.user?.email || "--"}</p>
-                    <p class="text-sm text-slate-600">${addr.phone || "--"}</p>
+                    <p class="text-sm font-bold">${escapeHtml(order.user?.name || order.user_name || "Customer")}</p>
+                    <p class="text-sm text-slate-600">${escapeHtml(order.user?.email || order.email || "--")}</p>
+                    <p class="text-sm text-slate-600">${escapeHtml(addr.phone || order.phone || "--")}</p>
                     <div class="p-4 bg-slate-50 rounded-lg border border-slate-100 mt-4">
-                         <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Delivery Vector</p>
-                         <p class="text-xs italic text-slate-700">${addr.address || ""}, ${addr.locality || ""}, ${addr.city || ""}, ${addr.state || ""} - ${addr.pincode || ""}</p>
+                         <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Delivery Address</p>
+                         <p class="text-xs italic text-slate-700">
+                           ${escapeHtml(addr.address || "")} ${addr.locality ? `, ${escapeHtml(addr.locality)}` : ""}
+                           ${addr.city ? `<br>${escapeHtml(addr.city)}` : ""} ${addr.state ? `, ${escapeHtml(addr.state)}` : ""}
+                           ${addr.pincode ? ` - ${escapeHtml(addr.pincode)}` : ""}
+                         </p>
                     </div>
                 </div>
             </div>
             <div>
-                <h4 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Acquisition Items</h4>
+                <h4 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Ordered Items</h4>
                 <div class="divide-y border rounded-xl overflow-hidden">
                     ${items
                       .map((item) => {
@@ -341,8 +337,8 @@ function showOrderDetails(id) {
                       .join("")}
                 </div>
                 <div class="mt-6 flex justify-between items-center p-4 bg-slate-900 text-white rounded-xl">
-                    <span class="text-xs font-black uppercase tracking-widest opacity-60">Total Payload</span>
-                    <span class="text-xl font-black italic">₹${Number(order.total_amount || 0).toLocaleString()}</span>
+                    <span class="text-xs font-black uppercase tracking-widest opacity-60">Total Amount</span>
+                    <span class="text-xl font-black italic">₹${Number(order.total_amount || order.total || 0).toLocaleString()}</span>
                 </div>
             </div>
         </div>

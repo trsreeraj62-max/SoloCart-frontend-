@@ -1,5 +1,5 @@
 import CONFIG from "./config.js";
-import { getAuthToken, apiCall, safeJSONParse } from "./main.js";
+import { getAuthToken, apiCall, safeJSONParse, escapeHtml } from "./main.js";
 
 const CHECKOUT_KEY = "checkout_data";
 
@@ -257,16 +257,7 @@ function collectPaymentDetails(method) {
   return {};
 }
 
-function escapeHtml(s) {
-  if (s === null || s === undefined) return "";
-  return String(s).replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
-  );
-}
+
 
 document.addEventListener("DOMContentLoaded", initPayment);
 // Card input auto-formatting
