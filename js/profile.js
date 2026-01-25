@@ -4,6 +4,8 @@ import {
   apiCall,
   safeJSONParse,
   updateHeaderProfileImage,
+  validatePassword,
+  validatePhone,
 } from "./main.js";
 
 async function initProfile() {
@@ -92,8 +94,11 @@ function populateUI(user) {
       document.getElementById("p-name").value = user.name || "";
     if (document.getElementById("p-email"))
       document.getElementById("p-email").value = user.email || "";
+    
+    // Support both 'phone' and 'phone_number' from backend
+    const phoneVal = user.phone || user.phone_number || "";
     if (document.getElementById("p-phone"))
-      document.getElementById("p-phone").value = user.phone || "";
+      document.getElementById("p-phone").value = phoneVal;
 
     // Handle profile image URL
     const profileImg = document.getElementById("p-image-preview");
@@ -129,105 +134,84 @@ function setupEventListeners() {
 
       const name = document.getElementById("p-name")?.value?.trim();
       const phone = document.getElementById("p-phone")?.value?.trim();
+      const password = document.getElementById("p-password")?.value;
+      const passwordConfirm = document.getElementById("p-password-confirm")?.value;
       const fileInput = document.getElementById("p-image-file");
 
-      // Basic validation
+      // Validations
       if (!name) {
         if (window.showToast) window.showToast("Name is required", "error");
         return;
       }
 
+      const phoneCheck = validatePhone(phone);
+      if (!phoneCheck.valid) {
+        if (window.showToast) window.showToast(phoneCheck.message, "error");
+        return;
+      }
+
+      if (password) {
+        const passCheck = validatePassword(password);
+        if (!passCheck.valid) {
+          if (window.showToast) window.showToast(passCheck.message, "error");
+          return;
+        }
+        if (password !== passwordConfirm) {
+          if (window.showToast) window.showToast("Passwords do not match", "error");
+          return;
+        }
+      }
+
       // Build FormData
       const fd = new FormData();
       fd.append("name", name);
-      fd.append("phone", phone || "");
+      fd.append("phone", phoneCheck.cleaned);
+      // Backend might expect phone_number too, let's play safe if we don't know the exact Laravel field
+      fd.append("phone_number", phoneCheck.cleaned);
+      
+      if (password) {
+        fd.append("password", password);
+        fd.append("password_confirmation", password);
+      }
 
       if (fileInput && fileInput.files && fileInput.files[0]) {
         fd.append("profile_image", fileInput.files[0]);
-        console.log(
-          "[Profile] Appended profile_image:",
-          fileInput.files[0].name,
-        );
+      }
+
+      const btn = e.target.querySelector('button[type="submit"]');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = "SAVING...";
       }
 
       try {
-        console.log("[Profile] Sending FormData to /profile/update");
         const data = await apiCall("/profile/update", {
           method: "POST",
           body: fd,
           requireAuth: true,
         });
 
-        console.log("[Profile] Response:", data);
-
         if (data && (data.user || data.success)) {
           const user = data.user || (data.data && data.data.user) || null;
           if (user) {
-            // Persist canonical profile for other pages
-            try {
-              localStorage.setItem("user_profile", JSON.stringify(user));
-              localStorage.setItem("user_data", JSON.stringify(user));
-            } catch (e) {}
-            if (window.showToast)
-              window.showToast("Profile updated successfully");
-            const displayName = document.getElementById("user-display-name");
-            if (displayName) displayName.innerText = user.name || name;
-            // Re-fetch profile to ensure all UI is rebuilt from backend
+            localStorage.setItem("user_profile", JSON.stringify(user));
+            localStorage.setItem("user_data", JSON.stringify(user));
+            if (window.showToast) window.showToast("Profile updated successfully");
+            
+            // Re-fetch and update UI
             await loadProfile();
-            try {
-              updateHeaderProfileImage();
-            } catch (e) {}
-
-            // Persist avatar URL separately for quick global access and update all avatar elements
-            try {
-              const stored = JSON.parse(
-                localStorage.getItem("user_profile") || "null",
-              );
-              let avatar =
-                stored &&
-                (stored.profile_image || stored.avatar || stored.image_url)
-                  ? stored.profile_image || stored.avatar || stored.image_url
-                  : null;
-              if (avatar) {
-                const backendBase = CONFIG.API_BASE_URL.replace(
-                  /\/api\/?$/i,
-                  "",
-                );
-                if (!/^https?:\/\//i.test(avatar))
-                  avatar = `${backendBase}/${String(avatar).replace(/^\//, "")}`;
-                avatar = String(avatar).replace(/^http:/, "https:");
-                localStorage.setItem("profile_avatar", avatar);
-              } else {
-                localStorage.removeItem("profile_avatar");
-              }
-            } catch (err) {
-              console.warn("Could not persist profile avatar:", err);
-            }
-            // Trigger refresh
-            window.location.reload();
+            updateHeaderProfileImage();
+            
+            setTimeout(() => window.location.reload(), 1000);
           } else {
-            if (window.showToast)
-              window.showToast("Profile updated successfully");
+            if (window.showToast) window.showToast("Profile updated successfully");
             setTimeout(() => window.location.reload(), 1000);
           }
         } else {
-          // show validation errors if present
           if (data && data.errors) {
             Object.keys(data.errors).forEach((field) => {
-              const el =
-                document.getElementById(`p-${field}`) ||
-                document.getElementById(field);
-              const msg = data.errors[field].flat
-                ? data.errors[field].flat()[0]
-                : data.errors[field][0];
-              if (el) {
-                const err = document.createElement("div");
-                err.className = "field-error text-rose-500 text-xs mt-1";
-                err.innerText = msg;
-                el.parentNode?.appendChild(err);
-              } else {
-                if (window.showToast) window.showToast(msg, "error");
-              }
+              const msg = Array.isArray(data.errors[field]) ? data.errors[field][0] : data.errors[field];
+              if (window.showToast) window.showToast(msg, "error");
             });
           } else {
             const msg = data?.message || "Profile update failed";
@@ -236,14 +220,19 @@ function setupEventListeners() {
         }
       } catch (err) {
         console.error("Profile update failed:", err);
-        if (window.showToast)
-          window.showToast("Network error. Try again.", "error");
+        if (window.showToast) window.showToast("Network error. Try again.", "error");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = "SAVE SETTINGS";
+        }
       }
     });
 
   document.getElementById("profile-logout")?.addEventListener("click", () => {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("user_data");
+    localStorage.removeItem("user_profile");
     window.location.href = "/index.html";
   });
 }

@@ -115,29 +115,58 @@ export function updateAuthUI() {
     safeJSONParse(localStorage.getItem("user_data"), null);
 
   if (token && user) {
-    // Simplified dropdown without avatar as requested
+    const avatarUrl = user.profile_image || user.avatar || user.image_url || null;
+    let imgHtml = '';
+    
+    if (avatarUrl) {
+      let finalUrl = avatarUrl;
+      if (!finalUrl.startsWith("http")) {
+        finalUrl = `${CONFIG.API_BASE_URL.replace(/\/api$/, "")}/${finalUrl.replace(/^\//, "")}`;
+      }
+      finalUrl = finalUrl.replace(/^http:/, "https:");
+      imgHtml = `<img src="${finalUrl}" class="w-7 h-7 rounded-sm object-cover user-avatar" alt="User">`;
+    } else {
+      const initial = (user.name || "U").charAt(0).toUpperCase();
+      imgHtml = `<div class="w-7 h-7 rounded-sm bg-indigo-500 flex items-center justify-center text-[10px] font-black text-white user-avatar-placeholder">${initial}</div>`;
+    }
+
     authActions.innerHTML = `
       <div class="relative inline-block" id="auth-dropdown">
-        <button id="auth-dropdown-btn" class="flex items-center gap-2 focus:outline-none bg-white/10 px-4 py-1.5 rounded-sm">
-          <span class="text-sm font-bold uppercase tracking-wide text-white">${user.name || "User"}</span>
-          <i class="fas fa-caret-down text-white/80"></i>
+        <button id="auth-dropdown-btn" class="flex items-center gap-3 focus:outline-none bg-slate-100 px-3 py-1.5 rounded-xl hover:bg-slate-200 transition-all border border-slate-200/50">
+          ${imgHtml}
+          <span class="text-xs font-bold uppercase tracking-wide text-slate-700 hidden sm:inline">${user.name || "User"}</span>
+          <i class="fas fa-caret-down text-slate-400 text-[10px]"></i>
         </button>
-        <div id="auth-dropdown-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl border border-slate-100 z-50 overflow-hidden">
-          <div class="px-4 py-3 bg-slate-50 border-b border-slate-100">
-            <p class="text-[10px] font-black uppercase text-slate-400">Synchronized User</p>
+        <div id="auth-dropdown-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          <div class="px-5 py-4 bg-slate-50 border-b border-slate-100">
+            <p class="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">Authenticated Account</p>
             <p class="text-xs font-bold text-slate-800 truncate">${user.email}</p>
           </div>
-          <a href="/profile.html" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 font-bold transition-colors border-b border-slate-50"><i class="fas fa-user-circle mr-2 opacity-50"></i> My Profile</a>
-          <a href="/orders.html" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 font-bold transition-colors border-b border-slate-50"><i class="fas fa-box-open mr-2 opacity-50"></i> My Orders</a>
-          ${user.role === "admin" || user.is_admin ? '<a href="/admin/dashboard.html" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 font-bold transition-colors border-b border-slate-50"><i class="fas fa-shield-alt mr-2 opacity-50"></i> Admin Panel</a>' : ""}
-          <button id="user-logout" class="w-full text-left px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 font-bold transition-colors"><i class="fas fa-power-off mr-2 opacity-50"></i> Logout</button>
+          <div class="p-1.5">
+            <a href="/profile.html" class="flex items-center gap-3 px-4 py-2.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg font-bold transition-colors">
+              <i class="fas fa-user-circle opacity-50 w-4"></i> My Profile
+            </a>
+            <a href="/orders.html" class="flex items-center gap-3 px-4 py-2.5 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg font-bold transition-colors">
+              <i class="fas fa-box-open opacity-50 w-4"></i> My Orders
+            </a>
+            ${user.role === "admin" || user.is_admin ? `
+            <div class="h-px bg-slate-100 my-1"></div>
+            <a href="/admin/dashboard.html" class="flex items-center gap-3 px-4 py-2.5 text-xs text-indigo-600 hover:bg-indigo-50 rounded-lg font-bold transition-colors">
+              <i class="fas fa-shield-alt w-4"></i> Admin Panel
+            </a>
+            ` : ""}
+            <div class="h-px bg-slate-100 my-1"></div>
+            <button id="user-logout" class="flex items-center gap-3 w-full text-left px-4 py-2.5 text-xs text-rose-600 hover:bg-rose-50 rounded-lg font-bold transition-colors">
+              <i class="fas fa-power-off opacity-50 w-4"></i> Logout
+            </button>
+          </div>
         </div>
       </div>
     `;
     // initialize dropdown behavior
     initAuthDropdown();
   } else {
-    authActions.innerHTML = `<a href="/login.html" class="bg-white text-[#2874f0] px-4 py-1.5 rounded-sm font-bold text-sm no-underline">Login</a>`;
+    authActions.innerHTML = `<a href="/login.html" class="bg-slate-900 text-white px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 hover:shadow-indigo-100 transition-all no-underline">Login</a>`;
   }
 }
 
@@ -178,15 +207,21 @@ export function updateHeaderProfileImage() {
     safeJSONParse(localStorage.getItem("user_profile"), null) ||
     safeJSONParse(localStorage.getItem("user_data"), null);
 
-  if (!user || !user.profile_image) return;
+  if (!user) return;
 
-  let img = user.profile_image;
+  const avatarUrl = user.profile_image || user.avatar || user.image_url || null;
+  if (!avatarUrl) return;
+
+  let img = avatarUrl;
   if (!img.startsWith("http")) {
-    img = `${CONFIG.API_BASE_URL.replace(/\/api$/, "")}/${img}`;
+    img = `${CONFIG.API_BASE_URL.replace(/\/api$/, "")}/${img.replace(/^\//, "")}`;
   }
+  img = img.replace(/^http:/, "https:");
 
   document.querySelectorAll(".user-avatar").forEach((el) => {
-    el.src = img.replace(/^http:/, "https:");
+    if (el.tagName === 'IMG') {
+      el.src = img;
+    }
   });
 }
 
@@ -226,16 +261,41 @@ export function updateProfileAvatar() {
     safeJSONParse(localStorage.getItem("user_profile"), null) ||
     safeJSONParse(localStorage.getItem("user_data"), null);
 
-  if (!profile || !profile.profile_image) return;
+  if (!profile) return;
+  
+  const avatarUrl = profile.profile_image || profile.avatar || profile.image_url || null;
+  if (!avatarUrl) return;
 
-  let avatar = profile.profile_image;
+  let avatar = avatarUrl;
   if (!avatar.startsWith("http")) {
-    avatar = `${CONFIG.API_BASE_URL.replace(/\/api$/, "")}/${avatar}`;
+    avatar = `${CONFIG.API_BASE_URL.replace(/\/api$/, "")}/${avatar.replace(/^\//, "")}`;
   }
+  avatar = avatar.replace(/^http:/, "https:");
 
-  document.querySelectorAll(".profile-avatar").forEach((img) => {
-    img.src = avatar.replace(/^http:/, "https:");
+  document.querySelectorAll(".profile-avatar, .user-avatar, #user-profile-circle, #p-image-preview").forEach((img) => {
+    if (img.tagName === 'IMG') {
+      img.src = avatar;
+      img.classList.remove('hidden');
+    }
   });
+
+  const initials = document.getElementById("user-initials");
+  if (initials) initials.classList.add("hidden");
+}
+
+/* ---------------- VALIDATION ---------------- */
+export function validatePassword(password) {
+  if (!password) return { valid: false, message: "Password is required" };
+  if (password.length < 8) return { valid: false, message: "Password must be at least 8 characters long" };
+  // Add more strength checks if needed
+  return { valid: true };
+}
+
+export function validatePhone(phone) {
+  if (!phone) return { valid: false, message: "Phone number is required" };
+  const cleaned = phone.replace(/\D/g, "");
+  if (cleaned.length !== 10) return { valid: false, message: "Phone number must be exactly 10 digits" };
+  return { valid: true, cleaned };
 }
 
 /* ---------------- DOM READY ---------------- */
