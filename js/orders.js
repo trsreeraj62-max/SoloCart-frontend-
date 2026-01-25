@@ -134,7 +134,8 @@ function renderOrders(orders) {
   }
   // Render each order using the first item as preview, but handle missing product objects.
   const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
-  const rows = orders.map((order) => {
+  const rows = orders.map((order, index) => {
+    console.log(`[Orders] Generating HTML for order #${order.id} (index ${index})`);
     const items = Array.isArray(order.items) ? order.items : [];
     const firstItem = items[0] || {};
     const productObj = extractProductFromItem(firstItem, backendBase);
@@ -181,6 +182,8 @@ function renderOrders(orders) {
   });
 
   container.innerHTML = rows.join("");
+  console.log(`[Orders] Set innerHTML with ${rows.length} order HTML blocks`);
+  console.log(`[Orders] Container now has ${container.children.length} child elements`);
 
   // Attach cancel handlers
   container.querySelectorAll(".cancel-order-btn").forEach((btn) => {
