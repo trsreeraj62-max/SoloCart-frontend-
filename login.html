@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
     <link
@@ -15,126 +15,110 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/resources/public/css/app.css" />
-    <style>
-      :root {
-        --fk-blue: #2874f0;
-        --fk-yellow: #ffe500;
-        --fk-bg: #f1f3f6;
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#4f46e5',
+              secondary: '#10b981',
+              dark: '#0f172a',
+              light: '#f8fafc'
+            },
+            fontFamily: {
+              sans: ['Outfit', 'sans-serif'],
+            }
+          }
+        }
       }
-      body {
-        background-color: var(--fk-bg);
-        font-family: "Inter", sans-serif;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        padding: 20px;
-      }
-      .login-card {
-        max-width: 850px;
-        width: 100%;
-        display: flex;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        border-radius: 4px;
-        overflow: hidden;
-        background: white;
-      }
-      .login-banner {
-        width: 40%;
-        background: var(--fk-blue);
-        padding: 40px 30px;
-        color: white;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-      .login-form-side {
-        width: 60%;
-        padding: 50px;
-      }
-    </style>
+    </script>
+    <link rel="stylesheet" href="/css/app.css" />
   </head>
-  <body class="min-h-screen bg-[#f1f3f6] flex items-center justify-center p-4">
+  <body class="min-h-screen bg-slate-50 font-sans flex items-center justify-center p-6">
     <!-- Toast Container -->
     <div
       id="toast-container"
-      class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"
+      class="fixed bottom-8 right-8 z-[9999] flex flex-col gap-3"
     ></div>
 
-    <div class="login-card">
-      <!-- Left Side -->
-      <div class="login-banner hidden md:flex flex-col justify-between">
-        <div>
-          <h1 class="text-3xl font-black italic tracking-tighter mb-4">
-            Login
-          </h1>
-          <p class="text-lg opacity-80 font-medium leading-relaxed">
-            Get access to your Orders, Wishlist and Recommendations
-          </p>
+    <div class="w-full max-w-[1000px] h-[600px] bg-white rounded-[3rem] shadow-2xl shadow-indigo-100 flex overflow-hidden border border-white">
+      <!-- Image Side -->
+      <div class="hidden lg:block w-1/2 relative bg-indigo-600 overflow-hidden p-16 flex flex-col justify-between">
+        <div class="relative z-10 space-y-6">
+            <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white font-black text-2xl">S</div>
+            <h1 class="text-4xl font-black text-white leading-tight tracking-tight italic">Welcome to the Matrix.</h1>
+            <p class="text-indigo-100 font-medium">Synchronize your account to manage acquisitions and track protocols in real-time.</p>
         </div>
-        <img
-          src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/login_img_c4a81e.png"
-          alt="Login Banner"
-          class="w-full mt-auto opacity-40 grayscale brightness-200"
-        />
+        
+        <!-- Abstract Shape -->
+        <div class="absolute -bottom-20 -right-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-20 pointer-events-none">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-white fill-current">
+                <path d="M47.7,-64.1C61.4,-56.9,71.8,-42.6,76.5,-27.1C81.2,-11.5,80.1,5.3,74.5,19.9C68.9,34.5,58.7,46.9,46.2,56.8C33.7,66.7,18.9,74.1,3.4,69.5C-12.1,64.9,-28.4,48.4,-41.8,34.8C-55.2,21.3,-65.7,10.6,-68.1,-1.4C-70.5,-13.3,-64.8,-26.7,-55.1,-37.8C-45.3,-48.9,-31.6,-57.8,-17.8,-64.9C-4.1,-72.1,9.8,-77.5,47.7,-64.1Z" transform="translate(100 100)" />
+            </svg>
+        </div>
+
+        <div class="relative z-10 p-6 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20">
+            <p class="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">System Status</p>
+            <p class="text-xs text-white font-bold italic mt-2">All protocols operational. Secure authentication enabled.</p>
+        </div>
       </div>
 
-      <!-- Right Side -->
-      <div class="login-form-side">
-        <form id="login-form" class="space-y-6">
-          <div class="relative group">
-            <input
-              type="email"
-              id="email"
-              required
-              class="w-full border-b border-slate-300 py-2 outline-none focus:border-[#2874f0] text-sm peer bg-transparent"
-              placeholder=" "
-            />
-            <label
-              for="email"
-              class="absolute left-0 top-2 text-slate-400 text-sm transition-all pointer-events-none peer-focus:-top-4 peer-focus:text-[10px] peer-focus:text-[#2874f0] peer-[:not(:placeholder-shown)]:-top-4 peer-[:not(:placeholder-shown)]:text-[10px]"
-              >Enter Email Address</label
-            >
-          </div>
+      <!-- Form Side -->
+      <div class="w-full lg:w-1/2 p-12 md:p-20 flex flex-col justify-center">
+        <div class="space-y-8">
+            <div class="space-y-2">
+                <h2 class="text-3xl font-black text-slate-900 tracking-tight italic">Initialize Access</h2>
+                <p class="text-slate-400 text-sm font-medium">Provide your credentials to breach the secure portal.</p>
+            </div>
 
-          <div class="relative group">
-            <input
-              type="password"
-              id="password"
-              required
-              class="w-full border-b border-slate-300 py-2 outline-none focus:border-[#2874f0] text-sm peer bg-transparent"
-              placeholder=" "
-            />
-            <label
-              for="password"
-              class="absolute left-0 top-2 text-slate-400 text-sm transition-all pointer-events-none peer-focus:-top-4 peer-focus:text-[10px] peer-focus:text-[#2874f0] peer-[:not(:placeholder-shown)]:-top-4 peer-[:not(:placeholder-shown)]:text-[10px]"
-              >Enter Password</label
-            >
-          </div>
+            <form id="login-form" class="space-y-6">
+              <div class="space-y-2">
+                <label for="email" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Protocol Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  required
+                  placeholder="name@nexus.com"
+                  class="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all text-sm font-bold"
+                />
+              </div>
 
-          <p class="text-[10px] text-slate-500 leading-tight">
-            By continuing, you agree to SoloCart's
-            <a href="#" class="text-[#2874f0] font-bold">Terms of Use</a> and
-            <a href="#" class="text-[#2874f0] font-bold">Privacy Policy</a>.
-          </p>
+              <div class="space-y-2">
+                <label for="password" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Access Phrase</label>
+                <input
+                  type="password"
+                  id="password"
+                  required
+                  placeholder="••••••••"
+                  class="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all text-sm font-bold"
+                />
+              </div>
 
-          <button
-            type="submit"
-            id="login-btn"
-            class="w-full bg-[#fb641b] text-white py-3 rounded-sm font-black text-sm shadow-md hover:shadow-lg transition-all"
-          >
-            Login
-          </button>
+              <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-tighter">
+                <label class="flex items-center gap-2 text-slate-400 cursor-pointer group">
+                    <input type="checkbox" class="w-4 h-4 rounded-md border-slate-200 text-indigo-600 focus:ring-indigo-500">
+                    <span class="group-hover:text-slate-600 transition-colors">Remember Node</span>
+                </label>
+                <a href="#" class="text-indigo-600 hover:text-indigo-700">Lost Key?</a>
+              </div>
 
-          <div class="pt-10 text-center">
-            <a
-              href="/register"
-              class="text-[#2874f0] text-sm font-black no-underline"
-              >New to SoloCart? Create an account</a
-            >
-          </div>
-        </form>
+              <button
+                type="submit"
+                id="login-btn"
+                class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 hover:shadow-indigo-100 transition-all transform active:scale-95"
+              >
+                BREACH PORTAL
+              </button>
+
+              <div class="pt-8 text-center">
+                <p class="text-xs text-slate-400 font-medium">
+                  New entity? 
+                  <a href="/register" class="text-indigo-600 font-black hover:underline ml-1">Register Protocol</a>
+                </p>
+              </div>
+            </form>
+        </div>
       </div>
     </div>
 

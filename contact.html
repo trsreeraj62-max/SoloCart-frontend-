@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
     <link
@@ -15,309 +15,105 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/resources/public/css/app.css" />
-    <style>
-      :root {
-        --fk-blue: #2874f0;
-        --fk-bg: #f1f3f6;
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#4f46e5',
+              secondary: '#10b981',
+              dark: '#0f172a',
+              light: '#f8fafc'
+            },
+            fontFamily: {
+              sans: ['Outfit', 'sans-serif'],
+            }
+          }
+        }
       }
-      body {
-        background-color: var(--fk-bg);
-        font-family: "Inter", sans-serif;
-      }
-      .container-max {
-        max-width: 1200px;
-      }
-    </style>
+    </script>
+    <link rel="stylesheet" href="/css/app.css" />
   </head>
-  <body>
+  <body class="bg-slate-50 font-sans text-slate-800">
     <div
       id="toast-container"
-      class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"
+      class="fixed bottom-8 right-8 z-[9999] flex flex-col gap-3"
     ></div>
 
-    <!-- Navigation -->
-    <nav
-      class="bg-[#2874f0] text-white py-2 sticky top-0 z-[1000] shadow-md"
-      id="main-nav"
-    >
-      <div class="container container-max flex items-center justify-between">
-        <div class="flex items-center gap-10">
-          <a href="/" class="flex flex-col leading-none no-underline">
-            <span class="text-2xl font-black italic tracking-tighter text-white"
-              >SoloCart</span
-            >
-          </a>
-          <ul
-            class="hidden md:flex items-center gap-6 m-0 p-0 list-none text-sm font-bold"
-          >
-            <li>
-              <a href="/" class="text-white no-underline hover:text-[#ffe500]"
-                >Home</a
-              >
-            </li>
-            <li>
-              <a
-                href="/shop"
-                class="text-white no-underline hover:text-[#ffe500]"
-                >Shop</a
-              >
-            </li>
-            <li>
-              <a href="/contact" class="text-[#ffe500] no-underline">Contact</a>
-            </li>
-          </ul>
+    <!-- Modern Navigation -->
+    <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 py-4">
+      <div class="container mx-auto px-4 lg:px-8 flex items-center justify-between">
+        <div class="flex items-center gap-12">
+            <a href="/" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-200">S</div>
+                <span class="text-2xl font-bold tracking-tight text-slate-900 group-hover:text-indigo-600 transition-colors">SoloCart</span>
+            </a>
+            
+            <ul class="hidden md:flex items-center gap-8">
+                <li><a href="/" class="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors">Home</a></li>
+                <li><a href="/shop" class="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors">Shop</a></li>
+                <li><a href="/contact" class="text-sm font-bold text-indigo-600 transition-colors">Contact</a></li>
+            </ul>
         </div>
       </div>
     </nav>
 
-    <main class="container container-max py-16 px-4">
-      <div class="max-w-5xl mx-auto">
-        <div
-          class="bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row"
-        >
-          <!-- Left: Info -->
-          <div
-            class="md:w-2/5 bg-[#2874f0] p-12 text-white flex flex-col justify-between relative overflow-hidden"
-          >
-            <div
-              class="absolute -right-20 -bottom-20 opacity-10 pointer-events-none"
-            >
-              <i class="fas fa-paper-plane text-[300px] rotate-45"></i>
-            </div>
-            <div class="relative z-10">
-              <h2 class="text-3xl font-black italic tracking-tighter mb-6">
-                Connect With Us
-              </h2>
-              <p class="text-sm opacity-80 leading-relaxed font-medium mb-12">
-                Having trouble with a transmission? Need to adjust your signal
-                frequency? We're here 24/7 to help.
-              </p>
+    <main class="container mx-auto px-4 lg:px-8 py-20">
+      <div class="max-w-4xl mx-auto text-center space-y-16">
+        <div class="space-y-4">
+            <span class="text-indigo-600 font-black text-xs uppercase tracking-[0.3em] italic">Support Protocol</span>
+            <h1 class="text-4xl md:text-6xl font-black text-slate-900 tracking-tight italic">Connect with the Collective</h1>
+            <p class="text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">Our synchronization nodes are active 24/7. Reach out via our official communication frequencies for immediate assistance.</p>
+        </div>
 
-              <div class="space-y-8">
-                <div class="flex items-center gap-4">
-                  <div
-                    class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
-                  >
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-white p-10 rounded-[3rem] shadow-xl shadow-indigo-50 border border-slate-50 space-y-6 group hover:-translate-y-2 transition-transform duration-500">
+                <div class="w-16 h-16 bg-indigo-50 rounded-[1.5rem] flex items-center justify-center text-indigo-600 text-2xl group-hover:bg-indigo-600 group-hover:text-white transition-all">
                     <i class="fas fa-phone-alt"></i>
-                  </div>
-                  <div>
-                    <p class="text-[10px] uppercase font-black opacity-50">
-                      Signal Line
-                    </p>
-                    <p class="text-sm font-bold">+1-800-SOLOCART</p>
-                  </div>
-                </div>
-                <div class="flex items-center gap-4">
-                  <div
-                    class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
-                  >
-                    <i class="fas fa-envelope"></i>
-                  </div>
-                  <div>
-                    <p class="text-[10px] uppercase font-black opacity-50">
-                      Pulse Mail
-                    </p>
-                    <p class="text-sm font-bold">support@solocart.io</p>
-                  </div>
-                </div>
-                <div class="flex items-center gap-4">
-                  <div
-                    class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
-                  >
-                    <i class="fas fa-map-marker-alt"></i>
-                  </div>
-                  <div>
-                    <p class="text-[10px] uppercase font-black opacity-50">
-                      Headquarters
-                    </p>
-                    <p class="text-sm font-bold">
-                      Quadrant 7, Silicon Valley, CA
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="flex gap-4 mt-12 relative z-10">
-              <a
-                href="#"
-                class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:text-[#2874f0] transition-all"
-                ><i class="fab fa-twitter"></i
-              ></a>
-              <a
-                href="#"
-                class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:text-[#2874f0] transition-all"
-                ><i class="fab fa-instagram"></i
-              ></a>
-              <a
-                href="#"
-                class="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:text-[#2874f0] transition-all"
-                ><i class="fab fa-linkedin-in"></i
-              ></a>
-            </div>
-          </div>
-
-          <!-- Right: Form -->
-          <div class="md:w-3/5 p-12">
-            <h3 class="text-2xl font-bold text-slate-800 mb-8">
-              Send a Transmission
-            </h3>
-            <form id="contact-form" class="space-y-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-2">
-                  <label
-                    for="contact-name"
-                    class="text-[10px] font-black uppercase tracking-widest text-slate-400"
-                    >Full Name</label
-                  >
-                  <input
-                    id="contact-name"
-                    type="text"
-                    placeholder="John Doe"
-                    class="w-full border-b-2 border-slate-100 py-2 outline-none focus:border-[#2874f0] transition-colors text-sm font-medium"
-                  />
                 </div>
                 <div class="space-y-2">
-                  <label
-                    for="contact-email"
-                    class="text-[10px] font-black uppercase tracking-widest text-slate-400"
-                    >Email Address</label
-                  >
-                  <input
-                    id="contact-email"
-                    type="email"
-                    placeholder="john@example.com"
-                    class="w-full border-b-2 border-slate-100 py-2 outline-none focus:border-[#2874f0] transition-colors text-sm font-medium"
-                  />
+                    <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Voice Comms</p>
+                    <p class="text-lg font-black text-slate-900">+1-800-SOLO-SYNC</p>
                 </div>
-              </div>
-              <div class="space-y-2">
-                <label
-                  for="contact-subject"
-                  class="text-[10px] font-black uppercase tracking-widest text-slate-400"
-                  >Subject</label
-                >
-                <input
-                  id="contact-subject"
-                  type="text"
-                  placeholder="How can we help?"
-                  class="w-full border-b-2 border-slate-100 py-2 outline-none focus:border-[#2874f0] transition-colors text-sm font-medium"
-                />
-              </div>
-              <div class="space-y-2">
-                <label
-                  for="contact-message"
-                  class="text-[10px] font-black uppercase tracking-widest text-slate-400"
-                  >Signal Message</label
-                >
-                <textarea
-                  id="contact-message"
-                  rows="4"
-                  placeholder="Your message here..."
-                  class="w-full border-b-2 border-slate-100 py-2 outline-none focus:border-[#2874f0] transition-colors text-sm font-medium resize-none"
-                ></textarea>
-              </div>
-              <button
-                type="submit"
-                class="bg-[#fb641b] text-white px-12 py-4 rounded-xl font-black text-sm uppercase shadow-xl hover:scale-105 transition-transform active:scale-95"
-              >
-                Send Message
-              </button>
-            </form>
-          </div>
+            </div>
+
+            <div class="bg-white p-10 rounded-[3rem] shadow-xl shadow-indigo-50 border border-slate-50 space-y-6 group hover:-translate-y-2 transition-transform duration-500">
+                <div class="w-16 h-16 bg-emerald-50 rounded-[1.5rem] flex items-center justify-center text-emerald-600 text-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                    <i class="fas fa-envelope-open-text"></i>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Protocol Mail</p>
+                    <p class="text-lg font-black text-slate-900">nexus@solocart.io</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-10 rounded-[3rem] shadow-xl shadow-indigo-50 border border-slate-50 space-y-6 group hover:-translate-y-2 transition-transform duration-500">
+                <div class="w-16 h-16 bg-rose-50 rounded-[1.5rem] flex items-center justify-center text-rose-600 text-2xl group-hover:bg-rose-600 group-hover:text-white transition-all">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Matrix HQ</p>
+                    <p class="text-lg font-black text-slate-900">Quadrant 9, Neo City</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Synchronization -->
+        <div class="pt-10 flex flex-col items-center gap-6">
+            <h3 class="text-[10px] font-black uppercase text-slate-400 tracking-[0.5em]">Synchronizing Channels</h3>
+            <div class="flex gap-4">
+                <a href="#" class="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-100 hover:shadow-lg transition-all text-xl"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-100 hover:shadow-lg transition-all text-xl"><i class="fab fa-instagram"></i></a>
+                <a href="#" class="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-100 hover:shadow-lg transition-all text-xl"><i class="fab fa-linkedin"></i></a>
+            </div>
         </div>
       </div>
     </main>
 
-    <footer
-      class="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-[0.2em]"
-    >
+    <footer class="text-center py-20 text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">
       © 2026 SoloCart Global • Secure Transmission Guaranteed
     </footer>
 
     <script type="module" src="/js/main.js"></script>
-    <script type="module">
-      import CONFIG from "./js/config.js";
-
-      // Email validation utility
-      function isValidEmail(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-      }
-
-      document
-        .getElementById("contact-form")
-        ?.addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const form = e.target;
-          const btn = form.querySelector("button");
-          const originalText = btn.innerText;
-
-          const name = document.getElementById("contact-name").value.trim();
-          const email = document
-            .getElementById("contact-email")
-            .value.trim()
-            .toLowerCase();
-          const subject = document
-            .getElementById("contact-subject")
-            .value.trim();
-          const message = document
-            .getElementById("contact-message")
-            .value.trim();
-
-          // Validate form fields
-          if (!name) {
-            window.showToast("Please enter your full name", "error");
-            return;
-          }
-
-          if (!email || !isValidEmail(email)) {
-            window.showToast("Please enter a valid email address", "error");
-            return;
-          }
-
-          if (!subject) {
-            window.showToast("Please enter a subject", "error");
-            return;
-          }
-
-          if (!message) {
-            window.showToast("Please enter a message", "error");
-            return;
-          }
-
-          console.log("[Contact] Submitting contact form with email:", email);
-
-          btn.disabled = true;
-          btn.innerText = "Sending...";
-
-          try {
-            const response = await fetch(`${CONFIG.API_BASE_URL}/contact`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ name, email, subject, message }),
-            });
-
-            console.log("[Contact] Response status:", response.status);
-
-            if (response.ok) {
-              window.showToast("Signal transmitted successfully!");
-              form.reset();
-            } else {
-              const data = await response.json();
-              window.showToast(
-                data.message || "Failed to transmit signal",
-                "error",
-              );
-            }
-          } catch (e) {
-            window.showToast("Link failure. Check your connection.", "error");
-          } finally {
-            btn.disabled = false;
-            btn.innerText = originalText;
-          }
-        });
-    </script>
   </body>
 </html>

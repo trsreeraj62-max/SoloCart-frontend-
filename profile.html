@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
     <link
@@ -15,106 +15,111 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/resources/public/css/app.css" />
-    <style>
-      :root {
-        --fk-blue: #2874f0;
-        --fk-bg: #f1f3f6;
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#4f46e5',
+              secondary: '#10b981',
+              dark: '#0f172a',
+              light: '#f8fafc'
+            },
+            fontFamily: {
+              sans: ['Outfit', 'sans-serif'],
+            }
+          }
+        }
       }
-      body {
-        background-color: var(--fk-bg);
-        font-family: "Inter", sans-serif;
-      }
-      .container-max {
-        max-width: 1200px;
-      }
-    </style>
+    </script>
+    <link rel="stylesheet" href="/css/app.css" />
   </head>
-  <body>
+  <body class="bg-slate-50 font-sans text-slate-800">
+    <!-- Toast Container -->
     <div
       id="toast-container"
-      class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"
+      class="fixed bottom-8 right-8 z-[9999] flex flex-col gap-3"
     ></div>
 
-    <!-- Navigation -->
-    <nav
-      class="bg-[#2874f0] text-white py-2 sticky top-0 z-[1000] shadow-md"
-      id="main-nav"
-    >
-      <div class="container container-max flex items-center justify-between">
-        <div class="flex items-center gap-10">
-          <a href="/" class="flex flex-col leading-none no-underline">
-            <span class="text-2xl font-black italic tracking-tighter text-white"
-              >SoloCart</span
-            >
-          </a>
+    <!-- Modern Navigation -->
+    <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 py-4">
+      <div class="container mx-auto px-4 lg:px-8 flex items-center justify-between">
+        <div class="flex items-center gap-12">
+            <a href="/" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-200">S</div>
+                <span class="text-2xl font-bold tracking-tight text-slate-900 group-hover:text-indigo-600 transition-colors">SoloCart</span>
+            </a>
         </div>
         <div id="auth-actions"></div>
       </div>
     </nav>
 
-    <main class="container container-max py-6 px-4">
-      <div class="flex flex-col lg:flex-row gap-4">
+    <main class="container mx-auto px-4 lg:px-8 py-10">
+      <div class="flex flex-col lg:flex-row gap-8">
         <!-- Left Sidebar -->
-        <aside class="lg:w-1/4 space-y-4">
+        <aside class="lg:w-1/4 space-y-6">
           <div
-            class="bg-white p-4 flex items-center gap-4 rounded-sm shadow-sm border border-slate-100"
+            class="bg-white p-6 flex items-center gap-4 rounded-3xl shadow-sm border border-slate-100"
           >
             <div
-              class="w-12 h-12 rounded-full bg-[#2874f0] text-white flex items-center justify-center text-xl font-black overflow-hidden profile-circle"
+              class="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl font-black overflow-hidden shadow-lg shadow-indigo-100"
             >
               <img
                 id="user-profile-circle"
-                src="https://placehold.co/48x48?text=User"
+                src="https://placehold.co/100x100?text=User"
                 alt="avatar"
                 class="w-full h-full object-cover hidden"
               />
-              <span
-                id="user-initials"
-                class="inline-flex items-center justify-center w-full h-full"
-                >?</span
-              >
+              <span id="user-initials">?</span>
             </div>
             <div>
-              <span class="text-[10px] font-black uppercase text-slate-400"
-                >Hello,</span
-              >
+              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Operator</span>
               <h2
-                class="text-base font-bold text-slate-800"
+                class="text-base font-bold text-slate-800 truncate max-w-[150px]"
                 id="user-display-name"
               >
-                Loading...
+                Syncing...
               </h2>
             </div>
           </div>
 
           <div
-            class="bg-white rounded-sm shadow-sm border border-slate-100 overflow-hidden"
+            class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden"
           >
-            <div class="p-4 border-b flex items-center justify-between">
-              <div class="flex items-center gap-3 text-[#2874f0]">
-                <i class="fas fa-user"></i>
-                <span class="text-sm font-black uppercase tracking-widest"
-                  >Account Settings</span
+            <div class="p-6 border-b border-slate-50">
+              <div class="flex items-center gap-3 text-indigo-600">
+                <i class="fas fa-terminal text-xs"></i>
+                <span class="text-[10px] font-black uppercase tracking-[0.2em]"
+                  >Control Center</span
                 >
               </div>
             </div>
-            <div class="flex flex-col">
+            <div class="flex flex-col p-2">
               <a
                 href="/profile"
-                class="px-12 py-3 text-sm font-bold bg-blue-50 text-[#2874f0] border-l-4 border-[#2874f0] no-underline"
-                >Profile Information</a
+                class="px-6 py-4 text-sm font-bold bg-indigo-50 text-indigo-600 rounded-2xl no-underline flex items-center gap-3"
+                >
+                <i class="fas fa-user-circle"></i>
+                Profile Identity
+                </a
               >
               <a
                 href="/orders"
-                class="px-12 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 no-underline transition-colors"
-                >My Orders</a
+                class="px-6 py-4 text-sm font-bold text-slate-500 hover:text-indigo-600 hover:bg-slate-50 rounded-2xl no-underline transition-all flex items-center gap-3"
+                >
+                <i class="fas fa-box"></i>
+                Acquisition History
+                </a
               >
+              <div class="my-4 border-t border-slate-50"></div>
               <a
                 href="#"
                 id="profile-logout"
-                class="px-12 py-3 text-sm font-bold text-rose-500 hover:bg-rose-50 no-underline transition-colors mt-10 border-t"
-                >Logout Signal</a
+                class="px-6 py-4 text-sm font-bold text-rose-500 hover:bg-rose-50 rounded-2xl no-underline transition-all flex items-center gap-3"
+                >
+                <i class="fas fa-power-off"></i>
+                Terminate Session
+                </a
               >
             </div>
           </div>
@@ -122,113 +127,97 @@
 
         <!-- Main Profile Area -->
         <div
-          class="lg:w-3/4 bg-white rounded-sm shadow-sm border border-slate-100 p-8"
+          class="lg:w-3/4 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8 md:p-12"
         >
-          <h1 class="text-xl font-bold text-slate-800 mb-10 pb-4 border-b">
-            Personal Information
-          </h1>
+          <div class="mb-12">
+            <h1 class="text-3xl font-black text-slate-900 tracking-tight italic mb-2">
+              Personal Identity Matrix
+            </h1>
+            <p class="text-slate-400 text-sm font-medium uppercase tracking-widest">Configure your core system parameters</p>
+          </div>
 
-          <form id="profile-form" class="max-w-xl space-y-8">
-            <div class="flex gap-10 items-center">
-              <label for="p-name" class="w-32 text-sm font-bold text-slate-500"
-                >Full Name</label
-              >
-              <input
-                type="text"
-                id="p-name"
-                class="flex-grow border-b-2 border-slate-100 py-2 outline-none focus:border-[#2874f0] text-sm font-bold"
-                required
-              />
-            </div>
-
-            <div class="flex gap-10 items-center">
-              <label for="p-email" class="w-32 text-sm font-bold text-slate-500"
-                >Email Address</label
-              >
-              <input
-                type="email"
-                id="p-email"
-                class="flex-grow border-b-2 border-slate-100 py-2 text-sm font-bold text-slate-400 cursor-not-allowed"
-                readonly
-                disabled
-              />
-            </div>
-
-            <div class="flex gap-10 items-start">
-              <label
-                for="p-bio"
-                class="w-32 text-sm font-bold text-slate-500 mt-2"
-                >Bio / Status</label
-              >
-              <textarea
-                id="p-bio"
-                rows="3"
-                class="flex-grow border-2 border-slate-100 p-3 rounded-sm outline-none focus:border-[#2874f0] text-sm font-medium resize-none"
-              ></textarea>
-            </div>
-
-            <div class="flex gap-10 items-center">
-              <label for="p-phone" class="w-32 text-sm font-bold text-slate-500"
-                >Phone</label
-              >
-              <input
-                type="tel"
-                id="p-phone"
-                class="flex-grow border-b-2 border-slate-100 py-2 outline-none focus:border-[#2874f0] text-sm font-bold"
-                placeholder="10-digit mobile number"
-              />
-            </div>
-
-            <div class="flex gap-10 items-center">
-              <label
-                for="p-image-file"
-                class="w-32 text-sm font-bold text-slate-500"
-                >Profile Image</label
-              >
-              <div class="flex items-center gap-4">
-                <input
-                  type="file"
-                  id="p-image-file"
-                  accept="image/*"
-                  class="border p-2 rounded-sm"
-                />
-                <div
-                  class="w-16 h-16 rounded-full overflow-hidden border bg-white profile-circle"
-                >
-                  <img
-                    id="p-image-preview"
-                    src="https://placehold.co/80x80?text=Preview"
-                    class="w-full h-full object-cover"
-                    alt="Profile preview"
+          <form id="profile-form" class="max-w-2xl space-y-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-3">
+                  <label for="p-name" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Legal Alias</label>
+                  <input
+                    type="text"
+                    id="p-name"
+                    class="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all text-sm font-bold"
+                    required
                   />
                 </div>
-              </div>
+
+                <div class="space-y-3">
+                  <label for="p-phone" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Comms Signal (10-Digit Mobile)</label>
+                  <input
+                    type="tel"
+                    id="p-phone"
+                    pattern="[0-9]{10}"
+                    maxlength="10"
+                    class="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all text-sm font-bold"
+                    placeholder="9876543210"
+                    required
+                  />
+                </div>
+
+                <div class="space-y-3 col-span-2">
+                  <label for="p-email" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Protocol Identifier (Email)</label>
+                  <div class="relative">
+                    <input
+                        type="email"
+                        id="p-email"
+                        class="w-full bg-slate-100 border border-slate-100 px-6 py-4 rounded-2xl text-sm font-bold text-slate-400 cursor-not-allowed italic"
+                        readonly
+                        disabled
+                    />
+                    <i class="fas fa-lock absolute right-6 top-1/2 -translate-y-1/2 text-slate-200"></i>
+                  </div>
+                </div>
+
+                <div class="space-y-3 col-span-2 pt-4">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Matrix Representation (Avatar)</label>
+                  <div class="flex items-center gap-8 p-6 rounded-[2rem] bg-slate-50 border border-slate-100">
+                    <div class="w-20 h-20 rounded-2xl overflow-hidden border-2 border-white shadow-xl bg-white relative group">
+                        <img
+                            id="p-image-preview"
+                            src="https://placehold.co/100x100?text=Preview"
+                            class="w-full h-full object-cover transition-transform group-hover:scale-110"
+                            alt="Profile preview"
+                        />
+                        <div class="absolute inset-0 bg-indigo-600/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                    </div>
+                    <div class="space-y-2 flex-grow">
+                        <input
+                          type="file"
+                          id="p-image-file"
+                          accept="image/*"
+                          class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:bg-indigo-600 file:text-white hover:file:bg-slate-900 transition-all cursor-pointer"
+                        />
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter italic ml-1">Max 2MB. Format: Sync-compatible (JPG, PNG, WEBP)</p>
+                    </div>
+                  </div>
+                </div>
             </div>
 
             <div class="pt-6">
               <button
                 type="submit"
-                class="bg-[#2874f0] text-white px-12 py-3 rounded-sm font-black text-sm uppercase shadow-lg hover:shadow-xl transition-all"
+                class="bg-slate-900 text-white px-12 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 hover:shadow-indigo-100 transition-all transform active:scale-95"
               >
-                Update Signal
+                UPDATE MATRIX
               </button>
             </div>
           </form>
 
-          <div class="mt-20 pt-10 border-t flex items-center justify-between">
-            <div>
-              <h4
-                class="text-sm font-black text-rose-500 uppercase tracking-widest"
-              >
-                Danger Frequency
-              </h4>
-              <p class="text-xs text-slate-400 font-bold">
-                Permanently delete your node from the SoloCart network
-              </p>
+          <div class="mt-24 p-8 rounded-[2rem] bg-rose-50/30 border border-rose-50 flex items-center justify-between">
+            <div class="space-y-1">
+              <h4 class="text-xs font-black text-rose-500 uppercase tracking-widest italic">Danger Frequency</h4>
+              <p class="text-xs text-slate-400 font-bold uppercase tracking-tighter">Permanently delete your node from the SoloCart network</p>
             </div>
-            <button
-              class="text-xs font-black uppercase text-rose-500 hover:underline"
-            >
+            <button class="px-6 py-3 rounded-xl text-[10px] font-black uppercase text-rose-500 hover:bg-rose-500 hover:text-white transition-all border border-rose-100">
               Deactivate Node
             </button>
           </div>

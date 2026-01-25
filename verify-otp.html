@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
     <link
@@ -15,131 +15,100 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/resources/public/css/app.css" />
-    <style>
-      :root {
-        --fk-blue: #2874f0;
-        --fk-yellow: #ffe500;
-        --fk-bg: #f1f3f6;
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#4f46e5',
+              secondary: '#10b981',
+              dark: '#0f172a',
+              light: '#f8fafc'
+            },
+            fontFamily: {
+              sans: ['Outfit', 'sans-serif'],
+            }
+          }
+        }
       }
-      body {
-        background-color: var(--fk-bg);
-        font-family: "Inter", sans-serif;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        padding: 20px;
-      }
-      .login-card {
-        max-width: 850px;
-        width: 100%;
-        display: flex;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        border-radius: 4px;
-        overflow: hidden;
-        background: white;
-      }
-      .login-banner {
-        width: 40%;
-        background: var(--fk-blue);
-        padding: 40px 30px;
-        color: white;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-      .login-form-side {
-        width: 60%;
-        padding: 50px;
-      }
-    </style>
+    </script>
+    <link rel="stylesheet" href="/css/app.css" />
   </head>
-  <body class="min-h-screen bg-[#f1f3f6] flex items-center justify-center p-4">
+  <body class="min-h-screen bg-slate-50 font-sans flex items-center justify-center p-6">
     <!-- Toast Container -->
     <div
       id="toast-container"
-      class="fixed bottom-[30px] right-[30px] z-[9999] flex flex-col gap-3"
+      class="fixed bottom-8 right-8 z-[9999] flex flex-col gap-3"
     ></div>
 
-    <div class="login-card">
-      <!-- Left Side -->
-      <div class="login-banner hidden md:flex flex-col justify-between">
-        <div>
-          <h1 class="text-3xl font-black italic tracking-tighter mb-4">
-            Verification
-          </h1>
-          <p class="text-lg opacity-80 font-medium leading-relaxed">
-            Enter the OTP sent to your email to verify your identity.
-          </p>
+    <div class="w-full max-w-[900px] h-[550px] bg-white rounded-[3rem] shadow-2xl shadow-indigo-100 flex overflow-hidden border border-white">
+      <!-- Image Side -->
+      <div class="hidden lg:block w-1/2 relative bg-indigo-600 overflow-hidden p-16 flex flex-col justify-between">
+        <div class="relative z-10 space-y-6">
+            <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white font-black text-2xl">S</div>
+            <h1 class="text-4xl font-black text-white leading-tight tracking-tight italic">Two-Factor Authentication</h1>
+            <p class="text-indigo-100 font-medium">Verify your signal origin to authorize terminal access.</p>
         </div>
-        <img
-          src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/login_img_c4a81e.png"
-          alt="Login Banner"
-          class="w-full mt-auto opacity-40 grayscale brightness-200"
-        />
+        
+        <div class="relative z-10 p-6 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 text-center">
+            <i class="fas fa-lock text-white text-3xl mb-4 opacity-50"></i>
+            <p class="text-[10px] font-black uppercase tracking-[0.3em] text-white">Encryption Layer Active</p>
+        </div>
       </div>
 
-      <!-- Right Side -->
-      <div class="login-form-side">
-        <form id="otp-form" class="space-y-6">
-          <!-- Hidden email field -->
-          <input type="hidden" id="email" />
+      <!-- Form Side -->
+      <div class="w-full lg:w-1/2 p-12 md:p-16 flex flex-col justify-center">
+        <div class="space-y-10">
+            <div class="space-y-2">
+                <h2 class="text-3xl font-black text-slate-900 tracking-tight italic">Verify Signal</h2>
+                <p class="text-slate-400 text-sm font-medium">A synchronization code has been transmitted to your provided email.</p>
+            </div>
 
-          <div class="relative group">
-            <input
-              type="text"
-              id="otp"
-              required
-              class="w-full border-b border-slate-300 py-2 outline-none focus:border-[#2874f0] text-sm peer bg-transparent tracking-[1em] font-bold text-center"
-              placeholder=" "
-              maxlength="6"
-            />
-            <label
-              for="otp"
-              class="absolute left-0 top-2 text-slate-400 text-sm transition-all pointer-events-none peer-focus:-top-4 peer-focus:text-[10px] peer-focus:text-[#2874f0] peer-[:not(:placeholder-shown)]:-top-4 peer-[:not(:placeholder-shown)]:text-[10px]"
-              >Enter 6-digit OTP</label
-            >
-          </div>
+            <form id="otp-form" class="space-y-8">
+              <input type="hidden" id="email" />
 
-          <button
-            type="submit"
-            id="verify-btn"
-            class="w-full bg-[#fb641b] text-white py-3 rounded-sm font-black text-sm shadow-md hover:shadow-lg transition-all"
-          >
-            VERIFY OTP
-          </button>
+              <div class="space-y-4">
+                <label for="otp" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center block">6-Digit Access Token</label>
+                <input
+                  type="text"
+                  id="otp"
+                  required
+                  maxlength="6"
+                  placeholder="000 000"
+                  class="w-full bg-slate-50 border border-slate-100 px-6 py-5 rounded-3xl outline-none focus:border-indigo-500 focus:bg-white transition-all text-2xl font-black text-center tracking-[0.5em] text-indigo-600 shadow-inner"
+                />
+              </div>
 
-          <div class="pt-6 text-center">
-            <button
-              type="button"
-              id="resend-btn"
-              class="text-[#2874f0] text-sm font-black bg-transparent border-0 cursor-pointer"
-            >
-              Resend OTP
-            </button>
-          </div>
-        </form>
+              <button
+                type="submit"
+                id="verify-btn"
+                class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 hover:shadow-indigo-100 transition-all transform active:scale-95"
+              >
+                AUTHORIZE ACCESS
+              </button>
+
+              <div class="text-center pt-2">
+                <button
+                  type="button"
+                  id="resend-btn"
+                  class="text-xs text-slate-400 font-bold hover:text-indigo-600 transition-colors uppercase tracking-widest"
+                >
+                  Resend Signal Protocol
+                </button>
+              </div>
+            </form>
+        </div>
       </div>
     </div>
 
     <script type="module" src="/js/auth.js"></script>
     <script>
-      // Suppress Tailwind CDN production warning
       const originalWarn = console.warn;
       console.warn = (...args) => {
-        if (
-          args[0] &&
-          typeof args[0] === "string" &&
-          args[0].includes(
-            "cdn.tailwindcss.com should not be used in production",
-          )
-        )
-          return;
+        if (args[0] && typeof args[0] === "string" && args[0].includes("cdn.tailwindcss.com should not be used in production")) return;
         originalWarn.apply(console, args);
       };
 
-      // Populate email from URL or fallback to pending email stored in localStorage
       document.addEventListener("DOMContentLoaded", () => {
         const params = new URLSearchParams(window.location.search);
         let email = params.get("email");
@@ -153,8 +122,6 @@
         if (email) {
           document.getElementById("email").value = email;
         } else {
-          // No email available — send user back to login
-          alert("Email missing. Please login again.");
           window.location.href = "/login.html";
         }
       });

@@ -3,7 +3,19 @@ import { getAuthToken, updateCartBadge, apiCall } from "./main.js";
 
 let currentProduct = null;
 
+function setupEventListeners() {
+  document
+    .getElementById("add-to-cart-btn")
+    ?.addEventListener("click", () => handleAddToCart());
+  document
+    .getElementById("buy-now-btn")
+    ?.addEventListener("click", handleBuyNow);
+}
+
 async function initProductDetails() {
+  // Start listeners immediately
+  setupEventListeners();
+
   const params = new URLSearchParams(window.location.search);
   const slug = params.get("slug");
 
@@ -12,54 +24,44 @@ async function initProductDetails() {
     return;
   }
 
-  await fetchProductDetails(slug);
-  setupEventListeners();
+  // Fire and forget (let it load in background while we show skeletons)
+  fetchProductDetails(slug);
 }
 
 async function fetchProductDetails(slug) {
   try {
-    // Attempt 1: Fetch by slug/ID provided
-    let data = await apiCall(`/products/${slug}`);
+    // Single efficient call. Most backends will return related products in the same call.
+    const data = await apiCall(`/products/${slug}`);
 
-    // Attempt 2: If failed and slug contains an ID at the end, try fetching by extracted ID
-    if (
-      (!data || data.message === "Server error: Invalid format" || !data.id) &&
-      /-\d+$/.test(slug)
-    ) {
-      const extractedId = slug.match(/-(\d+)$/)[1];
-      console.log(
-        `Attempting fallback fetch with extracted ID: ${extractedId}`,
-      );
-      const fallbackData = await apiCall(`/products/${extractedId}`);
-      if (fallbackData && (fallbackData.product || fallbackData.id)) {
-        data = fallbackData;
+    if (!data || data.success === false) {
+      // Only try fallback if absolutely necessary and slug looks like it has an ID
+      if (/-(\d+)$/.test(slug)) {
+        const extractedId = slug.match(/-(\d+)$/)[1];
+        const fallbackData = await apiCall(`/products/${extractedId}`);
+        if (fallbackData && fallbackData.success !== false) {
+          renderUI(fallbackData);
+        } else {
+          throw new Error("Product Signal Lost");
+        }
+      } else {
+        throw new Error("Product Signal Lost");
       }
-    }
-
-    if (!data) throw new Error("Product not found");
-
-    currentProduct = data.product || data.data || (data.id ? data : null);
-
-    if (currentProduct) {
-      renderProductInfo(currentProduct);
-      renderRelatedProducts(data.related_products || data.related || []);
     } else {
-      throw new Error("Product signal not detected");
+      renderUI(data);
     }
   } catch (e) {
     console.error("Failed to load product details", e);
     const nameEl = document.getElementById("product-name");
-    const descEl = document.getElementById("product-description");
-    const priceEl = document.getElementById("product-price");
+    if (nameEl) nameEl.innerText = "Signal Extraction Failed";
+    if (window.showToast) window.showToast("Product connection error", "error");
+  }
+}
 
-    if (nameEl) nameEl.innerText = "Product Signal Not Detected";
-    if (descEl)
-      descEl.innerText =
-        "The requested item could not be retrieved from the server. Please check your connection or try again later.";
-    if (priceEl) priceEl.innerText = "₹0";
-
-    if (window.showToast)
-      window.showToast("Product not found or server error", "error");
+function renderUI(data) {
+  currentProduct = data.product || data.data || (data.id ? data : null);
+  if (currentProduct) {
+    renderProductInfo(currentProduct);
+    renderRelatedProducts(data.related_products || data.related || []);
   }
 }
 
@@ -169,15 +171,6 @@ function renderRelatedProducts(products) {
         `;
     })
     .join("");
-}
-
-function setupEventListeners() {
-  document
-    .getElementById("add-to-cart-btn")
-    ?.addEventListener("click", () => handleAddToCart(false));
-  document
-    .getElementById("buy-now-btn")
-    ?.addEventListener("click", handleBuyNow);
 }
 
 async function handleAddToCart() {

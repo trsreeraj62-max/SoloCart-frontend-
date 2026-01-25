@@ -42,62 +42,24 @@
         </div>
       </div>
 
-      <div class="bg-white rounded shadow overflow-hidden">
+      <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-left">
             <thead
-              class="bg-slate-50 text-xs font-black uppercase text-slate-500"
+              class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]"
             >
               <tr>
-                <th class="px-4 py-3">Name</th>
-                <th class="px-4 py-3">Email</th>
-                <th class="px-4 py-3">Message</th>
-                <th class="px-4 py-3">Date</th>
-                <th class="px-4 py-3">Actions</th>
+                <th class="px-8 py-5">Origin Entity</th>
+                <th class="px-8 py-5">Protocol Email</th>
+                <th class="px-8 py-5">Signal Packet</th>
+                <th class="px-8 py-5">Synchronization Date</th>
               </tr>
             </thead>
-            <tbody id="messages-table" class="divide-y"></tbody>
+            <tbody id="messages-table" class="divide-y divide-slate-50 text-sm font-medium text-slate-600"></tbody>
           </table>
         </div>
       </div>
     </main>
-
-    <!-- Reply Modal -->
-    <div
-      id="replyModal"
-      class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4"
-    >
-      <div class="bg-white rounded-xl w-full max-w-2xl p-6">
-        <h2 class="text-lg font-black mb-4">Reply to Message</h2>
-        <div
-          id="original-message"
-          class="mb-4 text-sm text-slate-700 bg-slate-50 p-4 rounded"
-        ></div>
-        <form id="reply-form" novalidate>
-          <textarea
-            id="reply-text"
-            rows="5"
-            class="w-full border p-3 rounded mb-4"
-            placeholder="Type your reply here"
-          ></textarea>
-          <div class="flex justify-end gap-3">
-            <button
-              type="button"
-              class="close-reply px-4 py-2 bg-slate-200 rounded"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              id="send-reply-btn"
-              class="px-4 py-2 bg-green-600 text-white rounded"
-            >
-              Send Reply
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
 
     <script type="module" src="/js/admin-messages.js"></script>
   </body>

@@ -390,6 +390,27 @@ ul {
   outline: none;
 }
 
+/* Autofill Fix: prevent background-color from changing on autofill */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #f8fafc inset !important;
+    -webkit-text-fill-color: #0f172a !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+::placeholder {
+    color: #cbd5e1 !important;
+    opacity: 1;
+}
+:-ms-input-placeholder {
+    color: #cbd5e1 !important;
+}
+::-ms-input-placeholder {
+    color: #cbd5e1 !important;
+}
+
 /* Shop Layout */
 .shop-layout {
   display: grid;

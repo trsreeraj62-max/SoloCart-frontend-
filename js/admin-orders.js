@@ -368,18 +368,40 @@ function showOrderReason(id) {
   const returnCompletedAt =
     order.return_completed_at || order.returnCompletedAt || null;
 
+  // Helper function to format dates
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "-";
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleString();
+    } catch {
+      return "-";
+    }
+  };
+
+  const placedDate = formatDate(
+    order.created_at || order.placed_at || order.createdAt,
+  );
+  const paymentDate = formatDate(order.payment_at || order.paid_at);
+  const approvedDate = formatDate(order.approved_at || order.approvedAt);
+  const shippedDate = formatDate(order.shipped_at || order.shippedAt);
+  const deliveredDate = formatDate(order.delivered_at || order.deliveredAt);
+  const returnRequestedDate = formatDate(returnRequestedAt);
+  const returnCompletedDate = formatDate(returnCompletedAt);
+  const cancelledDate = formatDate(cancelledAt);
+
   content.innerHTML = `
     <div class="p-4">
       <h4 class="text-sm font-black uppercase text-slate-400">Lifecycle & Reasons</h4>
       <div class="mt-4 grid grid-cols-1 gap-3">
-        <div class="p-3 bg-white rounded border"><strong>Placed:</strong> ${escapeHtml(order.created_at || order.placed_at || order.createdAt || "-")}</div>
-        <div class="p-3 bg-white rounded border"><strong>Payment Success:</strong> ${escapeHtml(order.payment_at || order.paid_at || "-")}</div>
-        <div class="p-3 bg-white rounded border"><strong>Approved:</strong> ${escapeHtml(order.approved_at || order.approvedAt || "-")}</div>
-        <div class="p-3 bg-white rounded border"><strong>Shipped:</strong> ${escapeHtml(order.shipped_at || order.shippedAt || "-")}</div>
-        <div class="p-3 bg-white rounded border"><strong>Delivered:</strong> ${escapeHtml(order.delivered_at || order.deliveredAt || "-")}</div>
-        <div class="p-3 bg-white rounded border"><strong>Return Requested:</strong> ${escapeHtml(returnRequestedAt || "-")}</div>
-        <div class="p-3 bg-white rounded border"><strong>Return Completed:</strong> ${escapeHtml(returnCompletedAt || "-")}</div>
-        <div class="p-3 bg-white rounded border"><strong>Cancelled At:</strong> ${escapeHtml(cancelledAt || "-")}</div>
+        <div class="p-3 bg-white rounded border"><strong>Placed:</strong> ${placedDate}</div>
+        <div class="p-3 bg-white rounded border"><strong>Payment Success:</strong> ${paymentDate}</div>
+        <div class="p-3 bg-white rounded border"><strong>Approved:</strong> ${approvedDate}</div>
+        <div class="p-3 bg-white rounded border"><strong>Shipped:</strong> ${shippedDate}</div>
+        <div class="p-3 bg-white rounded border"><strong>Delivered:</strong> ${deliveredDate}</div>
+        <div class="p-3 bg-white rounded border"><strong>Return Requested:</strong> ${returnRequestedDate}</div>
+        <div class="p-3 bg-white rounded border"><strong>Return Completed:</strong> ${returnCompletedDate}</div>
+        <div class="p-3 bg-white rounded border"><strong>Cancelled At:</strong> ${cancelledDate}</div>
       </div>
 
       <div class="mt-6">
