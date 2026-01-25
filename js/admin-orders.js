@@ -52,13 +52,24 @@ function renderOrders(orders) {
   const rows = [];
   orders.forEach((o) => {
     const items = Array.isArray(o.items) ? o.items : [];
+    
+    // VIEW BUTTON HTML
+    const viewBtn = `
+        <button class="view-details-btn ml-2 text-slate-400 hover:text-blue-600 transition-colors" data-id="${o.id}" title="Who ordered this?">
+            <i class="fas fa-eye"></i>
+        </button>
+    `;
+
     if (items.length === 0) {
       // fallback single row when no items present
       const statusBadge = getStatusBadge(o.status);
       const actionButtons = buildActionButtons(o.id, o.status);
       rows.push(`
         <tr class="hover:bg-slate-50 transition-colors">
-          <td class="px-6 py-4 font-black italic text-[#2874f0]">#${o.order_number || o.id}</td>
+          <td class="px-6 py-4 font-black italic text-[#2874f0]">
+            #${o.order_number || o.id}
+            ${viewBtn}
+          </td>
           <td class="px-6 py-4">—</td>
           <td class="px-6 py-4"><img src="https://placehold.co/80x80?text=No+Image" class="w-12 h-12 object-contain"/></td>
           <td class="px-6 py-4">—</td>
@@ -82,8 +93,11 @@ function renderOrders(orders) {
 
         rows.push(`
           <tr class="hover:bg-slate-50 transition-colors">
-            <td class="px-6 py-4 font-black italic text-[#2874f0]">#${o.order_number || o.id}</td>
-            <td class="px-6 py-4">${escapeHtml(productName)}</td>
+            <td class="px-6 py-4 font-black italic text-[#2874f0]">
+                #${o.order_number || o.id}
+                ${viewBtn}
+            </td>
+            <td class="px-6 py-4 bg-yellow-50/50 border-x border-yellow-100 font-bold text-slate-700">${escapeHtml(productName)}</td>
             <td class="px-6 py-4"><img src="${imageUrl}" class="w-12 h-12 object-contain" onerror="this.src='https://placehold.co/80x80?text=No+Image'"/></td>
             <td class="px-6 py-4">₹${price}</td>
             <td class="px-6 py-4">${statusBadge}</td>
@@ -97,6 +111,18 @@ function renderOrders(orders) {
   table.innerHTML = rows.join("");
 
   // Re-bind events with safe async handlers (disable while running)
+  table.innerHTML = rows.join("");
+  
+  // View Buyer / Details Event Listeners
+  table.querySelectorAll(".view-details-btn").forEach((btn) => {
+    btn.addEventListener("click", (evt) => {
+        evt.preventDefault();
+        const id = btn.dataset.id;
+        if(id) showOrderDetails(id);
+    });
+  });
+
+  // Action Buttons Event Listeners
   table.querySelectorAll(".action-btn").forEach((btn) => {
     btn.addEventListener("click", async (evt) => {
       evt.preventDefault();
@@ -114,6 +140,8 @@ function renderOrders(orders) {
         console.error(err);
       } finally {
         btn.disabled = false;
+        // Optimization: Don't reload entire table, just row? 
+        // For now, renderOrders is called inside updateStatus success.
       }
     });
   });
