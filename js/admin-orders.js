@@ -291,25 +291,41 @@ function showOrderDetails(id) {
   const content = document.getElementById("modal-content");
   if (!content) return;
 
-  const addr = order.address || {};
+  // Fix: Handle Address as String or Object
+  let addressHtml = '<span class="italic text-slate-400">No address provided</span>';
+  if (order.address) {
+      if (typeof order.address === 'string') {
+          addressHtml = order.address;
+      } else if (typeof order.address === 'object') {
+          const a = order.address;
+          addressHtml = `${a.address || ""}, ${a.locality || ""}, ${a.city || ""}, ${a.state || ""} - ${a.pincode || ""}`;
+      }
+  }
+
   const items = order.items || [];
+  // Fix: Handle 'total' (DB column) vs 'total_amount' (old alias)
+  const totalVal = order.total || order.total_amount || 0;
 
   content.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div>
                 <h4 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Customer Details</h4>
                 <div class="space-y-2">
-                    <p class="text-sm font-bold">${escapeHtml(order.user?.name || order.user_name || "Customer")}</p>
-                    <p class="text-sm text-slate-600">${escapeHtml(order.user?.email || order.email || "--")}</p>
-                    <p class="text-sm text-slate-600">${escapeHtml(addr.phone || order.phone || "--")}</p>
+                    <p class="text-sm font-bold">${escapeHtml(order.user?.name || "Customer")}</p>
+                    <p class="text-sm text-slate-600">${escapeHtml(order.user?.email || "--")}</p>
+                    <p class="text-sm text-slate-600">${escapeHtml(order.user?.phone || "--")}</p>
                     <div class="p-4 bg-slate-50 rounded-lg border border-slate-100 mt-4">
-                         <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Delivery Address</p>
-                         <p class="text-xs italic text-slate-700">
-                           ${escapeHtml(addr.address || "")} ${addr.locality ? `, ${escapeHtml(addr.locality)}` : ""}
-                           ${addr.city ? `<br>${escapeHtml(addr.city)}` : ""} ${addr.state ? `, ${escapeHtml(addr.state)}` : ""}
-                           ${addr.pincode ? ` - ${escapeHtml(addr.pincode)}` : ""}
-                         </p>
+                         <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Delivery Vector</p>
+                         <p class="text-xs italic text-slate-700 leading-relaxed">${addressHtml}</p>
                     </div>
+                    ${
+                      order.return_reason
+                        ? `<div class="p-4 bg-red-50 rounded-lg border border-red-100 mt-4">
+                             <p class="text-[10px] font-black text-red-500 uppercase mb-2">Return Reason</p>
+                             <p class="text-xs italic text-red-700 leading-relaxed">${order.return_reason}</p>
+                           </div>`
+                        : ""
+                    }
                 </div>
             </div>
             <div>
@@ -337,8 +353,8 @@ function showOrderDetails(id) {
                       .join("")}
                 </div>
                 <div class="mt-6 flex justify-between items-center p-4 bg-slate-900 text-white rounded-xl">
-                    <span class="text-xs font-black uppercase tracking-widest opacity-60">Total Amount</span>
-                    <span class="text-xl font-black italic">₹${Number(order.total_amount || order.total || 0).toLocaleString()}</span>
+                    <span class="text-xs font-black uppercase tracking-widest opacity-60">Total Payload</span>
+                    <span class="text-xl font-black italic">₹${Number(totalVal).toLocaleString()}</span>
                 </div>
             </div>
         </div>
