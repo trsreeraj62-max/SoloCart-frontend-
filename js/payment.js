@@ -78,6 +78,19 @@ async function initPayment() {
     // Build order payload from checkout_data
     try {
       let resp;
+      const paymentDetails = collectPaymentDetails(payment_method);
+      
+      const commonPayload = {
+        full_name: checkout.address?.name || "",
+        email: checkout.address?.email || "",
+        phone: checkout.address?.phone || "",
+        address: checkout.address?.address || "",
+        city: checkout.address?.city || "",
+        state: checkout.address?.state || "",
+        pincode: checkout.address?.pincode || "",
+        payment_method,
+        ...paymentDetails
+      };
 
       if (isBuyNow && checkout.items.length === 1) {
         // Use /api/checkout/single for Buy Now
@@ -85,20 +98,10 @@ async function initPayment() {
         const payload = {
           product_id: item.product_id || item.id,
           quantity: item.quantity || 1,
-          full_name: checkout.address?.name || "",
-          email: checkout.address?.email || "",
-          phone: checkout.address?.phone || "",
-          address: checkout.address?.address || "",
-          city: checkout.address?.city || "",
-          state: checkout.address?.state || "",
-          pincode: checkout.address?.pincode || "",
-          payment_method,
+          ...commonPayload
         };
 
-        console.log(
-          "[Payment] Sending Buy Now payload to /checkout/single:",
-          JSON.stringify(payload),
-        );
+        console.log("[Payment] Sending Buy Now payload:", JSON.stringify(payload));
 
         resp = await apiCall("/checkout/single", {
           method: "POST",
@@ -107,36 +110,27 @@ async function initPayment() {
         });
       } else {
         // Use /api/checkout/cart for cart checkout
-        const payload = {
-          full_name: checkout.address?.name || "",
-          email: checkout.address?.email || "",
-          phone: checkout.address?.phone || "",
-          address: checkout.address?.address || "",
-          city: checkout.address?.city || "",
-          state: checkout.address?.state || "",
-          pincode: checkout.address?.pincode || "",
-          payment_method,
-        };
-
-        console.log(
-          "[Payment] Sending Cart checkout payload to /checkout/cart:",
-          JSON.stringify(payload),
-        );
+        console.log("[Payment] Sending Cart checkout payload:", JSON.stringify(commonPayload));
 
         resp = await apiCall("/checkout/cart", {
           method: "POST",
-          body: JSON.stringify(payload),
+          body: JSON.stringify(commonPayload),
           requireAuth: true,
         });
       }
 
-      console.log("[Payment] Order API response:", resp);
+      console.log("[Payment] API Response:", resp);
 
-      if (resp && (resp.order || resp.success)) {
+      if (resp && (resp.order || resp.success === true)) {
         if (window.showToast) window.showToast("Order Successful!");
-        const orderId = resp.order?.order_number || resp.order?.id || "SUCCESS";
-        console.log("[Payment] Order created successfully with ID:", orderId);
-        // clear checkout_data and buy-now keys
+        const orderId = resp.order?.order_number || resp.order?.id || resp.data?.id || "UNKNOWN";
+        console.log("[Payment] Order created with ID:", orderId);
+        
+        // Final verification check
+        if (orderId === "UNKNOWN") {
+             console.error("[Payment] Warning: Order ID missing in response:", resp);
+        }
+
         localStorage.removeItem(CHECKOUT_KEY);
         localStorage.removeItem("buy_now_item");
         localStorage.removeItem("checkout_type");
@@ -144,15 +138,16 @@ async function initPayment() {
           window.location.href = `/checkout-success.html?order_id=${orderId}`;
         }, 900);
       } else {
-        console.error("[Payment] Order creation failed", resp);
-        if (window.showToast)
-          window.showToast(resp?.message || "Order failed", "error");
+        console.error("[Payment] API returned failure:", resp);
+        const errMsg = resp?.message || "Order creation failed (Unknown error)";
+        if (window.showToast) window.showToast(errMsg, "error");
+        
         payBtn.disabled = false;
         payBtn.innerHTML = origText;
       }
     } catch (e) {
-      console.error("Payment/order failed", e);
-      if (window.showToast) window.showToast("Server error", "error");
+      console.error("Payment exception:", e);
+      if (window.showToast) window.showToast("Client error: " + e.message, "error");
       payBtn.disabled = false;
       payBtn.innerHTML = origText;
     }
