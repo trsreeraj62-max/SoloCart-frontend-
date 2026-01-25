@@ -134,8 +134,7 @@ function setupEventListeners() {
 
       const name = document.getElementById("p-name")?.value?.trim();
       const phone = document.getElementById("p-phone")?.value?.trim();
-      const password = document.getElementById("p-password")?.value;
-      const passwordConfirm = document.getElementById("p-password-confirm")?.value;
+
       const fileInput = document.getElementById("p-image-file");
 
       // Validations
@@ -150,17 +149,7 @@ function setupEventListeners() {
         return;
       }
 
-      if (password) {
-        const passCheck = validatePassword(password);
-        if (!passCheck.valid) {
-          if (window.showToast) window.showToast(passCheck.message, "error");
-          return;
-        }
-        if (password !== passwordConfirm) {
-          if (window.showToast) window.showToast("Passwords do not match", "error");
-          return;
-        }
-      }
+
 
       // Build FormData
       const fd = new FormData();
@@ -169,10 +158,7 @@ function setupEventListeners() {
       // Backend might expect phone_number too, let's play safe if we don't know the exact Laravel field
       fd.append("phone_number", phoneCheck.cleaned);
       
-      if (password) {
-        fd.append("password", password);
-        fd.append("password_confirmation", password);
-      }
+
 
       if (fileInput && fileInput.files && fileInput.files[0]) {
         fd.append("profile_image", fileInput.files[0]);
