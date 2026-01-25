@@ -85,11 +85,18 @@ function renderDetails(order) {
   const addr = order.address || {};
   const addrEl = document.getElementById("delivery-address");
   if (addrEl) {
+    const addressParts = [];
+    if (addr.address) addressParts.push(addr.address);
+    if (addr.locality) addressParts.push(addr.locality);
+    const cityStateZip = [addr.city, addr.state, addr.pincode]
+      .filter(Boolean)
+      .join(" ");
+
     addrEl.innerHTML = `
-            <p class="text-sm font-bold text-slate-800">${addr.name || "N/A"}</p>
-            <p class="text-xs text-slate-500 font-medium">${addr.address || ""}, ${addr.locality || ""}</p>
-            <p class="text-xs text-slate-500 font-medium">${addr.city || ""}, ${addr.state || ""} - ${addr.pincode || ""}</p>
-            <p class="text-xs font-bold text-slate-700 mt-2">Phone: ${addr.phone || "N/A"}</p>
+            <p class="text-sm font-bold text-slate-800">${addr.name || ""}</p>
+            ${addressParts.length > 0 ? `<p class="text-xs text-slate-500 font-medium">${addressParts.join(", ")}</p>` : ""}
+            ${cityStateZip ? `<p class="text-xs text-slate-500 font-medium">${cityStateZip}</p>` : ""}
+            ${addr.phone ? `<p class="text-xs font-bold text-slate-700 mt-2">Phone: ${addr.phone}</p>` : ""}
         `;
   }
 
@@ -98,46 +105,6 @@ function renderDetails(order) {
   const stepShipped = document.getElementById("step-shipped");
   const stepDelivered = document.getElementById("step-delivered");
   const downloadBtn = document.getElementById("download-invoice-btn");
-  const cancelBtnId = "cancel-order-btn";
-  let cancelBtn = document.getElementById(cancelBtnId);
-  if (!cancelBtn) {
-    const btn = document.createElement("button");
-    btn.id = cancelBtnId;
-    btn.className =
-      "ml-2 bg-rose-500 text-white px-4 py-2 rounded-sm text-xs font-bold hover:opacity-90";
-    btn.innerHTML = '<i class="fas fa-times mr-2"></i> Cancel Order';
-    btn.addEventListener("click", async () => {
-      if (!confirm("Are you sure you want to cancel this order?")) return;
-      btn.disabled = true;
-      btn.innerText = "Cancelling...";
-      try {
-        const res = await apiCall(`/orders/${order.id}/cancel`, {
-          method: "POST",
-          requireAuth: true,
-        });
-        if (res && (res.success || res.status === "cancelled" || res.order)) {
-          if (window.showToast) window.showToast("Order cancelled");
-          // refresh details
-          await fetchOrderDetail(order.id);
-        } else {
-          if (window.showToast)
-            window.showToast(res?.message || "Failed to cancel", "error");
-          btn.disabled = false;
-          btn.innerText = "Cancel Order";
-        }
-      } catch (err) {
-        console.error("Cancel failed", err);
-        if (window.showToast)
-          window.showToast("Network error while cancelling", "error");
-        btn.disabled = false;
-        btn.innerText = "Cancel Order";
-      }
-    });
-    // insert next to invoice button
-    const headerActions = document.querySelector(".p-4.border-b.flex");
-    if (headerActions) headerActions.appendChild(btn);
-    cancelBtn = btn;
-  }
 
   const status = (order.status || "").toLowerCase();
   if (fill) {
@@ -214,14 +181,11 @@ function renderDetails(order) {
       downloadBtn.disabled = true;
       downloadBtn.innerText = "Preparing...";
       try {
-        const resp = await apiCall(`/orders/${order.id}/invoice`, {
-          method: "GET",
-          requireAuth: true,
-        });
-        // If apiCall returns a non-JSON (raw) response, main.apiCall returns object with raw text; use fetch directly for blob
+        // Use fetch directly for binary PDF data (avoid apiCall JSON parsing)
         const invoiceUrl = `${CONFIG.API_BASE_URL.replace(/\/$/, "")}/orders/${order.id}/invoice`;
         const token = getAuthToken();
         const fetchResp = await fetch(invoiceUrl, {
+          method: "GET",
           headers: { Authorization: token ? `Bearer ${token}` : undefined },
         });
         if (!fetchResp.ok) throw new Error("Failed to download");
