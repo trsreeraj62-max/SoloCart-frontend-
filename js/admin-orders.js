@@ -32,8 +32,15 @@ async function fetchOrders() {
 
   try {
     const res = await apiCall(endpoint);
-    const orders =
-      res.data && Array.isArray(res.data.data) ? res.data.data : [];
+    // Fix: Handle both Collection (res.data IS array) and Pagination (res.data.data IS array)
+    let orders = [];
+    if (res.data) {
+        if (Array.isArray(res.data)) {
+            orders = res.data;
+        } else if (res.data.data && Array.isArray(res.data.data)) {
+            orders = res.data.data;
+        }
+    }
     currentOrders = orders;
     renderOrders(currentOrders);
   } catch (e) {
