@@ -80,6 +80,17 @@ function renderProductInfo(p) {
   const imgEl = document.getElementById("product-image");
   if (imgEl) imgEl.src = imageUrl;
 
+  // Reveal UI sections
+  const loadingState = document.getElementById("loading-state");
+  const dataContainer = document.getElementById("product-data-container");
+  const offersSection = document.getElementById("offers-section");
+  const specsSection = document.getElementById("specs-section");
+
+  if (loadingState) loadingState.classList.add("hidden");
+  if (dataContainer) dataContainer.classList.remove("hidden");
+  if (offersSection) offersSection.classList.remove("hidden");
+  if (specsSection) specsSection.classList.remove("hidden");
+
   if (document.getElementById("product-name"))
     document.getElementById("product-name").innerText = p.name;
   if (document.getElementById("product-rating"))
@@ -140,6 +151,10 @@ function renderProductInfo(p) {
 function renderRelatedProducts(products) {
   const grid = document.getElementById("related-products-grid");
   if (!grid) return;
+
+  if (grid) grid.classList.remove("hidden");
+  const section = document.getElementById("related-section");
+  if (section) section.classList.remove("hidden");
 
   if (!Array.isArray(products) || products.length === 0) {
     grid.innerHTML =

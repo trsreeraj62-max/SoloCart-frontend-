@@ -504,17 +504,20 @@ async function saveDiscount(e) {
   // Ensure discount percent defaults to 0 if empty
   const percentEl = document.getElementById("discount-percent");
   const percent = normalizeNumberInput(percentEl, 0);
-  const category = (
+  const categoryValue = (
     document.getElementById("discount-category").value || "all"
   ).toString();
 
   const payload = {
-    category: category,
-    percent: percent,
+    discount_percent: percent,
   };
 
+  if (categoryValue !== "all") {
+    payload.category_id = categoryValue;
+  }
+
   try {
-    const data = await apiCall("/discounts", {
+    const data = await apiCall("/admin/discounts/apply", {
       method: "POST",
       body: JSON.stringify(payload),
     });
@@ -547,7 +550,7 @@ async function saveCategory(e) {
   }
 
   const categoryData = { name: categoryName };
-  const endpoint = "/categories";
+  const endpoint = "/admin/categories";
 
   console.log(`🚀 Sending POST request to: ${endpoint}`);
 

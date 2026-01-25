@@ -47,54 +47,51 @@ async function initProfile() {
 
 // Fetch fresh profile from backend and populate DOM
 export async function loadProfile() {
+  let user = null;
   try {
-    const token = getAuthToken();
-    console.log(
-      "[Profile] Token present:",
-      !!token,
-      token ? `${String(token).slice(0, 12)}...` : null,
-    );
-
     const data = await apiCall("/profile", { requireAuth: true });
     console.log("[Profile] GET /profile response:", data);
 
-    // Normalize response to user object
-    let user = null;
-    if (!data) user = null;
-    else if (data.user) user = data.user;
-    else if (data.data && data.data.user) user = data.data.user;
-    else if (data.profile) user = data.profile;
-    else if (
-      data.data &&
-      typeof data.data === "object" &&
-      (data.data.name || data.data.email)
-    )
-      user = data.data;
-    else user = data;
+    if (data && data.success !== false) {
+      if (data.user) user = data.user;
+      else if (data.data && data.data.user) user = data.data.user;
+      else if (data.profile) user = data.profile;
+      else if (data.data && typeof data.data === "object" && (data.data.name || data.data.email)) user = data.data;
+      else user = data;
+    }
+  } catch (err) {
+    console.warn("[Profile] API fetch failed, falling back to storage");
+  }
 
-    if (!user) return;
+  // Fallback to localStorage if API failed or returned empty
+  if (!user || (!user.name && !user.email)) {
+    user = safeJSONParse(localStorage.getItem("user_profile"), null) || 
+           safeJSONParse(localStorage.getItem("user_data"), null);
+  }
 
-    // Save to localStorage for other parts of app (canonical key: user_profile)
+  if (user) {
     try {
       localStorage.setItem("user_profile", JSON.stringify(user));
       localStorage.setItem("user_data", JSON.stringify(user));
     } catch (e) {}
+    populateUI(user);
+  } else {
+    console.error("[Profile] Critical: No user data available.");
+  }
+}
 
+function populateUI(user) {
     // Update DOM fields
     const displayName = document.getElementById("user-display-name");
     const initials = document.getElementById("user-initials");
-    if (displayName)
-      displayName.innerText = user.name || user.full_name || "User";
+    if (displayName) displayName.innerText = user.name || user.full_name || "User";
     if (initials && (user.name || user.full_name))
-      initials.innerText = (user.name || user.full_name)
-        .charAt(0)
-        .toUpperCase();
+      initials.innerText = (user.name || user.full_name).charAt(0).toUpperCase();
 
     if (document.getElementById("p-name"))
       document.getElementById("p-name").value = user.name || "";
     if (document.getElementById("p-email"))
       document.getElementById("p-email").value = user.email || "";
-    // Bio field removed
     if (document.getElementById("p-phone"))
       document.getElementById("p-phone").value = user.phone || "";
 
@@ -102,12 +99,10 @@ export async function loadProfile() {
     const profileImg = document.getElementById("p-image-preview");
     let avatarUrl = user.profile_image || user.avatar || user.image_url || null;
     if (avatarUrl) {
-      // Make absolute if relative
       const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
       if (!/^https?:\/\//i.test(avatarUrl))
         avatarUrl = `${backendBase}/${String(avatarUrl).replace(/^\//, "")}`;
       avatarUrl = String(avatarUrl).replace(/^http:/, "https:");
-      console.log("[Profile] Using avatar URL:", avatarUrl);
       if (profileImg) profileImg.src = avatarUrl;
       const sidebarImg = document.getElementById("user-profile-circle");
       if (sidebarImg) {
@@ -116,16 +111,11 @@ export async function loadProfile() {
       }
       if (initials) initials.classList.add("hidden");
     } else {
-      if (profileImg)
-        profileImg.src =
-          profileImg.src || "https://placehold.co/80x80?text=Preview";
+      if (profileImg) profileImg.src = "https://placehold.co/80x80?text=Preview";
       const sidebarImg = document.getElementById("user-profile-circle");
       if (sidebarImg) sidebarImg.classList.add("hidden");
       if (initials) initials.classList.remove("hidden");
     }
-  } catch (e) {
-    console.error("[Profile] Failed to load profile", e);
-  }
 }
 
 function setupEventListeners() {
@@ -207,35 +197,18 @@ function setupEventListeners() {
                   avatar = `${backendBase}/${String(avatar).replace(/^\//, "")}`;
                 avatar = String(avatar).replace(/^http:/, "https:");
                 localStorage.setItem("profile_avatar", avatar);
-                // update all possible avatar elements used in the app
-                document
-                  .querySelectorAll(".profile-avatar, .user-avatar")
-                  .forEach((img) => {
-                    try {
-                      img.src = avatar;
-                    } catch (err) {}
-                  });
-                const sidebarImg = document.getElementById(
-                  "user-profile-circle",
-                );
-                if (sidebarImg) {
-                  sidebarImg.src = avatar;
-                  sidebarImg.classList.remove("hidden");
-                }
-
-                // Broadcast event for other listeners
-                try {
-                  window.dispatchEvent(
-                    new CustomEvent("avatarUpdated", { detail: avatar }),
-                  );
-                } catch (err) {}
+              } else {
+                localStorage.removeItem("profile_avatar");
               }
             } catch (err) {
               console.warn("Could not persist profile avatar:", err);
             }
+            // Trigger refresh
+            window.location.reload();
           } else {
             if (window.showToast)
-              window.showToast("Profile updated", "success");
+              window.showToast("Profile updated successfully");
+            setTimeout(() => window.location.reload(), 1000);
           }
         } else {
           // show validation errors if present

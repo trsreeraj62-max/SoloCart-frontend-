@@ -51,20 +51,26 @@ export async function apiCall(endpoint, options = {}) {
     });
 
     const text = await res.text();
-    const data = text ? JSON.parse(text) : {};
+    let data = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (e) {
+      console.warn("API response was not JSON:", text.substring(0, 100));
+      return { success: false, message: "Response format error", raw: text };
+    }
 
     if (!res.ok) {
       if (res.status === 401) {
         localStorage.clear();
         window.location.href = "/login.html";
       }
-      return { success: false, ...data };
+      return { success: false, ...data, statusCode: res.status };
     }
 
     return data;
   } catch (err) {
     console.error("API ERROR:", err);
-    return { success: false, message: "Network error" };
+    return { success: false, message: "Network error: " + err.message };
   }
 }
 
@@ -109,24 +115,25 @@ export function updateAuthUI() {
     safeJSONParse(localStorage.getItem("user_data"), null);
 
   if (token && user) {
-    // Render a clickable avatar with a small dropdown menu
+    // Simplified dropdown without avatar as requested
     authActions.innerHTML = `
       <div class="relative inline-block" id="auth-dropdown">
-        <button id="auth-dropdown-btn" class="flex items-center gap-2 focus:outline-none">
-          <img class="user-avatar w-8 h-8 rounded-full profile-avatar" />
-          <span class="hidden md:inline-block">${user.name || "User"}</span>
-          <i class="fas fa-caret-down ml-2 text-white/80"></i>
+        <button id="auth-dropdown-btn" class="flex items-center gap-2 focus:outline-none bg-white/10 px-4 py-1.5 rounded-sm">
+          <span class="text-sm font-bold uppercase tracking-wide text-white">${user.name || "User"}</span>
+          <i class="fas fa-caret-down text-white/80"></i>
         </button>
-        <div id="auth-dropdown-menu" class="hidden absolute right-0 mt-2 w-44 bg-white rounded-md shadow-lg border border-slate-100 z-50">
-          <a href="/profile.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">My Profile</a>
-          <a href="/orders.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">My Orders</a>
-          <a href="/cart.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Cart</a>
-          ${user.role === "admin" || user.is_admin ? '<a href="/admin/dashboard.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Admin Dashboard</a>' : ""}
-          <button id="user-logout" class="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-slate-50">Logout</button>
+        <div id="auth-dropdown-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl border border-slate-100 z-50 overflow-hidden">
+          <div class="px-4 py-3 bg-slate-50 border-b border-slate-100">
+            <p class="text-[10px] font-black uppercase text-slate-400">Synchronized User</p>
+            <p class="text-xs font-bold text-slate-800 truncate">${user.email}</p>
+          </div>
+          <a href="/profile.html" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 font-bold transition-colors border-b border-slate-50"><i class="fas fa-user-circle mr-2 opacity-50"></i> My Profile</a>
+          <a href="/orders.html" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 font-bold transition-colors border-b border-slate-50"><i class="fas fa-box-open mr-2 opacity-50"></i> My Orders</a>
+          ${user.role === "admin" || user.is_admin ? '<a href="/admin/dashboard.html" class="block px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 font-bold transition-colors border-b border-slate-50"><i class="fas fa-shield-alt mr-2 opacity-50"></i> Admin Panel</a>' : ""}
+          <button id="user-logout" class="w-full text-left px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 font-bold transition-colors"><i class="fas fa-power-off mr-2 opacity-50"></i> Logout</button>
         </div>
       </div>
     `;
-    updateHeaderProfileImage();
     // initialize dropdown behavior
     initAuthDropdown();
   } else {
@@ -236,4 +243,16 @@ document.addEventListener("DOMContentLoaded", () => {
   updateAuthUI();
   updateCartBadge();
   updateProfileAvatar();
+
+  // Scroll effect for navbar (remove blur if requested/fix blur look)
+  window.addEventListener("scroll", () => {
+    const nav = document.getElementById("main-nav");
+    if (nav) {
+      if (window.scrollY > 20) {
+        nav.classList.add("nav-scrolled");
+      } else {
+        nav.classList.remove("nav-scrolled");
+      }
+    }
+  });
 });

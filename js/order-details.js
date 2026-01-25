@@ -1,6 +1,8 @@
 import CONFIG from "./config.js";
 import { getAuthToken, apiCall, escapeHtml } from "./main.js";
 
+let currentOrder = null;
+
 async function initOrderDetails() {
   const token = getAuthToken();
   const params = new URLSearchParams(window.location.search);
@@ -11,6 +13,7 @@ async function initOrderDetails() {
     return;
   }
 
+  setupInvoiceListener();
   await fetchOrderDetail(orderId);
   setupRateReview();
 }
@@ -128,6 +131,43 @@ function setupRateReview() {
   }
 }
 
+function setupInvoiceListener() {
+  const downloadBtn = document.getElementById("download-invoice-btn");
+  if (!downloadBtn) return;
+
+  downloadBtn.addEventListener("click", async () => {
+    if (!currentOrder) return;
+    
+    downloadBtn.disabled = true;
+    downloadBtn.innerText = "Preparing...";
+    try {
+      const invoiceUrl = `${CONFIG.API_BASE_URL.replace(/\/$/, "")}/orders/${currentOrder.id}/invoice`;
+      const token = getAuthToken();
+      const fetchResp = await fetch(invoiceUrl, {
+        headers: { Authorization: token ? `Bearer ${token}` : undefined },
+      });
+      if (!fetchResp.ok) throw new Error("Failed to download");
+      const blob = await fetchResp.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-order-${currentOrder.order_number || currentOrder.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Invoice download failed", err);
+      if (window.showToast)
+        window.showToast("Failed to download invoice", "error");
+    } finally {
+      downloadBtn.disabled = false;
+      downloadBtn.innerHTML =
+        '<i class="fas fa-file-pdf"></i> Download Invoice';
+    }
+  });
+}
+
 async function fetchOrderDetail(id) {
   try {
     const data = await apiCall(`/orders/${id}`);
@@ -157,6 +197,7 @@ async function fetchOrderDetail(id) {
     }
 
     if (order && order.id) {
+      currentOrder = order; // Update global reference
       console.log("[Order Details] Order found, rendering...", order);
       renderDetails(order);
       // Start polling the single order for live updates
@@ -319,41 +360,7 @@ function renderDetails(order) {
         });
     });
   }
-
-  // Invoice listener
-  if (downloadBtn) {
-    downloadBtn.addEventListener("click", async () => {
-      downloadBtn.disabled = true;
-      downloadBtn.innerText = "Preparing...";
-      try {
-        // Use fetch directly for binary PDF data (avoid apiCall JSON parsing)
-        const invoiceUrl = `${CONFIG.API_BASE_URL.replace(/\/$/, "")}/orders/${order.id}/invoice`;
-        const token = getAuthToken();
-        const fetchResp = await fetch(invoiceUrl, {
-          method: "GET",
-          headers: { Authorization: token ? `Bearer ${token}` : undefined },
-        });
-        if (!fetchResp.ok) throw new Error("Failed to download");
-        const blob = await fetchResp.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `invoice-order-${order.order_number || order.id}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-      } catch (err) {
-        console.error("Invoice download failed", err);
-        if (window.showToast)
-          window.showToast("Failed to download invoice", "error");
-      } finally {
-        downloadBtn.disabled = false;
-        downloadBtn.innerHTML =
-          '<i class="fas fa-file-pdf"></i> Download Invoice';
-      }
-    });
-  }
+}
 }
 
 let _orderPollTimer = null;

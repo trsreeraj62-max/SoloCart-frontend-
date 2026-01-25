@@ -140,10 +140,14 @@ async function fetchHomeData() {
       showNoProductsPopup();
     }
 
-    // Disable category row if no data
-    const categorySection = document.getElementById("categories-row");
-    if (categorySection) {
-      categorySection.style.display = "none";
+    // Handle Categories
+    console.log("[HOME] 🔲 Processing categories...");
+    let categories = data.categories || data.data?.categories || [];
+    if (Array.isArray(categories) && categories.length > 0) {
+      renderCategories(categories);
+    } else {
+      const categorySection = document.getElementById("categories-row");
+      if (categorySection) categorySection.style.display = "none";
     }
   } catch (err) {
     console.error("[HOME] ❌ Home fetch failed:", err);
@@ -220,6 +224,32 @@ function renderBanners(banners) {
                 }
             </div>
         `;
+    })
+    .join("");
+}
+
+/**
+ * Renders categories at the top of the home page.
+ */
+function renderCategories(categories) {
+  const container = document.getElementById("categories-row");
+  if (!container || !Array.isArray(categories)) return;
+
+  container.innerHTML = categories
+    .map((c) => {
+      const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
+      const imageUrl = c.image
+        ? `${backendBase}/storage/${c.image}`
+        : "https://placehold.co/100x100?text=Category";
+
+      return `
+        <a href="/shop.html?category=${c.id}" class="flex flex-col items-center gap-2 no-underline group min-w-[80px]">
+            <div class="w-16 h-16 rounded-full overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center p-2 group-hover:shadow-md transition-shadow">
+                <img src="${imageUrl}" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" alt="${c.name}" onerror="this.onerror=null;this.src='https://placehold.co/100x100?text=Cat'">
+            </div>
+            <span class="text-[12px] font-bold text-slate-700 group-hover:text-[#2874f0] text-center">${c.name}</span>
+        </a>
+      `;
     })
     .join("");
 }
