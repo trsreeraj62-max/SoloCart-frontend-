@@ -361,7 +361,7 @@ function renderDetails(order) {
     });
   }
 }
-}
+
 
 let _orderPollTimer = null;
 function startOrderPolling(orderId) {
