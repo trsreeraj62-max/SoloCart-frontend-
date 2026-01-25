@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Return Initiated</title>
+    <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        color: #111;
+        background: #f7f7f7;
+        padding: 32px;
+      }
+      .card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 24px;
+        max-width: 700px;
+        margin: 0 auto;
+        border: 1px solid #eee;
+      }
+      .meta {
+        font-size: 13px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h2>Return Request Received</h2>
+      <p>Hello {{user_name}},</p>
+      <p>
+        We received your return request for order
+        <strong>#{{order_number}}</strong> on {{return_requested_at}}.
+      </p>
+      <p class="meta">Reason: {{return_reason}}</p>
+      <p>
+        We'll process your return and notify you when it's completed. Expected
+        completion time: {{return_expected_at}}
+      </p>
+      <p>Regards,<br />SoloCart Team</p>
+    </div>
+  </body>
+</html>

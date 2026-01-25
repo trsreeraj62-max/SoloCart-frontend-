@@ -3,6 +3,17 @@ import { apiCall } from "./main.js";
 
 let currentOrders = [];
 
+// Global HTML escape helper used by multiple functions
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 async function initAdminOrders() {
   const token = localStorage.getItem("auth_token");
   const user = JSON.parse(localStorage.getItem("user_data") || "{}");
@@ -35,11 +46,11 @@ async function fetchOrders() {
     // Fix: Handle both Collection (res.data IS array) and Pagination (res.data.data IS array)
     let orders = [];
     if (res.data) {
-        if (Array.isArray(res.data)) {
-            orders = res.data;
-        } else if (res.data.data && Array.isArray(res.data.data)) {
-            orders = res.data.data;
-        }
+      if (Array.isArray(res.data)) {
+        orders = res.data;
+      } else if (res.data.data && Array.isArray(res.data.data)) {
+        orders = res.data.data;
+      }
     }
     currentOrders = orders;
     renderOrders(currentOrders);
@@ -59,13 +70,21 @@ function renderOrders(orders) {
   const rows = [];
   orders.forEach((o) => {
     const items = Array.isArray(o.items) ? o.items : [];
-    
+
     // VIEW BUTTON HTML
     const viewBtn = `
         <button class="view-details-btn ml-2 text-slate-400 hover:text-blue-600 transition-colors" data-id="${o.id}" title="Who ordered this?">
-            <i class="fas fa-eye"></i>
+          <i class="fas fa-eye"></i>
         </button>
-    `;
+      `;
+
+    // Reason / return view button when available
+    const hasReturnReason = Boolean(
+      o.return_reason || o.cancel_reason || o.return_requested_at,
+    );
+    const reasonBtn = hasReturnReason
+      ? ` <button class="view-reason-btn ml-2 text-slate-400 hover:text-amber-600" data-id="${o.id}" title="View return/cancel reason"><i class="fas fa-flag"></i></button>`
+      : "";
 
     if (items.length === 0) {
       // fallback single row when no items present
@@ -74,8 +93,8 @@ function renderOrders(orders) {
       rows.push(`
         <tr class="hover:bg-slate-50 transition-colors">
           <td class="px-6 py-4 font-black italic text-[#2874f0]">
-            #${o.order_number || o.id}
-            ${viewBtn}
+             #${o.order_number || o.id}
+             ${viewBtn}${reasonBtn}
           </td>
           <td class="px-6 py-4">—</td>
           <td class="px-6 py-4"><img src="https://placehold.co/80x80?text=No+Image" class="w-12 h-12 object-contain"/></td>
@@ -101,8 +120,8 @@ function renderOrders(orders) {
         rows.push(`
           <tr class="hover:bg-slate-50 transition-colors">
             <td class="px-6 py-4 font-black italic text-[#2874f0]">
-                #${o.order_number || o.id}
-                ${viewBtn}
+                 #${o.order_number || o.id}
+                 ${viewBtn}${reasonBtn}
             </td>
             <td class="px-6 py-4 bg-yellow-50/50 border-x border-yellow-100 font-bold text-slate-700">${escapeHtml(productName)}</td>
             <td class="px-6 py-4"><img src="${imageUrl}" class="w-12 h-12 object-contain" onerror="this.src='https://placehold.co/80x80?text=No+Image'"/></td>
@@ -119,13 +138,23 @@ function renderOrders(orders) {
 
   // Re-bind events with safe async handlers (disable while running)
   table.innerHTML = rows.join("");
-  
+
   // View Buyer / Details Event Listeners
   table.querySelectorAll(".view-details-btn").forEach((btn) => {
     btn.addEventListener("click", (evt) => {
-        evt.preventDefault();
-        const id = btn.dataset.id;
-        if(id) showOrderDetails(id);
+      evt.preventDefault();
+      const id = btn.dataset.id;
+      if (id) showOrderDetails(id);
+    });
+  });
+
+  // View reason / return details button
+  table.querySelectorAll(".view-reason-btn").forEach((btn) => {
+    btn.addEventListener("click", (evt) => {
+      evt.preventDefault();
+      const id = btn.dataset.id;
+      if (!id) return;
+      showOrderReason(id);
     });
   });
 
@@ -147,20 +176,13 @@ function renderOrders(orders) {
         console.error(err);
       } finally {
         btn.disabled = false;
-        // Optimization: Don't reload entire table, just row? 
+        // Optimization: Don't reload entire table, just row?
         // For now, renderOrders is called inside updateStatus success.
       }
     });
   });
 
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
+  // use global escapeHtml helper
 
   function getStatusBadge(status) {
     const s = String(status || "").toLowerCase();
@@ -310,7 +332,7 @@ function showOrderDetails(id) {
                         <div class="p-4 flex gap-4 bg-white">
                             <img src="${imageUrl}" class="w-12 h-12 object-contain" onerror="this.src='https://placehold.co/400x400?text=No+Image'">
                             <div>
-                                <p class="text-xs font-bold">${product.name || "Unavailable"}</p>
+                                <p class="text-xs font-bold">${escapeHtml(product.name || "Unavailable")}</p>
                                 <p class="text-[10px] text-slate-400 font-bold uppercase">QTY: ${item.quantity} | UNIT: ₹${item.price}</p>
                             </div>
                         </div>
@@ -325,6 +347,54 @@ function showOrderDetails(id) {
             </div>
         </div>
     `;
+
+  document.getElementById("orderModal")?.classList.remove("hidden");
+}
+
+function showOrderReason(id) {
+  const order = currentOrders.find((o) => o.id == id);
+  if (!order) return;
+  const numEl = document.getElementById("modal-order-number");
+  if (numEl) numEl.innerText = `#${order.order_number || order.id}`;
+  const content = document.getElementById("modal-content");
+  if (!content) return;
+
+  const cancelledAt =
+    order.cancelled_at || order.cancelledAt || order.cancelled_at_timestamp;
+  const cancelReason = order.cancel_reason || order.cancelReason || null;
+  const returnRequestedAt =
+    order.return_requested_at || order.returnRequestedAt || null;
+  const returnReason = order.return_reason || order.returnReason || null;
+  const returnCompletedAt =
+    order.return_completed_at || order.returnCompletedAt || null;
+
+  content.innerHTML = `
+    <div class="p-4">
+      <h4 class="text-sm font-black uppercase text-slate-400">Lifecycle & Reasons</h4>
+      <div class="mt-4 grid grid-cols-1 gap-3">
+        <div class="p-3 bg-white rounded border"><strong>Placed:</strong> ${escapeHtml(order.created_at || order.placed_at || order.createdAt || "-")}</div>
+        <div class="p-3 bg-white rounded border"><strong>Payment Success:</strong> ${escapeHtml(order.payment_at || order.paid_at || "-")}</div>
+        <div class="p-3 bg-white rounded border"><strong>Approved:</strong> ${escapeHtml(order.approved_at || order.approvedAt || "-")}</div>
+        <div class="p-3 bg-white rounded border"><strong>Shipped:</strong> ${escapeHtml(order.shipped_at || order.shippedAt || "-")}</div>
+        <div class="p-3 bg-white rounded border"><strong>Delivered:</strong> ${escapeHtml(order.delivered_at || order.deliveredAt || "-")}</div>
+        <div class="p-3 bg-white rounded border"><strong>Return Requested:</strong> ${escapeHtml(returnRequestedAt || "-")}</div>
+        <div class="p-3 bg-white rounded border"><strong>Return Completed:</strong> ${escapeHtml(returnCompletedAt || "-")}</div>
+        <div class="p-3 bg-white rounded border"><strong>Cancelled At:</strong> ${escapeHtml(cancelledAt || "-")}</div>
+      </div>
+
+      <div class="mt-6">
+        <h5 class="text-xs font-black uppercase text-slate-400">Reasons</h5>
+        <div class="mt-2 p-3 bg-white rounded border">
+          <p class="text-sm"><strong>Cancel Reason:</strong> ${escapeHtml(cancelReason || "-")}</p>
+          <p class="text-sm mt-2"><strong>Return Reason:</strong> ${escapeHtml(returnReason || "-")}</p>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        ${order.invoice_url ? `<a class="inline-block bg-[#2874f0] text-white px-4 py-2 rounded" href="${escapeHtml(order.invoice_url)}" target="_blank">Download Invoice (PDF)</a>` : ""}
+      </div>
+    </div>
+  `;
 
   document.getElementById("orderModal")?.classList.remove("hidden");
 }
