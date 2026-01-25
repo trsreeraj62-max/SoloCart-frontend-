@@ -159,16 +159,13 @@ async function fetchCartOnce() {
 
     cartData = data;
 
-    // Extract items array from common shapes (no price math here)
+    // Extract items array from common shapes
     let items = [];
-    if (Array.isArray(data)) items = data;
-    else if (Array.isArray(data.items)) items = data.items;
-    else if (data.data && Array.isArray(data.data.items))
-      items = data.data.items;
-    else if (data.cart && Array.isArray(data.cart.items))
-      items = data.cart.items;
-    else if (Array.isArray(data.data)) items = data.data;
-    else items = data.items || data.data || [];
+    if (data.items && Array.isArray(data.items)) items = data.items;
+    else if (data.data && Array.isArray(data.data.items)) items = data.data.items;
+    else if (Array.isArray(data)) items = data;
+    else if (data.cart && Array.isArray(data.cart.items)) items = data.cart.items;
+    else items = [];
 
     console.log("[Checkout] Extracted items:", items.length, "items");
 
@@ -179,20 +176,7 @@ async function fetchCartOnce() {
       return;
     }
 
-    // Save items to checkout_data for the Continue button
-    try {
-      const checkoutData = {
-        items: items,
-        cart_data: data
-      };
-      localStorage.setItem(CHECKOUT_KEY, JSON.stringify(checkoutData));
-      console.log("[Checkout] Saved", items.length, "items to checkout_data");
-    } catch (e) {
-      console.error("[Checkout] Failed to save checkout data:", e);
-    }
-
     renderCartItems(items);
-    // Render totals strictly from backend fields only
     renderPriceDetails(data);
     
     console.log("[Checkout] Cart rendering complete");
@@ -204,60 +188,26 @@ async function fetchCartOnce() {
   }
 }
 
-async function fetchCartData() {
-  try {
-    const data = await apiCall("/cart", { requireAuth: true });
-    console.log("[Checkout] Raw cart response:", data);
-
-    // Normalize items similar to cart.js
-    let items = [];
-    if (!data) items = [];
-    else if (Array.isArray(data)) items = data;
-    else if (Array.isArray(data.items)) items = data.items;
-    else if (data.data && Array.isArray(data.data.items))
-      items = data.data.items;
-    else if (data.cart && Array.isArray(data.cart.items))
-      items = data.cart.items;
-    else if (Array.isArray(data.data)) items = data.data;
-    else items = data.items || data.data || [];
-
-    cartData = data;
-
-    // Apply checkout selection (single item) if present
-    // old flow removed in favor of unified checkout_data
-  } catch (e) {
-    console.error("Failed to fetch cart data", e);
-  }
-}
-
 function renderPriceDetails(data) {
-  // Render totals only from backend response keys. No arithmetic performed here.
+  // Render totals only from backend response keys.
+  // The backend now returns { total_items, total_mrp, total_price, total_discount } at root or in summary.
+  const summary = data.summary || {};
+  
+  const totalItems = data.total_items || summary.total_items || (data.items ? data.items.length : 0);
+  const totalMrp = data.total_mrp || summary.total_mrp || 0;
+  const totalPrice = data.total_price || summary.total_price || summary.grand_total || 0;
+  const discount = data.total_discount || summary.total_discount || (totalMrp - totalPrice);
+  const shipping = summary.shipping || 0;
+
   const countEl = document.getElementById("price-details-count");
   const mrpEl = document.getElementById("total-mrp");
   const discEl = document.getElementById("total-discount");
   const grandEl = document.getElementById("grand-total");
-
-  // Prefer common backend keys; fallbacks are only for compatibility with different API shapes
-  const totalItems =
-    data.total_items || data.items?.length || data.cart?.total_items || 0;
-  const totalMrp =
-    data.total_mrp ||
-    data.mrp_total ||
-    data.cart?.total_mrp ||
-    data.subtotal ||
-    data.total_mrp ||
-    0;
-  const totalPrice =
-    data.total_price ||
-    data.total ||
-    data.grand_total ||
-    data.total_amount ||
-    data.cart?.total_price ||
-    0;
-  const discount = totalMrp && totalPrice ? totalMrp - totalPrice : null;
+  const deliveryChargesEl = document.getElementById("delivery-charges");
 
   if (countEl) countEl.innerText = totalItems;
-  if (mrpEl) mrpEl.innerText = `₹${Number(totalMrp || 0).toLocaleString()}`;
+  if (mrpEl) mrpEl.innerText = `₹${Number(totalMrp).toLocaleString()}`;
+  
   if (discEl) {
     if (discount > 0) {
       discEl.innerText = `- ₹${Number(discount).toLocaleString()}`;
@@ -267,8 +217,18 @@ function renderPriceDetails(data) {
       discEl.parentElement.classList.add("hidden");
     }
   }
+  
+  // Delivery Charges Logic
+  if (deliveryChargesEl) {
+      if (shipping === 0) {
+          deliveryChargesEl.innerHTML = '<span class="text-green-600">Free</span>';
+      } else {
+          deliveryChargesEl.innerText = `₹${Number(shipping).toLocaleString()}`;
+      }
+  }
+  
   if (grandEl)
-    grandEl.innerText = `₹${Number(totalPrice || 0).toLocaleString()}`;
+    grandEl.innerText = `₹${Number(totalPrice).toLocaleString()}`;
     
   const savingsEl = document.getElementById("savings-amount");
   if (savingsEl) {

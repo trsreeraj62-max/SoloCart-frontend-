@@ -130,11 +130,21 @@ function renderCartItems(items) {
       const qty = Number(item.quantity || item.qty || 1);
       const price = Number(product.price || product.unit_price || 0);
       const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
-      const imageUrl = product.image_url
-        ? String(product.image_url).replace(/^http:/, "https:")
-        : product.image
-          ? `${backendBase}/storage/${product.image}`
-          : "https://placehold.co/400x400?text=No+Image";
+      // Robust Image Logic
+      let imageUrl = "https://placehold.co/400x400?text=No+Image";
+      
+      if (product.image_url) {
+          // If pure URL (http/https), use it. Protocol upgrade to https if needed.
+          if (product.image_url.match(/^https?:\/\//)) {
+              imageUrl = product.image_url.replace(/^http:/, "https:");
+          } else {
+              // Relative path from accessor? Prepend base
+              imageUrl = `${backendBase}${product.image_url.startsWith('/') ? '' : '/'}${product.image_url}`;
+          }
+      } else if (product.image) {
+          // Fallback to raw DB column
+          imageUrl = `${backendBase}/storage/${product.image.replace(/^\/+/, '')}`;
+      }
 
       return `
         <div class="p-4 flex gap-4 hover:bg-slate-50 transition-colors cart-row" data-product-id="${product.id}" data-item-id="${item.id}">
