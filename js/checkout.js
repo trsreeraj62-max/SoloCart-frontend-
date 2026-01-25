@@ -23,9 +23,23 @@ async function initCheckout() {
   autoFillUserData(userData);
 
   // Detect buy now vs cart checkout
-  const checkoutType = localStorage.getItem("checkout_type");
-  if (checkoutType === "buy_now") {
-    renderBuyNow();
+  const params = new URLSearchParams(window.location.search);
+  const isBuyNow = params.get("type") === "buy_now" || localStorage.getItem("checkout_type") === "buy_now";
+
+  // If navigating normally (e.g. from Cart), clear buy_now_item to prevent stale single-product checkout
+  if (!isBuyNow) {
+      localStorage.removeItem("buy_now_item");
+      localStorage.removeItem("checkout_type");
+  }
+
+  if (isBuyNow) {
+    if(!localStorage.getItem("buy_now_item")) {
+        // Fallback if flag is set but item missing
+        localStorage.removeItem("checkout_type");
+        await fetchCartOnce();
+    } else {
+        renderBuyNow();
+    }
   } else {
     await fetchCartOnce();
   }

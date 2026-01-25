@@ -197,7 +197,10 @@ function renderCartItems(items) {
       parent.insertBefore(buyAll, container);
     }
     document.getElementById("buy-all-now")?.addEventListener("click", () => {
-      initiateCheckoutSelection("all", null);
+      // Clear single-item flags
+      localStorage.removeItem("buy_now_item");
+      localStorage.setItem("checkout_type", "cart");
+      window.location.href = "/checkout.html";
     });
   }
 
@@ -241,7 +244,27 @@ function renderCartItems(items) {
     btn.addEventListener("click", (e) => {
       const pid = btn.dataset.productId;
       const itemId = btn.dataset.itemId;
-      // Store selection and navigate to checkout
+      
+      // Find item data
+      const itemRow = btn.closest('.cart-row');
+      // For simplicity in this flow, we might just redirect to product details to buy now there, OR implement partial checkout.
+      // However, USER wants "buy this item". Best path: treat as Buy Now for single item.
+      // We need item details.
+      // Let's rely on backend or pre-fetched items logic if possible, BUT simpler to just redirect to checkout if we treat as "buy now from cart".
+      
+      // Actually, "Buy This Item" usually implies checkout for JUST that item.
+      // But since we are in cart, we can re-use the "Buy Now" flow.
+      // We need to construct the item object.
+      // Since we don't have the full object easily accessible here without query, let's look it up or fetch.
+      // BETTER UX: Just treating "Buy This Item" as "Select this for checkout" is complex. 
+      // Simplest Fix per request: make it work like checkout.
+      // We will grab name/price/image from DOM or rely on `initiateCheckoutSelection` if we fix it.
+      
+      // Let's use initiateCheckoutSelection's logic but ensure it sets the flags Checkout.js expects.
+      // Actually, `initiateCheckoutSelection` sets `checkout_data`, which checkout.js READS if not "buy_now".
+      // BUT `checkout.js` priorities `fetchCartOnce` if type != buy_now.
+      
+      // FORCE "buy_now" mode for single item checkout from cart
       initiateCheckoutSelection("single", pid);
     });
   });
@@ -316,21 +339,34 @@ async function initiateCheckoutSelection(type, productId) {
           String(it.product_id) === String(productId)
         );
       });
+      
+      // If single item found, treat as "Buy Now" for consistency with Checkout.js
+      if (items.length > 0) {
+          const it = items[0];
+          const product = it.product || it.product_data || it;
+          const buyNowItem = {
+            id: product.id || product.product_id || product._id,
+            name: product.name || product.title || "",
+            price: Number(product.price || product.unit_price || 0),
+            quantity: Number(it.quantity || it.qty || 1),
+            image: product.image_url || it.image, // Use robust image link if available
+            mrp: Number(product.original_price || product.mrp || 0)
+          };
+          localStorage.setItem("buy_now_item", JSON.stringify(buyNowItem));
+          localStorage.setItem("checkout_type", "buy_now");
+          window.location.href = "/checkout.html?type=buy_now";
+          return;
+      }
     }
-
-    // Normalize stored items: minimal shape expected by checkout (/checkout/preview)
-    payload.items = (items || []).map((it) => {
-      const product = it.product || it.product_data || it;
-      return {
-        product_id: product.id || product.product_id || product._id,
-        name: product.name || product.title || "",
-        price: Number(product.price || product.unit_price || 0),
-        quantity: Number(it.quantity || it.qty || 1),
-      };
-    });
-
-    localStorage.setItem("checkout_data", JSON.stringify(payload));
+    
+    // Fallback: This path shouldn't really be hit for "all" 
+    // since we handled that in the "Buy All" listener directly now.
+    // But safely keep it:
+    
+    localStorage.removeItem("buy_now_item");
+    localStorage.setItem("checkout_type", "cart");
     window.location.href = "/checkout.html";
+
   } catch (e) {
     console.error("Failed to prepare checkout data", e);
     if (window.showToast)
