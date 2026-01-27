@@ -315,4 +315,91 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+
+  initMobileMenu();
 });
+
+/* ---------------- MOBILE MENU ---------------- */
+function initMobileMenu() {
+  // Target the container that holds the logo and the desktop menu
+  // Structure: nav .container > div.flex.gap-12 > [a(logo), ul(menu)]
+  const navGroup = document.querySelector('#main-nav .container .flex.items-center.gap-12');
+  if (!navGroup) return;
+
+  if (document.getElementById('mobile-menu-btn')) return;
+
+  // Create Toggle Button
+  const btn = document.createElement('button');
+  btn.id = 'mobile-menu-btn';
+  btn.className = 'md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-900 hover:bg-slate-200 transition-colors ml-4';
+  btn.innerHTML = '<i class="fas fa-bars"></i>';
+  
+  // Insert after logo
+  const logo = navGroup.querySelector('a');
+  if (logo) {
+      logo.insertAdjacentElement('afterend', btn);
+  } else {
+      navGroup.appendChild(btn);
+  }
+
+  // Overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'mobile-menu-overlay';
+  document.body.appendChild(overlay);
+
+  // Menu Drawer
+  const menu = document.createElement('div');
+  menu.className = 'mobile-menu-content';
+  
+  // Header
+  const header = document.createElement('div');
+  header.className = 'flex justify-between items-center mb-8';
+  header.innerHTML = `
+    <div class="flex items-center gap-2">
+         <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-black text-xl">S</div>
+         <span class="text-xl font-bold text-slate-900">SoloCart</span>
+    </div>
+  `;
+  
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'w-8 h-8 flex items-center justify-center bg-slate-50 rounded-full text-slate-400 hover:text-rose-500 transition-colors';
+  closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+  header.appendChild(closeBtn);
+  menu.appendChild(header);
+
+  // Links (Clone from desktop)
+  const ul = navGroup.querySelector('ul');
+  if (ul) {
+      const links = ul.querySelectorAll('a');
+      const linkContainer = document.createElement('div');
+      linkContainer.className = 'flex flex-col gap-2';
+      
+      links.forEach(link => {
+          const mLink = document.createElement('a');
+          mLink.href = link.getAttribute('href'); // Get raw attribute
+          mLink.className = 'mobile-nav-link';
+          mLink.innerHTML = `<i class="fas fa-chevron-right text-[10px] opacity-40"></i> ${link.textContent}`;
+          linkContainer.appendChild(mLink);
+      });
+      menu.appendChild(linkContainer);
+  }
+
+  document.body.appendChild(menu);
+
+  // Logic
+  const toggle = (show) => {
+      if (show) {
+          overlay.classList.add('active');
+          menu.classList.add('active');
+          document.body.style.overflow = 'hidden';
+      } else {
+          overlay.classList.remove('active');
+          menu.classList.remove('active');
+          document.body.style.overflow = '';
+      }
+  };
+
+  btn.addEventListener('click', () => toggle(true));
+  closeBtn.addEventListener('click', () => toggle(false));
+  overlay.addEventListener('click', () => toggle(false));
+}
