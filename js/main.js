@@ -350,7 +350,35 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   initMobileMenu();
+  initGlobalSearch();
 });
+
+/* ---------------- GLOBAL SEARCH (Non-Shop Pages) ---------------- */
+function initGlobalSearch() {
+  // If we are on the shop page, let shop.js handle it
+  if (window.location.pathname.includes("/shop")) return;
+
+  const searchInput = document.getElementById("global-search");
+  if (!searchInput) return;
+
+  const handleSearch = () => {
+    const query = searchInput.value.trim();
+    if (query) {
+      window.location.href = `/shop.html?search=${encodeURIComponent(query)}`;
+    }
+  };
+
+  searchInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") handleSearch();
+  });
+  
+  // Optional: if there's a search button icon
+  const searchIcon = searchInput.parentElement.querySelector(".fa-search");
+  if (searchIcon) {
+      searchIcon.parentElement.style.cursor = "pointer";
+      searchIcon.parentElement.addEventListener("click", handleSearch);
+  }
+}
 
 /* ---------------- MOBILE MENU ---------------- */
 function initMobileMenu() {
