@@ -52,6 +52,16 @@ async function initShop() {
   console.log("[SHOP] ✅ Shop initialization complete");
 }
 
+
+// Helper for debounce
+function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
 async function fetchCategories() {
   try {
     const data = await apiCall("/categories");
@@ -65,25 +75,21 @@ async function fetchCategories() {
 
 function renderCategories(categories) {
   const container = document.getElementById("category-filters");
+  if(!container) return;
+
   container.innerHTML =
     `
-        <label class="flex items-center gap-2 cursor-pointer group">
-            <input type="radio" name="category" value="" class="hidden peer" ${currentFilters.category === "" ? "checked" : ""}>
-            <div class="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center peer-checked:border-[#2874f0] peer-checked:bg-[#2874f0]">
-                <div class="w-1.5 h-1.5 rounded-full bg-white scale-0 peer-checked:scale-100 transition-transform"></div>
-            </div>
-            <span class="text-xs font-bold text-slate-600 peer-checked:text-[#2874f0]">All Categories</span>
+        <label class="flex items-center gap-2 cursor-pointer group py-1">
+            <input type="radio" name="category" value="" class="rounded border-slate-300 text-[#2874f0] focus:ring-0" ${currentFilters.category === "" ? "checked" : ""}>
+            <span class="text-sm text-slate-700 group-hover:text-slate-900">All Categories</span>
         </label>
     ` +
     categories
       .map(
         (c) => `
-        <label class="flex items-center gap-2 cursor-pointer group">
-            <input type="radio" name="category" value="${c.id}" class="hidden peer" ${currentFilters.category == c.id ? "checked" : ""}>
-            <div class="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center peer-checked:border-[#2874f0] peer-checked:bg-[#2874f0]">
-                <div class="w-1.5 h-1.5 rounded-full bg-white scale-0 peer-checked:scale-100 transition-transform"></div>
-            </div>
-            <span class="text-xs font-bold text-slate-600 peer-checked:text-[#2874f0]">${c.name}</span>
+        <label class="flex items-center gap-2 cursor-pointer group py-1">
+            <input type="radio" name="category" value="${c.id}" class="rounded border-slate-300 text-[#2874f0] focus:ring-0" ${currentFilters.category == c.id ? "checked" : ""}>
+            <span class="text-sm text-slate-700 group-hover:text-slate-900">${c.name}</span>
         </label>
     `,
       )
@@ -110,7 +116,7 @@ async function fetchProducts(append = false) {
   if (!append) {
     if (grid)
       grid.innerHTML = Array(8)
-        .fill('<div class="bg-white p-4 h-80 animate-pulse rounded-sm"></div>')
+        .fill('<div class="h-80 animate-pulse bg-slate-50 border border-slate-100 p-4"></div>')
         .join("");
     if (emptyState) emptyState.classList.add("hidden");
     currentFilters.page = 1;
@@ -183,7 +189,7 @@ async function fetchProducts(append = false) {
       grid.innerHTML = "";
     }
 
-    if (countText) countText.innerText = `Showing ${total} products`;
+    if (countText) countText.innerText = `Showing 1 – ${products.length} of ${total} results`;
     renderProducts(products, append);
 
     hasMore = pagination.current_page < pagination.last_page;
@@ -199,23 +205,11 @@ async function fetchProducts(append = false) {
 function renderProducts(products, append = false) {
   const grid = document.getElementById("shop-products-grid");
   if (!grid || !Array.isArray(products)) {
-    console.warn(
-      "[SHOP] renderProducts: grid found?",
-      !!grid,
-      "products array?",
-      Array.isArray(products),
-    );
     return;
   }
 
   const html = products
     .map((p) => {
-      console.log(
-        "[SHOP] Rendering product:",
-        p.id || p.slug || p.name,
-        "image:",
-        p.image_url || p.image,
-      );
       const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
       const imageUrl = p.image_url
         ? p.image_url.replace(/^http:/, "https:")
@@ -230,27 +224,34 @@ function renderProducts(products, append = false) {
           ? (price / (1 - discount / 100)).toFixed(0)
           : (price * 1.25).toFixed(0);
 
+      // Flipkart Grid Item Style
       return `
-            <div class="group bg-white rounded-sm overflow-hidden transition-all duration-300 hover:shadow-xl relative flex flex-col h-full border border-transparent hover:border-slate-100 p-4">
-                <a href="/product-details.html?slug=${p.id || p.slug}" class="no-underline text-inherit flex flex-col h-full">
-                    <div class="relative w-full aspect-square mb-4 overflow-hidden flex items-center justify-center">
-                        <img src="${imageUrl}" class="h-full object-contain group-hover:scale-105 transition-transform duration-700" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
-                        ${discount > 0 ? `<span class="absolute top-0 right-0 text-[10px] font-black text-white bg-green-500 px-2 py-1 rounded-bl-lg uppercase">${discount}% OFF</span>` : ""}
-                    </div>
-                    <div class="flex-grow">
-                        <h3 class="text-xs font-bold text-slate-800 line-clamp-2 mb-1 group-hover:text-[#2874f0] min-h-[32px]">${p.name || "Unavailable"}</h3>
-                        <div class="flex items-center gap-2 mb-2">
-                            <div class="bg-green-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
-                                ${p.rating || "4.2"} <i class="fas fa-star text-[7px]"></i>
-                            </div>
-                            <span class="text-slate-400 text-[10px] font-bold">(50+)</span>
+            <div class="hover:shadow-lg transition-shadow duration-300 relative bg-white p-4 group cursor-pointer" onclick="window.location.href='/product-details.html?slug=${p.id || p.slug}'">
+                <div class="relative w-full aspect-[4/5] mb-2 flex items-center justify-center overflow-hidden">
+                    <img src="${imageUrl}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
+                    ${discount > 0 ? `<div class="absolute top-0 left-0 text-[10px] font-bold text-green-700 bg-green-50 px-1 py-0.5 rounded-sm">${discount}% off</div>` : ""}
+                    
+                    <button class="absolute top-0 right-0 p-2 text-slate-300 hover:text-red-500 transition-colors z-20" onclick="event.stopPropagation();">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-1">
+                    <h3 class="text-sm font-medium text-slate-700 hover:text-[#2874f0] line-clamp-2 leading-snug min-h-[40px] transition-colors" title="${p.name}">${p.name}</h3>
+                    
+                    <div class="flex items-center gap-2">
+                        <div class="bg-green-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+                            ${p.rating || "4.2"} <i class="fas fa-star text-[8px]"></i>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-base font-black text-slate-900">₹${price.toLocaleString()}</span>
-                            <span class="text-[10px] text-slate-400 line-through font-bold">₹${Number(originalPrice).toLocaleString()}</span>
-                        </div>
+                        <span class="text-slate-400 text-xs font-medium">(${Math.floor(Math.random() * 500) + 10})</span>
                     </div>
-                </a>
+
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-base font-bold text-slate-900">₹${price.toLocaleString()}</span>
+                        ${discount > 0 ? `<span class="text-xs text-slate-500 line-through">₹${Number(originalPrice).toLocaleString()}</span>` : ""}
+                        ${discount > 0 ? `<span class="text-xs font-bold text-green-600">${discount}% off</span>` : ""}
+                    </div>
+                </div>
             </div>
         `;
     })
@@ -267,27 +268,36 @@ function renderProducts(products, append = false) {
 
 function setupEventListeners() {
   // Search
+  // Check if elements exist before adding listeners
   const searchInput = document.getElementById("global-search");
-  const searchBtn = document.getElementById("search-btn");
+  const searchBtn = document.getElementById("search-btn"); // Might not exist if using auto-search
 
-  const triggerSearch = () => {
-    currentFilters.search = searchInput.value;
-    currentFilters.page = 1;
-    applyFilters();
-  };
+  const triggerSearch = debounce(() => {
+    if(searchInput) {
+        currentFilters.search = searchInput.value;
+        currentFilters.page = 1;
+        applyFilters();
+    }
+  }, 500);
 
-  searchBtn.addEventListener("click", triggerSearch);
-  searchInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") triggerSearch();
-  });
+  if(searchInput) {
+      searchInput.addEventListener("input", triggerSearch);
+  }
 
-  // Price Filter
-  document.getElementById("apply-price").addEventListener("click", () => {
-    currentFilters.min_price = document.getElementById("min-price").value;
-    currentFilters.max_price = document.getElementById("max-price").value;
-    currentFilters.page = 1;
-    applyFilters();
-  });
+  // Price Selectors
+  const minPrice = document.getElementById("min-price-select");
+  const maxPrice = document.getElementById("max-price-select");
+  
+  if (minPrice && maxPrice) {
+      const updatePrice = () => {
+          currentFilters.min_price = minPrice.value;
+          currentFilters.max_price = maxPrice.value;
+          currentFilters.page = 1;
+          applyFilters();
+      };
+      minPrice.addEventListener("change", updatePrice);
+      maxPrice.addEventListener("change", updatePrice);
+  }
 
   // Sort
   document.querySelectorAll(".sort-btn").forEach((btn) => {
@@ -295,13 +305,17 @@ function setupEventListeners() {
       currentFilters.sort = btn.dataset.sort;
       currentFilters.page = 1;
       applyFilters();
+      updateSortButtons();
     });
   });
 
   // Reset
-  document.getElementById("reset-filters").addEventListener("click", () => {
-    window.location.href = "/shop.html";
-  });
+  const resetBtn = document.getElementById("reset-filters");
+  if(resetBtn) {
+      resetBtn.addEventListener("click", () => {
+        window.location.href = "/shop.html";
+      });
+  }
 
   // Infinite Scroll Listener
   window.addEventListener("scroll", () => {
