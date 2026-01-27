@@ -125,14 +125,35 @@ async function fetchHomeData() {
 
     if (featured.length > 0 || latest.length > 0) {
       console.log("[HOME] ✅ Rendering products...");
+      
+      // Row 1: Featured (Slider)
       renderProducts(
         featured.length > 0 ? featured : latest,
         "featured-products-grid",
+        true // isSlider = true
       );
+
+      // Row 2: Latest (Grid)
       renderProducts(
         latest.length > 0 ? latest : featured,
         "latest-products-grid",
+        false // isSlider = false
       );
+
+      // Row 3: Best Sellers (Grid)
+      // Use products pool for Row 3 and 4 if available
+      if (products.length > 0) {
+          renderProducts(products.slice(0, 10), "bestsellers-products-grid", false);
+          // Row 4: Trending
+          renderProducts(products.slice(10, 20), "trending-products-grid", false);
+      } else {
+          // Hide rows if no data
+          ["bestsellers-products-grid", "trending-products-grid"].forEach(id => {
+              const el = document.getElementById(id);
+              if (el && el.closest('section')) el.closest('section').style.display = 'none';
+          });
+      }
+
       console.log("[HOME] ✅ Products rendered successfully");
       hideNoProductsPopup();
     } else {
@@ -301,12 +322,14 @@ document.addEventListener('DOMContentLoaded', () => {
 /**
  * Renders products into a Specified grid container with Horizontal Scroll support.
  */
-function renderProducts(products, gridId) {
+function renderProducts(products, gridId, isSlider = false) {
   console.log(
     "[HOME] renderProducts called - GridId:",
     gridId,
     "Products:",
     products.length,
+    "isSlider:",
+    isSlider
   );
   if (!Array.isArray(products)) {
     console.error(
@@ -325,7 +348,7 @@ function renderProducts(products, gridId) {
 
   const renderedHtml = products
     .map((product) => {
-      // Use full URL if provided by backend (image_url), else construct it
+      // ... same logic for URL calculation ...
       const backendBase = CONFIG.API_BASE_URL.replace(/\/api\/?$/i, "");
       const imageUrl = product.image_url
         ? product.image_url.replace(/^http:/, "https:")
@@ -340,9 +363,11 @@ function renderProducts(products, gridId) {
           ? (price / (1 - discount / 100)).toFixed(0)
           : (price * 1.25).toFixed(0);
 
-      // Flipkart-style card (Vertical compressed)
+      const cardStyle = isSlider ? 'style="min-width: 200px; max-width: 200px;"' : '';
+      const cardClass = isSlider ? 'product-card-min' : 'product-card-grid-item';
+
       return `
-            <div class="product-card-min bg-white border border-slate-100 rounded-lg p-3 hover:shadow-lg transition-all relative flex flex-col gap-3 group cursor-pointer" onclick="window.location.href='/product-details.html?slug=${product.id || product.slug}'" style="min-width: 200px; max-width: 200px;">
+            <div class="${cardClass} bg-white border border-slate-100 rounded-lg p-3 hover:shadow-lg transition-all relative flex flex-col gap-3 group cursor-pointer" onclick="window.location.href='/product-details.html?slug=${product.id || product.slug}'" ${cardStyle}>
                 <div class="w-full h-[160px] flex items-center justify-center p-2 relative">
                     <img src="${imageUrl}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-500" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
                     ${discount > 0 ? `<div class="absolute top-0 left-0 bg-green-600 text-[9px] text-white px-1 font-bold rounded-sm">${discount}% off</div>` : ""}

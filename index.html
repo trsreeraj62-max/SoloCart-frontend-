@@ -189,16 +189,44 @@
                 </div>
             </section>
 
-            <!-- Latest Section Row -->
+            <!-- Row 2: New Arrivals (Grid - No Swipe) -->
             <section class="special-deal-row rounded-sm bg-white shadow-sm p-4 md:p-5">
-                <div class="special-deal-header flex justify-between items-end mb-3 border-b border-slate-100 pb-2">
+                <div class="special-deal-header flex justify-between items-end mb-4 border-b border-slate-100 pb-2">
                     <div class="flex flex-col">
-                        <h3 class="text-lg font-bold text-slate-900">New Arrivals</h3>
-                        <span class="text-xs text-emerald-600 font-bold">Just Added</span>
+                        <h3 class="text-xl font-bold text-slate-900 tracking-tight">New Arrivals</h3>
+                        <span class="text-xs text-emerald-600 font-bold uppercase tracking-wider">Fresh Collection</span>
                     </div>
-                    <a href="/shop?sort=newest" class="bg-[#2874f0] text-white text-[11px] font-bold px-4 py-2 rounded-sm shadow-sm hover:shadow-md transition-all">VIEW ALL</a>
+                    <a href="/shop?sort=newest" class="text-[#2874f0] text-xs font-bold hover:underline">VIEW ALL</a>
                 </div>
-                <div class="horizontal-scroll-container flex gap-3 overflow-x-auto pb-4 no-scrollbar" id="latest-products-grid">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 md:gap-4" id="latest-products-grid">
+                    <!-- Loaded via JS -->
+                </div>
+            </section>
+
+            <!-- Row 3: Best Sellers (Grid - No Swipe) -->
+            <section class="special-deal-row rounded-sm bg-white shadow-sm p-4 md:p-5">
+                <div class="special-deal-header flex justify-between items-end mb-4 border-b border-slate-100 pb-2">
+                    <div class="flex flex-col">
+                        <h3 class="text-xl font-bold text-slate-900 tracking-tight">Best Sellers</h3>
+                        <span class="text-xs text-amber-600 font-bold uppercase tracking-wider">Customer Favorites</span>
+                    </div>
+                    <a href="/shop" class="text-[#2874f0] text-xs font-bold hover:underline">VIEW ALL</a>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 md:gap-4" id="bestsellers-products-grid">
+                    <!-- Loaded via JS -->
+                </div>
+            </section>
+
+            <!-- Row 4: Trending Deals (Grid - No Swipe) -->
+            <section class="special-deal-row rounded-sm bg-white shadow-sm p-4 md:p-5">
+                <div class="special-deal-header flex justify-between items-end mb-4 border-b border-slate-100 pb-2">
+                    <div class="flex flex-col">
+                        <h3 class="text-xl font-bold text-slate-900 tracking-tight">Trending Deals</h3>
+                        <span class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Top Trends 2026</span>
+                    </div>
+                    <a href="/shop" class="text-[#2874f0] text-xs font-bold hover:underline">VIEW ALL</a>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 md:gap-4" id="trending-products-grid">
                     <!-- Loaded via JS -->
                 </div>
             </section>
