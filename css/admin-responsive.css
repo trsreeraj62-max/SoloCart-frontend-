@@ -1,0 +1,88 @@
+/* Admin Responsive Styles */
+
+/* Mobile Sidebar Toggle Button */
+.mobile-sidebar-toggle {
+    display: none; /* Hidden on desktop */
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 8px;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    font-size: 1.25rem;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1001; /* Above sidebar */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Overlay */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+    backdrop-filter: blur(2px);
+}
+
+.sidebar-overlay.active {
+    display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    /* Show Toggle Button */
+    .mobile-sidebar-toggle {
+        display: flex;
+    }
+
+    /* Adjust Sidebar */
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+        z-index: 1000;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    /* Adjust Main Content */
+    .main-content {
+        margin-left: 0 !important; /* Override inline style or css */
+        padding: 1.5rem;
+        padding-top: 5rem; /* Space for the toggle button */
+    }
+    
+    /* Stats Grid */
+    .grid-cols-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    /* Stats Grid Mobile */
+    .grid-cols-4 {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+    
+    .grid-cols-1.md\:grid-cols-2 {
+         grid-template-columns: 1fr;
+    }
+
+    .main-content {
+        padding: 1rem;
+        padding-top: 5rem;
+    }
+
+    /* Tables */
+    .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+    }
+}
