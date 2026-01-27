@@ -30,13 +30,20 @@ async function initShop() {
   console.log("[SHOP] Filters from URL:", currentFilters);
 
   // Initialize UI states
-  if (currentFilters.search) {
-    document.getElementById("global-search").value = currentFilters.search;
+  const globalSearchInput = document.getElementById("global-search");
+  if (currentFilters.search && globalSearchInput) {
+    globalSearchInput.value = currentFilters.search;
   }
-  if (currentFilters.min_price)
-    document.getElementById("min-price").value = currentFilters.min_price;
-  if (currentFilters.max_price)
-    document.getElementById("max-price").value = currentFilters.max_price;
+
+  const minPriceInput = document.getElementById("min-price-select") || document.getElementById("min-price");
+  if (currentFilters.min_price && minPriceInput) {
+    minPriceInput.value = currentFilters.min_price;
+  }
+
+  const maxPriceInput = document.getElementById("max-price-select") || document.getElementById("max-price");
+  if (currentFilters.max_price && maxPriceInput) {
+    maxPriceInput.value = currentFilters.max_price;
+  }
 
   updateSortButtons();
 
@@ -63,24 +70,38 @@ function debounce(func, wait) {
 }
 
 async function fetchCategories() {
+  console.log("[SHOP] 📂 fetchCategories starting...");
   try {
     const data = await apiCall("/categories");
+    console.log("[SHOP] 📂 Categories API response:", data);
     const categories =
       data.categories || data.data || (Array.isArray(data) ? data : []);
+    console.log("[SHOP] 📂 Extracted categories array:", categories);
     renderCategories(categories);
   } catch (e) {
-    console.error("Failed to load categories", e);
+    console.error("[SHOP] ❌ fetchCategories failed:", e);
   }
 }
 
 function renderCategories(categories) {
   const container = document.getElementById("category-filters");
-  if(!container) return;
+  if (!container) {
+    console.warn("[SHOP] ⚠️ category-filters container not found in DOM");
+    return;
+  }
+
+  if (!Array.isArray(categories)) {
+     console.error("[SHOP] ❌ renderCategories: categories is not an array", categories);
+     container.innerHTML = '<p class="text-xs text-slate-400">Failed to load categories</p>';
+     return;
+  }
+
+  console.log("[SHOP] 🎨 Rendering", categories.length, "categories");
 
   container.innerHTML =
     `
         <label class="flex items-center gap-2 cursor-pointer group py-1">
-            <input type="radio" name="category" value="" class="rounded border-slate-300 text-[#2874f0] focus:ring-0" ${currentFilters.category === "" ? "checked" : ""}>
+            <input type="radio" name="category" value="" class="rounded border-slate-300 text-[#2874f0] focus:ring-0" ${currentFilters.category === "" || currentFilters.category === null ? "checked" : ""}>
             <span class="text-sm text-slate-700 group-hover:text-slate-900">All Categories</span>
         </label>
     ` +
@@ -98,6 +119,7 @@ function renderCategories(categories) {
   // Re-bind category radio clicks
   container.querySelectorAll('input[name="category"]').forEach((input) => {
     input.addEventListener("change", (e) => {
+      console.log("[SHOP] ⚡ Category changed to:", e.target.value);
       currentFilters.category = e.target.value;
       currentFilters.page = 1;
       applyFilters();
