@@ -61,8 +61,13 @@ export async function apiCall(endpoint, options = {}) {
 
     if (!res.ok) {
       if (res.status === 401) {
-        localStorage.clear();
-        window.location.href = "/login.html";
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user_data");
+        localStorage.removeItem("user_profile");
+        
+        if (!options.skipRedirect) {
+             window.location.href = "/login.html";
+        }
       }
       return { success: false, ...data, statusCode: res.status };
     }
@@ -230,7 +235,13 @@ export async function updateCartBadge() {
   const badge = document.getElementById("cart-count-badge");
   if (!badge) return;
 
-  const data = await apiCall("/cart");
+  if (!getAuthToken()) {
+      badge.textContent = "0";
+      badge.classList.add("hidden");
+      return;
+  }
+
+  const data = await apiCall("/cart", { skipRedirect: true });
   const count = data?.items?.length || 0;
 
   badge.textContent = count;
