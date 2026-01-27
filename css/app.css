@@ -560,14 +560,54 @@ input:-webkit-autofill:active {
         border-radius: 0;
     }
     
+    .hero-content-slider {
+         padding-left: 5%;
+         padding-right: 5%;
+         text-align: center;
+         display: flex;
+         flex-direction: column;
+         align-items: center;
+         justify-content: center;
+         width: 100%;
+    }
+
     /* Font Sizes */
     h1 { font-size: 1.5rem !important; }
     h2 { font-size: 1.25rem !important; }
+    h3 { font-size: 1.5rem !important; } /* Added from remote */
     
     /* Layouts */
     .container {
         padding: 0 0.5rem;
     }
+
+    /* Shop Page Mobile */ /* Added from remote */
+    .shop-layout { /* Added from remote */
+        grid-template-columns: 1fr; /* Added from remote */
+        gap: 1.5rem; /* Added from remote */
+    } /* Added from remote */
+    
+    /* Fix Footer Grid */
+    footer .grid {
+        gap: 2rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* Payment Page Mobile Fixes */ /* Added from remote */
+    /* Reverse order on mobile for Payment Page Grid */ /* Added from remote */
+    .payment-grid-reverse { /* Added from remote */
+        display: flex; /* Added from remote */
+        flex-direction: column-reverse; /* Added from remote */
+    } /* Added from remote */
+    
+    /* Improve spacing on payment page */ /* Added from remote */
+    .payment-step-indicator { /* Added from remote */
+        margin-bottom: 1.5rem; /* Added from remote */
+    } /* Added from remote */
+    
+    .payment-option-label { /* Added from remote */
+        padding: 1rem; /* Added from remote */
+    } /* Added from remote */
 }
 
 /* Horizontal Scroll / Flipkart Style */
@@ -633,4 +673,48 @@ input:-webkit-autofill:active {
     padding-bottom: 0.5rem;
 }
 
+/* Performance Optimizations */ /* Added from remote */
+.product-card-img, .hero-slide img { /* Added from remote */
+    content-visibility: auto; /* Added from remote */
+    contain-intrinsic-size: 300px; /* Approximate height */ /* Added from remote */
+} /* Added from remote */
 
+/* Hamburger & Mobile Menu Fixes */ /* Added from remote */
+.mobile-nav-toggle { /* Added from remote */
+    display: none; /* Hidden on desktop */ /* Added from remote */
+} /* Added from remote */
+@media (max-width: 1024px) { /* Added from remote */
+    .mobile-nav-toggle { /* Added from remote */
+        display: block; /* Added from remote */
+        z-index: 1001; /* Above navbar */ /* Added from remote */
+        position: relative; /* Added from remote */
+    } /* Added from remote */
+    /* Ensure no overlap with cart */ /* Added from remote */
+    .nav-actions { /* Added from remote */
+        gap: 1rem; /* Added from remote */
+    } /* Added from remote */
+} /* Added from remote */
+
+/* Grid Fixes for Mobile (2 cols) */ /* Added from remote */
+@media (max-width: 640px) { /* Added from remote */
+    .grid-cols-mobile-2 { /* Added from remote */
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important; /* Added from remote */
+        gap: 0.75rem !important; /* Added from remote */
+    } /* Added from remote */
+} /* Added from remote */
+
+/* Fix Filter/Sort Overflow */ /* Added from remote */
+.sort-controls { /* Added from remote */
+    flex-wrap: wrap; /* Added from remote */
+} /* Added from remote */
+
+/* Prevent horizontal scroll on mobile */ /* Added from remote */
+body { /* Added from remote */
+    overflow-x: hidden; /* Added from remote */
+    width: 100%; /* Added from remote */
+} /* Added from remote */
+
+/* Fix product name spacing */ /* Added from remote */
+.line-clamp-2 { /* Added from remote */
+    margin-bottom: 0.5rem; /* Added from remote */
+} /* Added from remote */

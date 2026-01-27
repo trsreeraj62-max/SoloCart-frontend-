@@ -66,7 +66,7 @@ function autoFillUserData(userData) {
            setIfEmpty("address", userData.address);
       } else {
            setIfEmpty("address", userData.address.address || "");
-           setIfEmpty("locality", userData.address.locality || "");
+           // setIfEmpty("locality", userData.address.locality || "");
            setIfEmpty("city", userData.address.city || "");
            setIfEmpty("state", userData.address.state || "");
            setIfEmpty("pincode", userData.address.pincode || "");
@@ -83,6 +83,18 @@ function renderBuyNow() {
   const item = JSON.parse(rawItem);
   console.log("[Checkout] Rendering Buy Now Item");
   
+  // PERSIST TO CHECKOUT DATA (New Logic)
+  try {
+      const raw = localStorage.getItem(CHECKOUT_KEY);
+      const checkout = raw ? JSON.parse(raw) : {};
+      checkout.items = [item];
+      checkout.type = 'buy_now';
+      checkout.total_price = item.price * item.quantity;
+      localStorage.setItem(CHECKOUT_KEY, JSON.stringify(checkout));
+  } catch (e) {
+      console.error("Failed to save buy_now item to checkout data", e);
+  }
+
   const container = document.getElementById("checkout-items-list");
   if (container) {
       container.innerHTML = `
@@ -188,6 +200,22 @@ async function fetchCartOnce() {
       console.warn("[Checkout] No items in cart, redirecting...");
       window.location.href = "/cart.html";
       return;
+    }
+
+    // PERSIST TO CHECKOUT DATA (New Logic)
+    try {
+        const raw = localStorage.getItem(CHECKOUT_KEY);
+        const checkout = raw ? JSON.parse(raw) : {};
+        checkout.items = items;
+        checkout.type = 'cart';
+        
+        // Capture totals
+        const summary = data.summary || {};
+        checkout.total_price = data.total_price || summary.total_price || summary.grand_total || 0;
+        
+        localStorage.setItem(CHECKOUT_KEY, JSON.stringify(checkout));
+    } catch (e) {
+        console.error("Failed to save cart items to checkout data", e);
     }
 
     renderCartItems(items);
@@ -405,7 +433,7 @@ function setupEventListeners() {
       name: document.getElementById("name").value,
       phone: document.getElementById("phone").value,
       pincode: document.getElementById("pincode").value,
-      locality: document.getElementById("locality").value,
+      // Locality removed
       address: document.getElementById("address").value,
       city: document.getElementById("city").value,
       state: document.getElementById("state").value,
@@ -431,8 +459,37 @@ function setupEventListeners() {
     ?.addEventListener("click", () => {
       console.log("[Checkout] Continue button clicked");
       
-      // Ensure checkout_data contains address and items
-      const raw = localStorage.getItem(CHECKOUT_KEY);
+      // Attempt recovery if items missing
+      let raw = localStorage.getItem(CHECKOUT_KEY);
+      let checkout = raw ? JSON.parse(raw) : {};
+
+      if (!checkout.items || checkout.items.length === 0) {
+          console.warn("[Checkout] Items missing in persistence, attempting recovery...");
+          const buyNowRaw = localStorage.getItem("buy_now_item");
+          if (buyNowRaw) {
+              const item = JSON.parse(buyNowRaw);
+              checkout.items = [item];
+              checkout.type = 'buy_now';
+              checkout.total_price = item.price * item.quantity;
+              localStorage.setItem(CHECKOUT_KEY, JSON.stringify(checkout));
+          } else if (cartData) {
+               let items = [];
+               if (cartData.items && Array.isArray(cartData.items)) items = cartData.items;
+               else if (cartData.data && Array.isArray(cartData.data.items)) items = cartData.data.items;
+               else if (Array.isArray(cartData)) items = cartData;
+               else if (cartData.cart && Array.isArray(cartData.cart.items)) items = cartData.cart.items;
+               
+               if (items.length > 0) {
+                   checkout.items = items;
+                   checkout.type = 'cart';
+                   localStorage.setItem(CHECKOUT_KEY, JSON.stringify(checkout));
+               }
+          }
+          // Refresh checkout obj
+          raw = localStorage.getItem(CHECKOUT_KEY);
+          checkout = raw ? JSON.parse(raw) : {};
+      }
+
       console.log("[Checkout] Checkout data from localStorage:", raw ? "exists" : "missing");
       
       if (!raw) {
@@ -443,14 +500,13 @@ function setupEventListeners() {
       }
       
       try {
-        const checkout = JSON.parse(raw);
         console.log("[Checkout] Parsed checkout data:", checkout);
         console.log("[Checkout] Items count:", checkout.items?.length || 0);
         console.log("[Checkout] Has address:", !!checkout.address);
         
         if (!checkout.items || checkout.items.length === 0) {
           console.error("[Checkout] No items in checkout data!");
-          if (window.showToast) window.showToast("No items selected", "error");
+          if (window.showToast) window.showToast("No items selected. Please go back to cart.", "error");
           return;
         }
         
