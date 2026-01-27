@@ -342,40 +342,16 @@ function renderProducts(products, gridId) {
 
       // Flipkart-style card (Vertical compressed)
       return `
-<<<<<<< HEAD
-            <div class="product-card-min bg-white border border-slate-100 rounded-lg p-2 hover:shadow-lg transition-all relative flex flex-col gap-2 group cursor-pointer" onclick="window.location.href='/product-details.html?slug=${product.id || product.slug}'">
+            <div class="product-card-min bg-white border border-slate-100 rounded-lg p-2 hover:shadow-lg transition-all relative flex flex-col gap-2 group cursor-pointer" onclick="window.location.href='/product-details.html?slug=${product.id || product.slug}'" style="min-width: 180px; max-width: 180px;">
                 <div class="w-full h-[140px] flex items-center justify-center p-1 relative">
                     <img src="${imageUrl}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-500" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
                     ${discount > 0 ? `<div class="absolute top-0 left-0 bg-green-600 text-[9px] text-white px-1 font-bold rounded-sm">${discount}% off</div>` : ""}
-                    <div class="absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                         <i class="fas fa-heart text-slate-300 hover:text-red-500 bg-white rounded-full p-1.5 shadow-sm border text-xs"></i>
-                    </div>
                 </div>
                 <div class="text-center">
                     <h3 class="text-[13px] font-medium text-slate-800 line-clamp-1 overflow-hidden text-ellipsis mb-0.5" title="${product.name}">${product.name || "Unavailable"}</h3>
                     <div class="flex items-center justify-center gap-1.5 flex-wrap">
                         <span class="text-sm font-bold text-slate-900">₹${price.toLocaleString()}</span>
                         ${discount > 0 ? `<span class="text-[11px] text-slate-400 line-through">₹${Number(originalPrice).toLocaleString()}</span>` : ""}
-=======
-            <div class="group bg-white rounded-sm overflow-hidden transition-all duration-300 hover:shadow-xl relative flex flex-col h-full border border-transparent hover:border-slate-100 p-4">
-                <a href="/product-details.html?slug=${product.id || product.slug}" class="no-underline text-inherit flex flex-col h-full">
-                    <div class="relative w-full aspect-square mb-3 overflow-hidden flex items-center justify-center">
-                        <img src="${imageUrl}" class="h-full object-contain group-hover:scale-105 transition-transform duration-700" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
-                        ${discount > 0 ? `<span class="absolute top-0 right-0 text-[10px] font-black text-white bg-green-500 px-2 py-1 rounded-bl-lg uppercase">${discount}% OFF</span>` : ""}
-                    </div>
-                    <div class="flex-grow px-1">
-                        <h3 class="text-xs font-bold text-slate-800 line-clamp-2 mb-2 group-hover:text-[#2874f0] min-h-[32px] leading-tight">${product.name || "Unavailable"}</h3>
-                        <div class="flex items-center gap-2 mb-2">
-                             <div class="bg-green-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
-                                ${product.rating || "4.2"} <i class="fas fa-star text-[7px]"></i>
-                            </div>
-                            <span class="text-slate-400 text-[10px] font-bold">(50+)</span>
-                        </div>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span class="text-sm font-black text-slate-900">₹${price.toLocaleString()}</span>
-                            <span class="text-[10px] text-slate-400 line-through font-bold">₹${Number(originalPrice).toLocaleString()}</span>
-                        </div>
->>>>>>> 8b3f0fded4ec37fbc15f9f233346f27a7d0148a8
                     </div>
                 </div>
             </div>

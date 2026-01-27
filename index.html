@@ -102,57 +102,27 @@
     </nav>
 
     <!-- Main Content -->
-<<<<<<< HEAD
-
     <!-- Main Content -->
-    <main class="min-h-[80vh] pt-2 md:pt-6 bg-[#f1f2f4]"> <!-- Flipkart usually has a light grey background for separation -->
+    <main class="min-h-[80vh] pt-2 md:pt-4 bg-[#f1f2f4]">
       <div class="container mx-auto px-2 lg:px-4">
         
         <!-- Modern Hero Section (Flipkart Style) -->
-        <div class="relative group mb-6">
+        <div class="relative group mb-4">
             <div
                 id="flipkartCarousel"
-                class="carousel slide rounded-lg md:rounded-xl overflow-hidden shadow-lg"
+                class="carousel slide rounded-sm overflow-hidden shadow-sm"
                 data-bs-ride="carousel"
                 data-bs-interval="4000"
             >
                 <div class="carousel-inner" id="hero-slider-content">
                     <!-- Banner items will be loaded via JS -->
                     <div class="carousel-item active">
-                        <div class="relative h-[200px] md:h-[350px] bg-slate-900 overflow-hidden">
+                        <div class="relative h-[180px] md:h-[280px] bg-slate-900 overflow-hidden">
                             <img
                                 src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1600&auto=format&fit=crop"
                                 class="absolute inset-0 w-full h-full object-cover opacity-80"
                                 alt="Collection"
                             />
-=======
-    <main class="min-h-[80vh] pt-6">
-      <div class="container mx-auto px-4 lg:px-8">
-        <!-- Modern Hero Section -->
-        <div
-            id="flipkartCarousel"
-            class="carousel slide rounded-[2.5rem] overflow-hidden shadow-2xl shadow-indigo-100 mb-12"
-            data-bs-ride="carousel"
-            data-bs-interval="4000"
-        >
-            <div class="carousel-inner" id="hero-slider-content">
-                <!-- Banner items will be loaded via JS -->
-                <div class="carousel-item active">
-                    <div class="relative h-[250px] md:h-[450px] bg-slate-900 overflow-hidden">
-                        <img
-                            src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1600&auto=format&fit=crop"
-                            class="absolute inset-0 w-full h-full object-cover opacity-60"
-                            alt="Collection"
-                            fetchpriority="high"
-                        />
-                        <div class="absolute inset-0 flex items-center p-6 md:p-20">
-                            <div class="max-w-2xl text-white space-y-4 md:space-y-6">
-                                <span class="bg-indigo-600 px-3 py-1 md:px-4 md:py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-widest">New Arrival</span>
-                                <h1 class="text-2xl md:text-6xl font-black leading-tight tracking-tight">Elegance in Every Sync</h1>
-                                <p class="text-slate-300 text-sm md:text-lg font-medium line-clamp-2 md:line-clamp-none">Discover the new standard of premium lifestyle essentials designed for your world.</p>
-                                <a href="/shop" class="inline-block px-6 py-3 md:px-10 md:py-4 bg-white text-indigo-600 font-bold rounded-xl md:rounded-2xl text-sm md:text-base hover:bg-slate-50 transition-all shadow-lg">Browse Shop</a>
-                            </div>
->>>>>>> 8b3f0fded4ec37fbc15f9f233346f27a7d0148a8
                         </div>
                     </div>
                 </div>
@@ -168,8 +138,8 @@
                     data-bs-target="#flipkartCarousel"
                     data-bs-slide="prev"
                 >
-                    <div class="w-10 h-10 bg-white/40 hover:bg-white backdrop-blur-md rounded-r-lg flex items-center justify-center text-slate-800 shadow-sm">
-                        <i class="fas fa-chevron-left"></i>
+                    <div class="w-8 h-10 bg-white/40 hover:bg-white backdrop-blur-md rounded-r-sm flex items-center justify-center text-slate-800 shadow-sm">
+                        <i class="fas fa-chevron-left text-xs"></i>
                     </div>
                 </button>
                 <button
@@ -178,23 +148,17 @@
                     data-bs-target="#flipkartCarousel"
                     data-bs-slide="next"
                 >
-                    <div class="w-10 h-10 bg-white/40 hover:bg-white backdrop-blur-md rounded-l-lg flex items-center justify-center text-slate-800 shadow-sm">
-                        <i class="fas fa-chevron-right"></i>
+                    <div class="w-8 h-10 bg-white/40 hover:bg-white backdrop-blur-md rounded-l-sm flex items-center justify-center text-slate-800 shadow-sm">
+                        <i class="fas fa-chevron-right text-xs"></i>
                     </div>
                 </button>
             </div>
         </div>
 
-<<<<<<< HEAD
         <!-- Categories Section (Horizontal Circle Scroll) -->
-        <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
-=======
-        <!-- Categories Section -->
-        <div class="mb-20">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8 text-center">Shop by Category</h3>
->>>>>>> 8b3f0fded4ec37fbc15f9f233346f27a7d0148a8
+        <div class="bg-white p-3 rounded-sm shadow-sm mb-3">
             <div
-                class="flex justify-start md:justify-center items-center overflow-x-auto gap-6 md:gap-10 pb-2 no-scrollbar"
+                class="flex justify-start md:justify-center items-center overflow-x-auto gap-6 md:gap-10 pb-1 no-scrollbar"
                 id="categories-row"
             >
                 <!-- Loaded via JS -->
@@ -208,46 +172,33 @@
         </div>
 
         <!-- Sections with Premium Horizontal Scroll (Flipkart Style Rows) -->
-        <div class="space-y-4 mb-20">
+        <div class="space-y-3 mb-10">
             
             <!-- Featured Products Row -->
-            <section class="special-deal-row rounded-lg">
-                <div class="special-deal-header">
+            <section class="special-deal-row rounded-sm bg-white shadow-sm p-3">
+                <div class="special-deal-header flex justify-between items-end mb-3 border-b border-slate-100 pb-2">
                     <div class="flex flex-col">
-                        <h3 class="text-xl font-bold text-slate-900">Top Picks For You</h3>
+                        <h3 class="text-lg font-bold text-slate-900">Top Picks For You</h3>
                         <span class="text-xs text-slate-400">Recommended based on trends</span>
                     </div>
-                    <a href="/shop" class="bg-[#2874f0] text-white text-xs font-bold px-4 py-2 rounded-sm shadow-sm hover:shadow-md transition-all">VIEW ALL</a>
+                    <a href="/shop" class="bg-[#2874f0] text-white text-[11px] font-bold px-4 py-2 rounded-sm shadow-sm hover:shadow-md transition-all">VIEW ALL</a>
                 </div>
-                <div
-<<<<<<< HEAD
-                    class="horizontal-scroll-container"
-=======
-                    class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-6"
->>>>>>> 8b3f0fded4ec37fbc15f9f233346f27a7d0148a8
-                    id="featured-products-grid"
-                >
+                <!-- IMPORTANT: JS uses these IDs to inject content -->
+                <div class="horizontal-scroll-container flex gap-3 overflow-x-auto pb-4 no-scrollbar" id="featured-products-grid">
                     <!-- Loaded via JS -->
                 </div>
             </section>
 
             <!-- Latest Section Row -->
-            <section class="special-deal-row rounded-lg">
-                <div class="special-deal-header">
+            <section class="special-deal-row rounded-sm bg-white shadow-sm p-3">
+                <div class="special-deal-header flex justify-between items-end mb-3 border-b border-slate-100 pb-2">
                     <div class="flex flex-col">
-                        <h3 class="text-xl font-bold text-slate-900">New Arrivals</h3>
+                        <h3 class="text-lg font-bold text-slate-900">New Arrivals</h3>
                         <span class="text-xs text-emerald-600 font-bold">Just Added</span>
                     </div>
-                    <a href="/shop?sort=newest" class="bg-[#2874f0] text-white text-xs font-bold px-4 py-2 rounded-sm shadow-sm hover:shadow-md transition-all">VIEW ALL</a>
+                    <a href="/shop?sort=newest" class="bg-[#2874f0] text-white text-[11px] font-bold px-4 py-2 rounded-sm shadow-sm hover:shadow-md transition-all">VIEW ALL</a>
                 </div>
-                <div
-<<<<<<< HEAD
-                    class="horizontal-scroll-container"
-=======
-                    class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-6"
->>>>>>> 8b3f0fded4ec37fbc15f9f233346f27a7d0148a8
-                    id="latest-products-grid"
-                >
+                <div class="horizontal-scroll-container flex gap-3 overflow-x-auto pb-4 no-scrollbar" id="latest-products-grid">
                     <!-- Loaded via JS -->
                 </div>
             </section>

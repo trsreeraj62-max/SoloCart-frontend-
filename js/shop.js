@@ -230,10 +230,6 @@ function renderProducts(products, append = false) {
                 <div class="relative w-full aspect-[4/5] mb-2 flex items-center justify-center overflow-hidden">
                     <img src="${imageUrl}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
                     ${discount > 0 ? `<div class="absolute top-0 left-0 text-[10px] font-bold text-green-700 bg-green-50 px-1 py-0.5 rounded-sm">${discount}% off</div>` : ""}
-                    
-                    <button class="absolute top-0 right-0 p-2 text-slate-300 hover:text-red-500 transition-colors z-20" onclick="event.stopPropagation();">
-                        <i class="fas fa-heart"></i>
-                    </button>
                 </div>
                 
                 <div class="space-y-1">
