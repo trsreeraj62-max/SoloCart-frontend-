@@ -342,8 +342,8 @@ function renderProducts(products, gridId) {
 
       // Flipkart-style card (Vertical compressed)
       return `
-            <div class="product-card-min bg-white border border-slate-100 rounded-lg p-2 hover:shadow-lg transition-all relative flex flex-col gap-2 group cursor-pointer" onclick="window.location.href='/product-details.html?slug=${product.id || product.slug}'" style="min-width: 180px; max-width: 180px;">
-                <div class="w-full h-[140px] flex items-center justify-center p-1 relative">
+            <div class="product-card-min bg-white border border-slate-100 rounded-lg p-3 hover:shadow-lg transition-all relative flex flex-col gap-3 group cursor-pointer" onclick="window.location.href='/product-details.html?slug=${product.id || product.slug}'" style="min-width: 200px; max-width: 200px;">
+                <div class="w-full h-[160px] flex items-center justify-center p-2 relative">
                     <img src="${imageUrl}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-500" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
                     ${discount > 0 ? `<div class="absolute top-0 left-0 bg-green-600 text-[9px] text-white px-1 font-bold rounded-sm">${discount}% off</div>` : ""}
                 </div>
