@@ -259,6 +259,48 @@ function renderCategories(categories) {
 /**
  * Renders products into a Specified grid container.
  */
+
+// Banner Progress Logic
+let bannerProgressInterval;
+function startBannerProgress() {
+    const bar = document.getElementById('banner-progress');
+    if (!bar) return;
+    
+    // Reset
+    bar.style.width = '0%';
+    bar.style.transition = 'none'; // Instant reset
+    
+    // Force reflow
+    void bar.offsetWidth;
+
+    // Start animation
+    bar.style.transition = 'width 3.8s linear'; // Slightly less than 4s interval
+    bar.style.width = '100%';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const carousel = document.getElementById('flipkartCarousel');
+    if (carousel) {
+        carousel.addEventListener('slide.bs.carousel', () => {
+             // Reset when slide changes
+             const bar = document.getElementById('banner-progress');
+             if(bar) {
+                bar.style.transition = 'none';
+                bar.style.width = '0%';
+             }
+        });
+        carousel.addEventListener('slid.bs.carousel', () => {
+            startBannerProgress();
+        });
+        // Start initially
+        setTimeout(startBannerProgress, 100);
+    }
+});
+
+
+/**
+ * Renders products into a Specified grid container with Horizontal Scroll support.
+ */
 function renderProducts(products, gridId) {
   console.log(
     "[HOME] renderProducts called - GridId:",
@@ -291,8 +333,6 @@ function renderProducts(products, gridId) {
           ? `${backendBase}/storage/${product.image}`
           : "https://placehold.co/400x400?text=No+Image";
 
-      console.log("[HOME] Product:", product.name, "Image:", imageUrl);
-
       const price = Number(product.price) || 0;
       const discount = Number(product.discount_percent) || 0;
       const originalPrice =
@@ -300,27 +340,23 @@ function renderProducts(products, gridId) {
           ? (price / (1 - discount / 100)).toFixed(0)
           : (price * 1.25).toFixed(0);
 
+      // Flipkart-style card (Vertical compressed)
       return `
-            <div class="group bg-white rounded-sm overflow-hidden transition-all duration-300 hover:shadow-xl relative flex flex-col h-full border border-transparent hover:border-slate-100 p-4">
-                <a href="/product-details.html?slug=${product.id || product.slug}" class="no-underline text-inherit flex flex-col h-full">
-                    <div class="relative w-full aspect-square mb-4 overflow-hidden flex items-center justify-center">
-                        <img src="${imageUrl}" class="h-full object-contain group-hover:scale-105 transition-transform duration-700" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
-                        ${discount > 0 ? `<span class="absolute top-0 right-0 text-[10px] font-black text-white bg-green-500 px-2 py-1 rounded-bl-lg uppercase">${discount}% OFF</span>` : ""}
+            <div class="product-card-min bg-white border border-slate-100 rounded-lg p-2 hover:shadow-lg transition-all relative flex flex-col gap-2 group cursor-pointer" onclick="window.location.href='/product-details.html?slug=${product.id || product.slug}'">
+                <div class="w-full h-[140px] flex items-center justify-center p-1 relative">
+                    <img src="${imageUrl}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-500" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
+                    ${discount > 0 ? `<div class="absolute top-0 left-0 bg-green-600 text-[9px] text-white px-1 font-bold rounded-sm">${discount}% off</div>` : ""}
+                    <div class="absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <i class="fas fa-heart text-slate-300 hover:text-red-500 bg-white rounded-full p-1.5 shadow-sm border text-xs"></i>
                     </div>
-                    <div class="flex-grow">
-                        <h3 class="text-xs font-bold text-slate-800 line-clamp-2 mb-1 group-hover:text-[#2874f0] min-h-[32px]">${product.name || "Unavailable"}</h3>
-                        <div class="flex items-center gap-2 mb-2">
-                            <div class="bg-green-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
-                                ${product.rating || "4.2"} <i class="fas fa-star text-[7px]"></i>
-                            </div>
-                            <span class="text-slate-400 text-[10px] font-bold">(50+)</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-base font-black text-slate-900">₹${price.toLocaleString()}</span>
-                            <span class="text-[10px] text-slate-400 line-through font-bold">₹${Number(originalPrice).toLocaleString()}</span>
-                        </div>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-[13px] font-medium text-slate-800 line-clamp-1 overflow-hidden text-ellipsis mb-0.5" title="${product.name}">${product.name || "Unavailable"}</h3>
+                    <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                        <span class="text-sm font-bold text-slate-900">₹${price.toLocaleString()}</span>
+                        ${discount > 0 ? `<span class="text-[11px] text-slate-400 line-through">₹${Number(originalPrice).toLocaleString()}</span>` : ""}
                     </div>
-                </a>
+                </div>
             </div>
         `;
     })
@@ -367,3 +403,4 @@ window.addEventListener("storage", (e) => {
     }
   }
 });
+
