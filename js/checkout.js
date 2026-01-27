@@ -66,7 +66,7 @@ function autoFillUserData(userData) {
            setIfEmpty("address", userData.address);
       } else {
            setIfEmpty("address", userData.address.address || "");
-           setIfEmpty("locality", userData.address.locality || "");
+           // setIfEmpty("locality", userData.address.locality || "");
            setIfEmpty("city", userData.address.city || "");
            setIfEmpty("state", userData.address.state || "");
            setIfEmpty("pincode", userData.address.pincode || "");
@@ -433,7 +433,7 @@ function setupEventListeners() {
       name: document.getElementById("name").value,
       phone: document.getElementById("phone").value,
       pincode: document.getElementById("pincode").value,
-      locality: document.getElementById("locality").value,
+      // Locality removed
       address: document.getElementById("address").value,
       city: document.getElementById("city").value,
       state: document.getElementById("state").value,

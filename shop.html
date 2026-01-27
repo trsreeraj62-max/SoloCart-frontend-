@@ -147,19 +147,7 @@
                     <span class="text-sm font-medium text-slate-500" id="results-count">Loading products...</span>
                     
                     <div class="flex items-center gap-3">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Sort By</span>
-                        <select class="bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 py-2 pl-3 pr-8 focus:outline-none focus:border-indigo-500 cursor-pointer shadow-sm transition-all hover:border-slate-300" id="sort-select-new">
-                            <option value="newest">Newest First</option>
-                            <option value="price_low">Price: Low to High</option>
-                            <option value="price_high">Price: High to Low</option>
-                        </select>
-                        <!-- Keep buttons logic compatible but use select UI if preferred, or buttons. Let's use buttons to keep existing JS working easily but restyle completely -->
-                        <div class="hidden"> <!-- Hidden existing buttons structure to maintain ID compatibility if needed, but I will replace structure --> </div>
-                         <div class="flex bg-white rounded-lg p-1 border border-slate-100 shadow-sm">
-                            <button class="sort-btn active px-4 py-1.5 text-xs font-bold rounded-md bg-slate-900 text-white transition-all shadow-sm" data-sort="newest">Newest</button>
-                            <button class="sort-btn px-4 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-all" data-sort="price_low">Price ↑</button>
-                            <button class="sort-btn px-4 py-1.5 text-xs font-bold rounded-md text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-all" data-sort="price_high">Price ↓</button>
-                        </div>
+                        <!-- Sort removed as requested -->
                     </div>
                 </div>
 

@@ -39,7 +39,7 @@
       </div>
 
       <!-- MAIN GRID -->
-      <div class="grid md:grid-cols-3 gap-6">
+      <div class="grid md:grid-cols-3 gap-6 payment-grid-reverse">
         <!-- LEFT: Address & Order Summary -->
         <div class="md:col-span-2 space-y-4">
             <!-- Address Display -->
@@ -75,7 +75,7 @@
           <h3 class="text-lg font-black mb-4">Payment Options</h3>
 
           <!-- UPI -->
-          <label class="block mb-3">
+          <label class="block mb-3 payment-option-label">
               <div class="flex items-center gap-3 p-3 border rounded cursor-pointer hover:bg-blue-50">
                 <input type="radio" name="payment_method" value="upi" />
                 <i class="fa-brands fa-google-pay text-2xl"></i>
@@ -87,7 +87,7 @@
           </label>
 
           <!-- Card -->
-          <label class="block mb-3">
+          <label class="block mb-3 payment-option-label">
               <div class="flex items-center gap-3 p-3 border rounded cursor-pointer hover:bg-blue-50">
                 <input type="radio" name="payment_method" value="card" />
                 <i class="fa-regular fa-credit-card text-xl"></i>
@@ -103,7 +103,7 @@
           </label>
 
           <!-- Netbanking -->
-          <label class="block mb-3">
+          <label class="block mb-3 payment-option-label">
               <div class="flex items-center gap-3 p-3 border rounded cursor-pointer hover:bg-blue-50">
                 <input type="radio" name="payment_method" value="netbanking" />
                 <i class="fa-solid fa-building-columns text-lg"></i>
@@ -121,7 +121,7 @@
           </label>
 
           <!-- COD -->
-          <label class="block mb-6">
+          <label class="block mb-6 payment-option-label">
               <div class="flex items-center gap-3 p-3 border rounded cursor-pointer hover:bg-blue-50">
                 <input type="radio" name="payment_method" value="cod" checked />
                 <i class="fa-solid fa-money-bill-wave text-lg"></i>

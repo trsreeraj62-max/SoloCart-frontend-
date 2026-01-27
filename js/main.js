@@ -140,7 +140,6 @@ export function updateAuthUI() {
         <button id="auth-dropdown-btn" class="flex items-center gap-3 focus:outline-none bg-slate-100 px-3 py-1.5 rounded-xl hover:bg-slate-200 transition-all border border-slate-200/50">
           ${imgHtml}
           <span class="text-xs font-bold uppercase tracking-wide text-slate-700 hidden sm:inline">${user.name || "User"}</span>
-          <i class="fas fa-caret-down text-slate-400 text-[10px]"></i>
         </button>
         <div id="auth-dropdown-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <div class="px-5 py-4 bg-slate-50 border-b border-slate-100">
@@ -170,9 +169,39 @@ export function updateAuthUI() {
     `;
     // initialize dropdown behavior
     initAuthDropdown();
+    
+    // Update Mobile Menu Login -> Logout
+    const mobileLoginBtn = document.getElementById("mobile-login-link");
+    if (mobileLoginBtn) {
+        mobileLoginBtn.innerHTML = '<i class="fas fa-power-off"></i> Logout';
+        mobileLoginBtn.href = "#";
+        mobileLoginBtn.classList.add("text-rose-500");
+        mobileLoginBtn.onclick = (e) => {
+            e.preventDefault();
+            logoutUser();
+        };
+    }
   } else {
     authActions.innerHTML = `<a href="/login.html" class="bg-slate-900 text-white px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 hover:shadow-indigo-100 transition-all no-underline">Login</a>`;
+    
+    // Reset Mobile Link
+    const mobileLoginBtn = document.getElementById("mobile-login-link");
+    if (mobileLoginBtn) {
+        mobileLoginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+        mobileLoginBtn.href = "/login.html";
+        mobileLoginBtn.classList.remove("text-rose-500");
+        mobileLoginBtn.onclick = null;
+    }
   }
+}
+
+function logoutUser() {
+    try {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("user_data");
+      localStorage.removeItem("user_profile");
+    } catch (e) {}
+    window.location.href = "/index.html";
 }
 
 function initAuthDropdown() {
@@ -191,14 +220,7 @@ function initAuthDropdown() {
   });
 
   // Logout button
-  document.getElementById("user-logout")?.addEventListener("click", () => {
-    try {
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("user_data");
-      localStorage.removeItem("user_profile");
-    } catch (e) {}
-    window.location.href = "/index.html";
-  });
+  document.getElementById("user-logout")?.addEventListener("click", logoutUser);
 
   // Close when clicking outside
   window.addEventListener("click", (e) => {
@@ -332,72 +354,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* ---------------- MOBILE MENU ---------------- */
 function initMobileMenu() {
-  // Target the container that holds the logo and the desktop menu
-  // Structure: nav .container > div.flex.gap-12 > [a(logo), ul(menu)]
-  const navGroup = document.querySelector('#main-nav .container .flex.items-center.gap-12');
-  if (!navGroup) return;
+  const btn = document.getElementById('mobile-menu-toggle');
+  const closeBtn = document.getElementById('close-mobile-menu');
+  const overlay = document.getElementById('mobile-menu-overlay');
+  const menu = document.getElementById('mobile-menu');
 
-  if (document.getElementById('mobile-menu-btn')) return;
+  if (!btn || !closeBtn || !overlay || !menu) return;
 
-  // Create Toggle Button
-  const btn = document.createElement('button');
-  btn.id = 'mobile-menu-btn';
-  btn.className = 'md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-900 hover:bg-slate-200 transition-colors ml-4';
-  btn.innerHTML = '<i class="fas fa-bars"></i>';
-  
-  // Insert after logo
-  const logo = navGroup.querySelector('a');
-  if (logo) {
-      logo.insertAdjacentElement('afterend', btn);
-  } else {
-      navGroup.appendChild(btn);
-  }
-
-  // Overlay
-  const overlay = document.createElement('div');
-  overlay.className = 'mobile-menu-overlay';
-  document.body.appendChild(overlay);
-
-  // Menu Drawer
-  const menu = document.createElement('div');
-  menu.className = 'mobile-menu-content';
-  
-  // Header
-  const header = document.createElement('div');
-  header.className = 'flex justify-between items-center mb-8';
-  header.innerHTML = `
-    <div class="flex items-center gap-2">
-         <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-black text-xl">S</div>
-         <span class="text-xl font-bold text-slate-900">SoloCart</span>
-    </div>
-  `;
-  
-  const closeBtn = document.createElement('button');
-  closeBtn.className = 'w-8 h-8 flex items-center justify-center bg-slate-50 rounded-full text-slate-400 hover:text-rose-500 transition-colors';
-  closeBtn.innerHTML = '<i class="fas fa-times"></i>';
-  header.appendChild(closeBtn);
-  menu.appendChild(header);
-
-  // Links (Clone from desktop)
-  const ul = navGroup.querySelector('ul');
-  if (ul) {
-      const links = ul.querySelectorAll('a');
-      const linkContainer = document.createElement('div');
-      linkContainer.className = 'flex flex-col gap-2';
-      
-      links.forEach(link => {
-          const mLink = document.createElement('a');
-          mLink.href = link.getAttribute('href'); // Get raw attribute
-          mLink.className = 'mobile-nav-link';
-          mLink.innerHTML = `<i class="fas fa-chevron-right text-[10px] opacity-40"></i> ${link.textContent}`;
-          linkContainer.appendChild(mLink);
-      });
-      menu.appendChild(linkContainer);
-  }
-
-  document.body.appendChild(menu);
-
-  // Logic
   const toggle = (show) => {
       if (show) {
           overlay.classList.add('active');
@@ -410,7 +373,21 @@ function initMobileMenu() {
       }
   };
 
-  btn.addEventListener('click', () => toggle(true));
-  closeBtn.addEventListener('click', () => toggle(false));
-  overlay.addEventListener('click', () => toggle(false));
+  // Remove existing listeners to be safe (though this runs once usually)
+  const newBtn = btn.cloneNode(true);
+  btn.parentNode.replaceChild(newBtn, btn);
+  
+  newBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isActive = menu.classList.contains('active');
+      toggle(!isActive);
+  });
+
+  const newClose = closeBtn.cloneNode(true);
+  closeBtn.parentNode.replaceChild(newClose, closeBtn);
+  newClose.addEventListener('click', () => toggle(false));
+
+  const newOverlay = overlay.cloneNode(true);
+  overlay.parentNode.replaceChild(newOverlay, overlay);
+  newOverlay.addEventListener('click', () => toggle(false));
 }

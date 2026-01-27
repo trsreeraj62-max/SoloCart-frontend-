@@ -588,6 +588,7 @@ input:-webkit-autofill:active {
     /* Fix Footer Grid */
     footer .grid {
         gap: 2rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -630,6 +631,29 @@ input:-webkit-autofill:active {
 body {
     overflow-x: hidden;
     width: 100%;
+}
+
+/* Fix product name spacing */
+.line-clamp-2 {
+    margin-bottom: 0.5rem;
+}
+
+/* Payment Page Mobile Fixes */
+@media (max-width: 768px) {
+    /* Reverse order on mobile for Payment Page Grid */
+    .payment-grid-reverse {
+        display: flex;
+        flex-direction: column-reverse;
+    }
+    
+    /* Improve spacing on payment page */
+    .payment-step-indicator {
+        margin-bottom: 1.5rem;
+    }
+    
+    .payment-option-label {
+        padding: 1rem;
+    }
 }
 
 

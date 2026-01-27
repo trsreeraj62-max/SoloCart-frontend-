@@ -10,7 +10,7 @@ async function fetchHomeData() {
     console.log("[HOME] 🔍 Starting fetchHomeData...");
     console.log("[HOME] API URL:", CONFIG.API_BASE_URL + "/home-data");
 
-    const data = await apiCall("/home-data");
+    const data = await apiCall("/home-data", { skipRedirect: true });
     console.log("[HOME] ✅ API Response received:", data);
     console.log("[HOME] Response type:", typeof data);
     console.log("[HOME] Is array?", Array.isArray(data));
@@ -303,20 +303,20 @@ function renderProducts(products, gridId) {
       return `
             <div class="group bg-white rounded-sm overflow-hidden transition-all duration-300 hover:shadow-xl relative flex flex-col h-full border border-transparent hover:border-slate-100 p-4">
                 <a href="/product-details.html?slug=${product.id || product.slug}" class="no-underline text-inherit flex flex-col h-full">
-                    <div class="relative w-full aspect-square mb-4 overflow-hidden flex items-center justify-center">
+                    <div class="relative w-full aspect-square mb-3 overflow-hidden flex items-center justify-center">
                         <img src="${imageUrl}" class="h-full object-contain group-hover:scale-105 transition-transform duration-700" alt="${product.name}" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
                         ${discount > 0 ? `<span class="absolute top-0 right-0 text-[10px] font-black text-white bg-green-500 px-2 py-1 rounded-bl-lg uppercase">${discount}% OFF</span>` : ""}
                     </div>
-                    <div class="flex-grow">
-                        <h3 class="text-xs font-bold text-slate-800 line-clamp-2 mb-1 group-hover:text-[#2874f0] min-h-[32px]">${product.name || "Unavailable"}</h3>
+                    <div class="flex-grow px-1">
+                        <h3 class="text-xs font-bold text-slate-800 line-clamp-2 mb-2 group-hover:text-[#2874f0] min-h-[32px] leading-tight">${product.name || "Unavailable"}</h3>
                         <div class="flex items-center gap-2 mb-2">
-                            <div class="bg-green-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
+                             <div class="bg-green-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
                                 ${product.rating || "4.2"} <i class="fas fa-star text-[7px]"></i>
                             </div>
                             <span class="text-slate-400 text-[10px] font-bold">(50+)</span>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-base font-black text-slate-900">₹${price.toLocaleString()}</span>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-sm font-black text-slate-900">₹${price.toLocaleString()}</span>
                             <span class="text-[10px] text-slate-400 line-through font-bold">₹${Number(originalPrice).toLocaleString()}</span>
                         </div>
                     </div>
