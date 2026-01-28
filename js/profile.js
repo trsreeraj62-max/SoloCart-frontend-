@@ -86,9 +86,16 @@ function populateUI(user) {
     // Update DOM fields
     const displayName = document.getElementById("user-display-name");
     const initials = document.getElementById("user-initials");
-    if (displayName) displayName.innerText = user.name || user.full_name || "User";
-    if (initials && (user.name || user.full_name))
-      initials.innerText = (user.name || user.full_name).charAt(0).toUpperCase();
+    let nameToDisplay = user.name || user.full_name || "User";
+    // If name is just a 10-digit number (common during phone-auth registrations), use email or User
+    if (/^\d{10}$/.test(nameToDisplay.trim())) {
+      nameToDisplay = user.email ? user.email.split('@')[0] : "User";
+      console.log("[Profile] Name appeared to be phone number, using fallback:", nameToDisplay);
+    }
+
+    if (displayName) displayName.innerText = nameToDisplay;
+    if (initials && nameToDisplay)
+      initials.innerText = nameToDisplay.charAt(0).toUpperCase();
 
     if (document.getElementById("p-name"))
       document.getElementById("p-name").value = user.name || "";

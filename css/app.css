@@ -572,63 +572,54 @@ input:-webkit-autofill:active {
 
 
 @media (max-width: 768px) {
-    .hide-on-mobile {
-        display: none !important;
-    }
-    .show-on-mobile {
-        display: block !important;
-    }
-    
-    /* Hero Adjustments */
-    .hero-slider-container {
-        height: 200px; /* Flipkart style smaller banner on mobile */
-        border-radius: 0;
-    }
-    
-    .hero-content-slider {
-         padding-left: 5%;
-         padding-right: 5%;
-         text-align: center;
-         display: flex;
-         flex-direction: column;
-         align-items: center;
-         justify-content: center;
-         width: 100%;
+    /* Responsive Grids */
+    .responsive-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.75rem !important;
+        padding: 0.5rem !important;
     }
 
-    /* Font Sizes */
-    h1 { font-size: 1.5rem !important; }
-    h2 { font-size: 1.25rem !important; }
-    h3 { font-size: 1.5rem !important; } /* Added from remote */
+    /* Product Card Professionalism */
+    .product-card-grid-item, .product-card-min {
+        border-radius: 8px !important;
+        overflow: hidden;
+        border: 1px solid #f1f5f9 !important;
+        padding: 0 !important;
+        display: flex;
+        flex-direction: column;
+        background: white;
+        height: 100%;
+    }
     
-    /* Layouts */
-    .container {
-        padding: 0 0.5rem;
+    .product-card-grid-item .p-3, .product-card-grid-item .text-center {
+        padding: 0.75rem !important;
+        text-align: left !important;
+    }
+    
+    .product-card-grid-item img {
+        height: 140px !important; /* Smaller height for 2-column grid */
+        width: 100%;
+        object-fit: contain;
+        padding: 0.5rem;
+        background: #f8fafc;
     }
 
-    /* Shop Page Mobile */ /* Added from remote */
-    .shop-layout { /* Added from remote */
-        grid-template-columns: 1fr; /* Added from remote */
-        gap: 1.5rem; /* Added from remote */
-    } /* Added from remote */
+    /* Spacing & Typography */
+    section { margin-bottom: 1.5rem !important; padding: 1rem !important; }
+    h1 { font-size: 1.4rem !important; }
+    h2 { font-size: 1.1rem !important; }
+    .text-sm { font-size: 0.8rem !important; }
     
-    /* Fix Footer Grid */
-    footer .grid {
-        gap: 2rem;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+    /* Navbar Clutter Reduction */
+    #global-search { font-size: 13px !important; padding: 0.6rem 1rem 0.6rem 2.5rem !important; }
+    .nav-actions { gap: 0.75rem !important; }
 
-    /* Payment Page Mobile Fixes */ /* Added from remote */
-    /* Reverse order on mobile for Payment Page Grid */ /* Added from remote */
-    .payment-grid-reverse { /* Added from remote */
-        display: flex; /* Added from remote */
-        flex-direction: column-reverse; /* Added from remote */
-    } /* Added from remote */
-    
-    /* Improve spacing on payment page */ /* Added from remote */
-    .payment-step-indicator { /* Added from remote */
-        margin-bottom: 1.5rem; /* Added from remote */
-    } /* Added from remote */
+    /* Payment Page Mobile Fixes - Unified */
+    .payment-grid-reverse {
+        display: flex !important;
+        flex-direction: column !important; /* Options BELOW summary on mobile */
+    }
     
     .payment-option-label {
         padding: 1rem;
@@ -736,7 +727,7 @@ input:-webkit-autofill:active {
     }
     
     .product-card-grid-item img {
-        height: 160px !important;
+        height: 140px !important; /* Smaller height for 2-column grid */
         width: 100%;
         object-fit: contain;
         padding: 0.5rem;
@@ -746,30 +737,34 @@ input:-webkit-autofill:active {
     /* Spacing & Typography */
     section { margin-bottom: 1.5rem !important; padding: 1rem !important; }
     h1 { font-size: 1.4rem !important; }
-    h3 { font-size: 1.1rem !important; }
+    h2 { font-size: 1.1rem !important; }
     .text-sm { font-size: 0.8rem !important; }
     
     /* Navbar Clutter Reduction */
     #global-search { font-size: 13px !important; padding: 0.6rem 1rem 0.6rem 2.5rem !important; }
     .nav-actions { gap: 0.75rem !important; }
+
+    /* Payment Page Fix: Options BELOW total on mobile */
+    .payment-grid-reverse {
+        display: flex;
+        flex-direction: column; /* Changed from column-reverse as requested */
+    }
 }
 
 @media (max-width: 480px) {
-    /* 1-Column for small phones as requested */
-    .responsive-grid, .stack-on-mobile {
-        grid-template-columns: 1fr !important;
+    /* Ensure 2-Column even on very small phones */
+    .responsive-grid, .horizontal-scroll-container, .stack-on-mobile {
+        grid-template-columns: repeat(2, 1fr) !important;
     }
     
-    .product-card-grid-item img {
-        height: 200px !important;
+    .product-card-grid-item img, .product-card-min img {
+        height: 120px !important;
     }
     
-    /* Better tap targets */
-    .btn, .nav-link, .dropdown-item {
-        min-height: 44px;
+    /* Hide Profile Links on Payment Page (Mobile) */
+    .page-payment #auth-dropdown-menu {
+        display: none !important;
     }
-    
-    .container { padding: 0 0.75rem; }
 }
 
 /* Horizontal Scroll Overrides */
@@ -881,22 +876,6 @@ input:-webkit-autofill:active {
     contain-intrinsic-size: 300px; /* Approximate height */ /* Added from remote */
 } /* Added from remote */
 
-/* Hamburger & Mobile Menu Fixes */ /* Added from remote */
-.mobile-nav-toggle { /* Added from remote */
-    display: none; /* Hidden on desktop */ /* Added from remote */
-} /* Added from remote */
-@media (max-width: 1024px) { /* Added from remote */
-    .mobile-nav-toggle { /* Added from remote */
-        display: block; /* Added from remote */
-        z-index: 1001; /* Above navbar */ /* Added from remote */
-        position: relative; /* Added from remote */
-    } /* Added from remote */
-    /* Ensure no overlap with cart */ /* Added from remote */
-    .nav-actions { /* Added from remote */
-        gap: 1rem; /* Added from remote */
-    } /* Added from remote */
-} /* Added from remote */
-
 /* Grid Fixes for Mobile (2 cols) */ /* Added from remote */
 @media (max-width: 640px) { /* Added from remote */
     .grid-cols-mobile-2 { /* Added from remote */
@@ -975,4 +954,20 @@ body { /* Added from remote */
 /* Prevent Login Flicker */
 .is-authenticated #auth-actions > a[href*="login.html"] {
     display: none !important;
+}
+
+/* Hamburger & Mobile Menu Fixes */
+.mobile-nav-toggle {
+    display: none; /* Hidden on desktop */
+}
+@media (max-width: 1024px) {
+    .mobile-nav-toggle {
+        display: block;
+        z-index: 1001; /* Above navbar */
+        position: relative;
+    }
+    /* Ensure no overlap with cart */
+    .nav-actions {
+        gap: 1rem;
+    }
 }
