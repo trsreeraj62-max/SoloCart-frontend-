@@ -55,7 +55,7 @@ export async function apiCall(endpoint, options = {}) {
   // Timeout logic (Render free tier fix)
   const timeout = options.timeout || 15000; // default 15s
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
+  const id = setTimeout(() => controller.abort("timeout"), timeout);
 
   try {
     const res = await fetch(url, {
@@ -92,8 +92,13 @@ export async function apiCall(endpoint, options = {}) {
     return data;
   } catch (err) {
     clearTimeout(id);
-    console.error("API ERROR:", err);
-    if (err.name === 'AbortError') {
+    const isTimeout = err.name === 'AbortError' || err === 'timeout' || (err.message && err.message.includes('timeout'));
+    
+    if (!isTimeout) {
+      console.error("API ERROR:", err);
+    }
+
+    if (isTimeout) {
       return { success: false, message: "Server connection timed out (Render cold start). Please refresh.", timeout: true };
     }
     return { success: false, message: "Network error: " + err.message };
