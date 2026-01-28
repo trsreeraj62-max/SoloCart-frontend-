@@ -85,6 +85,15 @@ async function fetchCategories() {
     }
 
     console.log("[SHOP] 📂 Extracted categories array:", categories);
+    
+    // Safety check: if categories is empty but we have home-data potentially, try one last check
+    if ((!categories || categories.length === 0) && !window._category_fallback_tried) {
+        window._category_fallback_tried = true;
+        const homeData = await apiCall("/home-data");
+        const fbCats = homeData?.categories || homeData?.data?.categories || [];
+        if (fbCats.length > 0) categories = fbCats;
+    }
+    
     renderCategories(categories);
   } catch (e) {
     console.error("[SHOP] ❌ fetchCategories failed, trying final fallback:", e);

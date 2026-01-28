@@ -129,17 +129,14 @@
                     
                     <!-- Category Filter -->
                     <div class="p-4 border-b border-slate-200">
-                        <div class="flex justify-between items-center mb-4 cursor-pointer" data-bs-toggle="collapse" data-bs-target="#category-collapse">
+                        <div class="flex justify-between items-center mb-4">
                             <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500">Categories</h3>
-                            <i class="fas fa-chevron-down text-slate-400 text-xs"></i>
                         </div>
-                        <div id="category-collapse" class="collapse show">
-                             <div id="category-filters" class="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar pl-1">
-                                <!-- JS Loaded checkboxes -->
-                                <div class="animate-pulse space-y-2">
-                                    <div class="h-4 bg-slate-100 rounded w-3/4"></div>
-                                    <div class="h-4 bg-slate-100 rounded w-2/3"></div>
-                                </div>
+                        <div id="category-filters" class="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar pl-1">
+                            <!-- JS Loaded checkboxes -->
+                            <div class="animate-pulse space-y-2">
+                                <div class="h-4 bg-slate-100 rounded w-3/4"></div>
+                                <div class="h-4 bg-slate-100 rounded w-2/3"></div>
                             </div>
                         </div>
                     </div>
@@ -331,6 +328,6 @@
         if(closeFilters) closeFilters.addEventListener('click', () => toggleFilters(false));
         if(filterOverlay) filterOverlay.addEventListener('click', () => toggleFilters(false));
     </script>
-    <script type="module" src="/js/shop.js?v=2.0"></script>
+    <script type="module" src="/js/shop.js?v=3.1"></script>
 </body>
 </html>
