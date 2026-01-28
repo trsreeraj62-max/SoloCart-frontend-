@@ -1,6 +1,8 @@
 import CONFIG from "./config.js";
 import { getAuthToken, updateCartBadge, apiCall } from "./main.js";
 
+console.log("[ProductDetails] Script Loaded and Executing...");
+
 let currentProduct = null;
 
 function setupEventListeners() {
@@ -13,13 +15,16 @@ function setupEventListeners() {
 }
 
 async function initProductDetails() {
+  console.log("[ProductDetails] 🚀 Initializing...");
   // Start listeners immediately
   setupEventListeners();
 
   const params = new URLSearchParams(window.location.search);
   const slug = params.get("slug");
+  console.log("[ProductDetails] 🔍 Slug detected:", slug);
 
   if (!slug) {
+    console.warn("[ProductDetails] ⚠️ No slug found, redirecting to shop");
     window.location.href = "/shop.html";
     return;
   }
@@ -32,6 +37,7 @@ async function fetchProductDetails(slug) {
   try {
     // Single efficient call. Most backends will return related products in the same call.
     const data = await apiCall(`/products/${slug}`);
+    console.log("[ProductDetails] 📦 API Data arrived:", data);
     if (data && data.success !== false) {
       renderUI(data);
     } else {
@@ -237,4 +243,8 @@ function handleBuyNow() {
   window.location.href = "/checkout.html";
 }
 
-document.addEventListener("DOMContentLoaded", initProductDetails);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initProductDetails);
+} else {
+  initProductDetails();
+}
