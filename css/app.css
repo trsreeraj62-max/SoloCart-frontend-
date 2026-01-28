@@ -971,3 +971,8 @@ body { /* Added from remote */
     z-index: 10;
     border-bottom: 1px solid #f1f5f9;
 }
+
+/* Prevent Login Flicker */
+.is-authenticated #auth-actions > a[href*="login.html"] {
+    display: none !important;
+}

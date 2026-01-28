@@ -1,5 +1,10 @@
 import CONFIG from "./config.js";
 
+// Immediate auth check for CSS targeting
+if (localStorage.getItem("auth_token")) {
+  document.documentElement.classList.add("is-authenticated");
+}
+
 /* ---------------- SAFE JSON ---------------- */
 export function safeJSONParse(str, fallback = {}) {
   if (!str || str === "undefined" || str === "null") return fallback;
@@ -352,12 +357,17 @@ export function validatePhone(phone) {
 }
 
 /* ---------------- DOM READY ---------------- */
-document.addEventListener("DOMContentLoaded", () => {
-  updateAuthUI();
-  updateCartBadge();
-  updateProfileAvatar();
+// Run UI updates IMMEDIATELY as the module loads to prevent login flicker
+updateAuthUI();
+updateCartBadge();
+updateProfileAvatar();
 
-  // Scroll effect for navbar (remove blur if requested/fix blur look)
+document.addEventListener("DOMContentLoaded", () => {
+  // Re-run safely on DOM ready or just initialize dynamic behaviors
+  initMobileMenu();
+  initGlobalSearch();
+
+  // Scroll effect for navbar
   window.addEventListener("scroll", () => {
     const nav = document.getElementById("main-nav");
     if (nav) {
@@ -368,9 +378,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
-
-  initMobileMenu();
-  initGlobalSearch();
 });
 
 /* ---------------- GLOBAL SEARCH (Non-Shop Pages) ---------------- */

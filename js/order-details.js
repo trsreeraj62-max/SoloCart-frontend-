@@ -238,9 +238,17 @@ function renderDetails(order) {
 
   // Address
   const addr = order.address || {};
-  const phone = addr.phone || order.phone || (order.user ? order.user.phone : null);
-  const addrEl = document.getElementById("delivery-address");
-  if (addrEl) {
+  let addressHtml = '';
+
+  if (typeof addr === 'string') {
+    // Case 1: Address is a plain string
+    addressHtml = `
+            <p class="text-sm font-bold text-slate-800">${escapeHtml(order.user_name || (order.user ? order.user.name : "User"))}</p>
+            <p class="text-xs text-slate-500 font-medium">${escapeHtml(addr)}</p>
+        `;
+  } else {
+    // Case 2: Address is an object
+    const name = addr.name || order.user_name || (order.user ? order.user.name : "User");
     const addressParts = [];
     if (addr.address) addressParts.push(addr.address);
     if (addr.locality) addressParts.push(addr.locality);
@@ -248,12 +256,22 @@ function renderDetails(order) {
       .filter(Boolean)
       .join(" ");
 
-    addrEl.innerHTML = `
-            <p class="text-sm font-bold text-slate-800">${escapeHtml(addr.name || order.user_name || "User")}</p>
+    addressHtml = `
+            <p class="text-sm font-bold text-slate-800">${escapeHtml(name)}</p>
             ${addressParts.length > 0 ? `<p class="text-xs text-slate-500 font-medium">${escapeHtml(addressParts.join(", "))}</p>` : ""}
             ${cityStateZip ? `<p class="text-xs text-slate-500 font-medium">${escapeHtml(cityStateZip)}</p>` : ""}
-            ${phone ? `<p class="text-xs font-bold text-slate-700 mt-2">Phone: ${escapeHtml(phone)}</p>` : ""}
         `;
+  }
+
+  // Add Phone
+  const phone = order.phone || (typeof addr === 'object' ? addr.phone : null) || (order.user ? order.user.phone : null);
+  if (phone) {
+    addressHtml += `<p class="text-xs font-bold text-slate-700 mt-2">Phone: ${escapeHtml(phone)}</p>`;
+  }
+
+  const addrEl = document.getElementById("delivery-address");
+  if (addrEl) {
+    addrEl.innerHTML = addressHtml;
   }
 
   // Tracker logic
