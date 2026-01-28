@@ -97,18 +97,18 @@ function renderProductInfo(p) {
     document.getElementById("product-rating").innerText = p.rating || "4.2";
   if (document.getElementById("product-price"))
     document.getElementById("product-price").innerText =
-      `₹${Number(p.price).toLocaleString()}`;
+      `₹${Number(p.current_price).toLocaleString()}`;
 
   const oldPriceEl = document.getElementById("product-old-price");
   const discountEl = document.getElementById("product-discount");
 
-  if (p.discount_percent > 0) {
+  if (p.is_discount_active) {
     if (oldPriceEl) {
-      oldPriceEl.innerText = `₹${(p.price / (1 - p.discount_percent / 100)).toFixed(0)}`;
+      oldPriceEl.innerText = `₹${Number(p.price).toLocaleString()}`;
       oldPriceEl.classList.remove("hidden");
     }
     if (discountEl) {
-      discountEl.innerText = `${p.discount_percent}% off`;
+      discountEl.innerText = p.discount_label || "Special Offer";
       discountEl.classList.remove("hidden");
     }
   } else {
@@ -171,6 +171,9 @@ function renderRelatedProducts(products) {
           ? `${backendBase}/storage/${p.image}`
           : "https://placehold.co/400x400?text=No+Image";
 
+      const isDiscounted = p.is_discount_active;
+      const currentPrice = Number(p.current_price || p.price || 0);
+
       return `
             <div class="bg-white rounded-sm border border-slate-100 p-3 hover:shadow-lg transition-all group">
                 <a href="/product-details.html?slug=${p.slug || p.id}" class="no-underline text-inherit">
@@ -179,7 +182,8 @@ function renderRelatedProducts(products) {
                     </div>
                     <h4 class="text-xs font-bold text-slate-800 line-clamp-2 mb-1 group-hover:text-[#2874f0]">${p.name || "Unavailable"}</h4>
                     <div class="flex items-center gap-2">
-                        <span class="text-sm font-black">₹${Number(p.price || 0).toLocaleString()}</span>
+                        <span class="text-sm font-black">₹${currentPrice.toLocaleString()}</span>
+                        ${isDiscounted ? `<span class="text-[10px] text-slate-400 line-through">₹${Number(p.price).toLocaleString()}</span>` : ""}
                     </div>
                 </a>
             </div>
@@ -232,9 +236,10 @@ function handleBuyNow() {
   const buyNowItem = {
     id: currentProduct.id,
     name: currentProduct.name,
-    price: Number(currentProduct.price || 0),
+    price: Number(currentProduct.current_price || currentProduct.price || 0),
     image: currentProduct.image_url || currentProduct.image || "",
     quantity: 1,
+    mrp: Number(currentProduct.price || 0)
   };
   localStorage.setItem("buy_now_item", JSON.stringify(buyNowItem));
   localStorage.setItem("checkout_type", "buy_now");

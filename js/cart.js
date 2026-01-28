@@ -164,9 +164,11 @@ function renderCartItems(items) {
                 
                 <div class="flex items-center gap-4 mt-3">
                     <div class="flex items-center gap-3">
-                        <span class="text-lg font-black text-slate-900">₹${(price * qty).toLocaleString()}</span>
-                        <span class="text-xs text-slate-400 line-through font-bold">₹${(price * 1.25 * qty).toFixed(0)}</span>
-                        <span class="text-[10px] text-green-600 font-black">20% Off</span>
+                        <span class="text-lg font-black text-slate-900">₹${Number(price * qty).toLocaleString()}</span>
+                        ${product.original_price && product.original_price > price ? `
+                            <span class="text-xs text-slate-400 line-through font-bold">₹${(product.original_price * qty).toLocaleString()}</span>
+                            <span class="text-[10px] text-green-600 font-black">${product.discount_label || ""}</span>
+                        ` : ""}
                     </div>
                 </div>
 

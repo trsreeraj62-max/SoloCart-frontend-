@@ -123,6 +123,11 @@ function renderCategories(categories) {
       currentFilters.category = e.target.value;
       currentFilters.page = 1;
       applyFilters();
+      
+      // Auto-close on mobile after selection
+      if (window.innerWidth < 1024) {
+          document.getElementById('close-filters')?.click();
+      }
     });
   });
 }
@@ -241,19 +246,17 @@ function renderProducts(products, append = false) {
           ? `${backendBase}/storage/${p.image}`
           : "https://placehold.co/400x400?text=No+Image";
 
-      const price = Number(p.price) || 0;
-      const discount = Number(p.discount_percent) || 0;
-      const originalPrice =
-        discount > 0
-          ? (price / (1 - discount / 100)).toFixed(0)
-          : (price * 1.25).toFixed(0);
+      const currentPrice = Number(p.current_price) || 0;
+      const originalPrice = Number(p.price) || 0;
+      const isDiscounted = p.is_discount_active;
+      const discountLabel = p.discount_label || "";
 
       // Flipkart Grid Item Style
       return `
             <div class="hover:shadow-lg transition-shadow duration-300 relative bg-white p-4 group cursor-pointer" onclick="window.location.href='/product-details.html?slug=${p.id || p.slug}'">
                 <div class="relative w-full aspect-[4/5] mb-2 flex items-center justify-center overflow-hidden">
                     <img src="${imageUrl}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null;this.src='https://placehold.co/400x400?text=No+Image'">
-                    ${discount > 0 ? `<div class="absolute top-0 left-0 text-[10px] font-bold text-green-700 bg-green-50 px-1 py-0.5 rounded-sm">${discount}% off</div>` : ""}
+                    ${isDiscounted ? `<div class="absolute top-0 left-0 text-[10px] font-bold text-green-700 bg-green-50 px-1 py-0.5 rounded-sm">${discountLabel}</div>` : ""}
                 </div>
                 
                 <div class="space-y-1">
@@ -265,11 +268,11 @@ function renderProducts(products, append = false) {
                         </div>
                         <span class="text-slate-400 text-xs font-medium">(${Math.floor(Math.random() * 500) + 10})</span>
                     </div>
-
+ 
                     <div class="flex items-center gap-2 flex-wrap">
-                        <span class="text-base font-bold text-slate-900">₹${price.toLocaleString()}</span>
-                        ${discount > 0 ? `<span class="text-xs text-slate-500 line-through">₹${Number(originalPrice).toLocaleString()}</span>` : ""}
-                        ${discount > 0 ? `<span class="text-xs font-bold text-green-600">${discount}% off</span>` : ""}
+                        <span class="text-base font-bold text-slate-900">₹${currentPrice.toLocaleString()}</span>
+                        ${isDiscounted ? `<span class="text-xs text-slate-500 line-through">₹${originalPrice.toLocaleString()}</span>` : ""}
+                        ${isDiscounted ? `<span class="text-xs font-bold text-green-600">${discountLabel}</span>` : ""}
                     </div>
                 </div>
             </div>

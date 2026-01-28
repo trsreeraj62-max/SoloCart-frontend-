@@ -253,6 +253,14 @@ ul {
 .btn-mobile-full {
   width: 100%;
 }
+@media (min-width: 1024px) {
+    .sidebar-filters {
+        position: sticky;
+        top: 100px;
+        height: calc(100vh - 120px);
+        overflow-y: auto;
+    }
+}
 @media (max-width: 640px) {
   .btn {
     padding: 0.75rem 1.25rem;
@@ -622,9 +630,23 @@ input:-webkit-autofill:active {
         margin-bottom: 1.5rem; /* Added from remote */
     } /* Added from remote */
     
-    .payment-option-label { /* Added from remote */
-        padding: 1rem; /* Added from remote */
-    } /* Added from remote */
+    .payment-option-label {
+        padding: 1rem;
+    }
+}
+
+.filter-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1090;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.filter-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 /* --- MOBILE MODERIZATION (Senior UI/UX Refinements) --- */
@@ -640,13 +662,24 @@ input:-webkit-autofill:active {
         right: 0;
         background: white;
         z-index: 1100;
-        border-radius: 24px 24px 0 0;
+        border-radius: 20px 20px 0 0;
         transform: translateY(100%);
         transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
         max-height: 85vh;
         overflow-y: auto;
-        display: block !important; /* Force display but hidden by transform */
+        display: block !important;
+        padding-bottom: 2rem;
+    }
+    
+    .sidebar-filters::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 4px;
+        background: #e2e8f0;
+        border-radius: 2px;
+        margin: 10px auto;
     }
     
     .sidebar-filters.active {
@@ -657,12 +690,17 @@ input:-webkit-autofill:active {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 1.25rem;
+        padding: 0.75rem 1.25rem 1.25rem;
         border-bottom: 1px solid #f1f5f9;
         position: sticky;
         top: 0;
         background: white;
         z-index: 10;
+    }
+
+    .sidebar-filters select, .sidebar-filters input {
+        height: 44px; /* Better touch target */
+        font-size: 16px !important; /* Prevent iOS zoom */
     }
     
     .shop-layout {
