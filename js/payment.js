@@ -72,7 +72,7 @@ async function initPayment() {
     }
 
     // Determine if this is Buy Now (single product) or Cart checkout
-    const isBuyNow = checkout.is_buy_now === true;
+    const isBuyNow = checkout.type === 'buy_now' || checkout.is_buy_now === true;
     console.log("[Payment] Checkout type - Buy Now:", isBuyNow);
 
     // Build order payload from checkout_data
@@ -92,7 +92,7 @@ async function initPayment() {
         ...paymentDetails
       };
 
-      if (isBuyNow && checkout.items.length === 1) {
+      if (isBuyNow && checkout.items && checkout.items.length > 0) {
         // Use /api/checkout/single for Buy Now
         const item = checkout.items[0];
         const payload = {
@@ -110,11 +110,20 @@ async function initPayment() {
         });
       } else {
         // Use /api/checkout/cart for cart checkout
-        console.log("[Payment] Sending Cart checkout payload:", JSON.stringify(commonPayload));
+        // Include items in payload for backend fallback/verification
+        const payload = {
+            ...commonPayload,
+            items: checkout.items.map(it => ({
+                product_id: it.product_id || it.id,
+                quantity: it.quantity || it.qty || 1
+            }))
+        };
+
+        console.log("[Payment] Sending Cart checkout payload:", JSON.stringify(payload));
 
         resp = await apiCall("/checkout/cart", {
           method: "POST",
-          body: JSON.stringify(commonPayload),
+          body: JSON.stringify(payload),
           requireAuth: true,
         });
       }
