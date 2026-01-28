@@ -971,3 +971,24 @@ body { /* Added from remote */
         gap: 1rem;
     }
 }
+
+/* Profile Page Mobile Refinements */
+@media (max-width: 768px) {
+    .page-profile .flex-col.lg\:flex-row {
+        flex-direction: column !important;
+    }
+    .page-profile aside {
+        width: 100% !important;
+        margin-bottom: 2rem;
+    }
+    .page-profile h1 {
+        font-size: 1.5rem !important;
+    }
+    #user-display-name {
+        max-width: 100% !important;
+    }
+    .page-profile .p-8.md\:p-12 {
+        padding: 1.5rem !important;
+        border-radius: 1.5rem !important;
+    }
+}

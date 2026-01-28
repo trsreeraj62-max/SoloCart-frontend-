@@ -27,44 +27,66 @@ async function initAdminProducts() {
 
 async function fetchCategories() {
   try {
-    const data = await apiCall("/categories");
-    const categories =
-      data.categories || data.data || (Array.isArray(data) ? data : []);
+    const data = await apiCall("/categories", { timeout: 8000 });
+    let categories = [];
+    if (data && data.success !== false) {
+      categories = data.categories || data.data || (Array.isArray(data) ? data : []);
+    } else {
+      console.warn("Categories API failure, trying fallback...");
+      const homeData = await apiCall("/home-data");
+      categories = homeData?.categories || homeData?.data?.categories || [];
+    }
+
     currentCategories = Array.isArray(categories) ? categories : [];
     populateCategorySelect(currentCategories);
+    
     // mark categories as available
     window.__solocart_admin_categories_ok = true;
-    // ensure add button enabled
     const openProductBtn = document.getElementById("open-add-product-btn");
     if (openProductBtn) openProductBtn.disabled = false;
   } catch (e) {
     console.error("Failed to load categories", e);
+    // Final fallback
+    try {
+      const homeData = await apiCall("/home-data");
+      currentCategories = homeData?.categories || homeData?.data?.categories || [];
+      populateCategorySelect(currentCategories);
+    } catch (e2) {}
+
     window.__solocart_admin_categories_ok = false;
     const openProductBtn = document.getElementById("open-add-product-btn");
-    if (openProductBtn) openProductBtn.disabled = true;
-    if (window.showToast)
-      window.showToast(
-        "Failed to load categories (server unreachable)",
-        "error",
-      );
-    // surface raw error if available
-    if (e && e.rawError) console.error("Category fetch raw error:", e.rawError);
+    if (openProductBtn) openProductBtn.disabled = (currentCategories.length === 0);
   }
 }
 
 function populateCategorySelect(categories) {
   const sel = document.getElementById("p-category");
-  if (!sel) return;
-  // Clear and add default
-  sel.innerHTML =
-    `<option value="">Select category</option>` +
+  const filterSel = document.getElementById("products-category-filter");
+  
+  const optionsHtml = `<option value="">Select category</option>` +
     categories
       .map((c) => `<option value="${c.id}">${c.name}</option>`)
       .join("");
+
+  if (sel) sel.innerHTML = optionsHtml;
+  if (filterSel) {
+    filterSel.innerHTML = `<option value="all">All Categories</option>` +
+      categories.map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
+  }
 }
 async function fetchProducts() {
+  const searchInput = document.querySelector('input[placeholder="Search products..."]');
+  const catFilter = document.getElementById("products-category-filter");
+  
+  const search = searchInput ? searchInput.value.trim() : "";
+  const cat = catFilter ? catFilter.value : "all";
+  
+  let url = "/admin/products?";
+  if (search) url += `search=${encodeURIComponent(search)}&`;
+  if (cat && cat !== "all") url += `category_id=${cat}&`;
+
   try {
-    const data = await apiCall("/admin/products");
+    const data = await apiCall(url);
 
     // Handle paginated response: { success: true, data: { data: [...] } }
     const productList =
@@ -73,18 +95,11 @@ async function fetchProducts() {
       data.products ||
       (Array.isArray(data) ? data : []);
 
-    if (Array.isArray(productList) && productList.length > 0) {
-      currentProducts = productList;
-      renderProducts(currentProducts);
-    } else {
-      // Empty or no products
-      currentProducts = [];
-      renderProducts(currentProducts);
-    }
+    currentProducts = Array.isArray(productList) ? productList : [];
+    renderProducts(currentProducts);
   } catch (e) {
     console.error("Failed to load admin products", e);
     if (window.showToast) window.showToast("Failed to load products", "error");
-    if (e && e.rawError) console.error("Products fetch raw error:", e.rawError);
   }
 }
 
@@ -321,21 +336,35 @@ function setupEventListeners() {
       if (!preview) return;
       if (file) {
         const reader = new FileReader();
-        reader.onload = function (ev) {
+        reader.onload = function(ev) {
           preview.src = ev.target.result;
         };
         reader.readAsDataURL(file);
       } else {
-        // If cleared, fallback to hidden URL or placeholder
         const hidden = document.getElementById("p-image-url");
-        preview.src =
-          hidden && hidden.value
-            ? hidden.value
-            : "https://placehold.co/160x160?text=Preview";
+        preview.src = hidden && hidden.value ? hidden.value : "https://placehold.co/160x160?text=Preview";
       }
     });
-    console.log("✓ Image file input preview listener attached");
   }
+
+  // Filters
+  const sInput = document.querySelector('input[placeholder="Search products..."]');
+  if (sInput) {
+    sInput.addEventListener("input", debounce(() => fetchProducts(), 500));
+  }
+  const categoryFilter = document.getElementById("products-category-filter");
+  if (categoryFilter) {
+    categoryFilter.addEventListener("change", () => fetchProducts());
+  }
+}
+
+// Helper for debounce
+function debounce(func, wait) {
+  let timeout;
+  return function(...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
 }
 
 async function openAddModal() {

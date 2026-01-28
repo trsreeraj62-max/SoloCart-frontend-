@@ -122,4 +122,13 @@
         text-align: center;
         justify-content: center;
     }
+
+    /* Table Action Buttons Gap */
+    .action-btn {
+        margin-right: 0 !important;
+        margin-bottom: 0.25rem !important;
+    }
+    td .flex.gap-2 {
+        gap: 0.5rem !important;
+    }
 }

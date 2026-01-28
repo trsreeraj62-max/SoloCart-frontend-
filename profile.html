@@ -78,9 +78,9 @@
               <span id="user-initials">?</span>
             </div>
             <div>
-              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">User</span>
+              <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">User Profile</span>
               <h2
-                class="text-base font-bold text-slate-800 truncate max-w-[150px]"
+                class="text-base font-bold text-slate-800 break-words line-clamp-1"
                 id="user-display-name"
               >
                 Syncing...
@@ -145,6 +145,8 @@
                   <input
                     type="text"
                     id="p-name"
+                    name="name"
+                    autocomplete="name"
                     class="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all text-sm font-bold"
                     required
                   />
@@ -155,8 +157,10 @@
                   <input
                     type="tel"
                     id="p-phone"
+                    name="phone"
                     pattern="[0-9]{10}"
                     maxlength="10"
+                    autocomplete="tel"
                     class="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all text-sm font-bold"
                     placeholder="9876543210"
                     required

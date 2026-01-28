@@ -196,14 +196,14 @@ function renderOrders(orders) {
     const parts = [];
     if (s === "pending") {
       parts.push(
-        `<button class="action-btn bg-blue-100 text-blue-600 hover:bg-blue-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-wide mr-2" data-id="${orderId}" data-action="approved">Approve</button>`,
+        `<button class="action-btn bg-blue-100 text-blue-600 hover:bg-blue-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-wide" data-id="${orderId}" data-action="approved">Approve</button>`,
       );
       parts.push(
         `<button class="action-btn bg-rose-100 text-rose-600 hover:bg-rose-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-wide" data-id="${orderId}" data-action="cancelled">Cancel</button>`,
       );
     } else if (s === "approved" || s === "processing") {
       parts.push(
-        `<button class="action-btn bg-purple-100 text-purple-600 hover:bg-purple-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-wide mr-2" data-id="${orderId}" data-action="shipped">Ship</button>`,
+        `<button class="action-btn bg-purple-100 text-purple-600 hover:bg-purple-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-wide" data-id="${orderId}" data-action="shipped">Ship</button>`,
       );
       parts.push(
         `<button class="action-btn bg-rose-100 text-rose-600 hover:bg-rose-200 px-3 py-1 rounded text-xs font-bold uppercase tracking-wide" data-id="${orderId}" data-action="cancelled">Cancel</button>`,
@@ -217,7 +217,7 @@ function renderOrders(orders) {
         `<span class="text-xs text-slate-400 font-medium italic">No actions</span>`,
       );
     }
-    return parts.join("");
+    return `<div class="flex items-center justify-end gap-2 flex-wrap">${parts.join("")}</div>`;
   }
 }
 
