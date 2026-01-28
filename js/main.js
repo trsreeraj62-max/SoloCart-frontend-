@@ -30,6 +30,10 @@ export function getAuthToken() {
 }
 
 /* ---------------- API CALL ---------------- */
+/**
+ * Generic API Caller with Timeout & Error Handling
+ * Handles Render cold starts (wait up to 15s)
+ */
 export async function apiCall(endpoint, options = {}) {
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   const url = `${CONFIG.API_BASE_URL}${path}`.replace(/^http:/, "https:");
@@ -43,12 +47,20 @@ export async function apiCall(endpoint, options = {}) {
   if (token) headers.Authorization = `Bearer ${token}`;
   if (options.body instanceof FormData) delete headers["Content-Type"];
 
+  // Timeout logic (Render free tier fix)
+  const timeout = options.timeout || 15000; // default 15s
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+
   try {
     const res = await fetch(url, {
       ...options,
       headers,
+      signal: controller.signal,
       cache: "no-store",
     });
+    
+    clearTimeout(id);
 
     const text = await res.text();
     let data = {};
@@ -74,8 +86,16 @@ export async function apiCall(endpoint, options = {}) {
 
     return data;
   } catch (err) {
+    clearTimeout(id);
     console.error("API ERROR:", err);
+    if (err.name === 'AbortError') {
+      return { success: false, message: "Server connection timed out (Render cold start). Please refresh.", timeout: true };
+    }
     return { success: false, message: "Network error: " + err.message };
+  } finally {
+    // Ensure loaders are hidden if any global loader exists
+    const loader = document.getElementById("loading") || document.getElementById("global-loader");
+    if (loader) loader.style.display = "none";
   }
 }
 

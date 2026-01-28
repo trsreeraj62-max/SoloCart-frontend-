@@ -218,6 +218,8 @@ async function fetchProducts(append = false) {
     currentFilters.page = pagination.current_page + 1;
   } catch (e) {
     console.error("Failed to load products", e);
+    if (countText) countText.innerText = "Error loading results";
+    if (grid && !append) grid.innerHTML = '<div class="col-span-full py-10 text-center text-slate-400">Failed to load products. Please try again.</div>';
     if (window.showToast) window.showToast("Error loading products", "error");
   } finally {
     isLoading = false;

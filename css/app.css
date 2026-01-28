@@ -226,21 +226,38 @@ ul {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem 2rem;
-  border-radius: 99px;
-  font-weight: 800;
+  padding: 0.8rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
   cursor: pointer;
   border: none;
   transition: var(--transition);
+  font-size: 0.9rem;
+  gap: 0.5rem;
+  white-space: nowrap;
 }
 .btn-primary {
   background: var(--primary);
   color: white;
-  box-shadow: 0 10px 30px rgba(79, 70, 229, 0.2);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
 }
 .btn-primary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 15px 40px rgba(79, 70, 229, 0.3);
+  transform: translateY(-2px);
+  background: #4338ca;
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
+}
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+}
+.btn-mobile-full {
+  width: 100%;
+}
+@media (max-width: 640px) {
+  .btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.85rem;
+  }
 }
 
 /* Card System */
@@ -610,6 +627,153 @@ input:-webkit-autofill:active {
     } /* Added from remote */
 }
 
+/* --- MOBILE MODERIZATION (Senior UI/UX Refinements) --- */
+
+@media (max-width: 1024px) {
+    .container { padding: 0 1rem; }
+    
+    /* Shop Filter Drawer Style */
+    .sidebar-filters {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        z-index: 1100;
+        border-radius: 24px 24px 0 0;
+        transform: translateY(100%);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+        max-height: 85vh;
+        overflow-y: auto;
+        display: block !important; /* Force display but hidden by transform */
+    }
+    
+    .sidebar-filters.active {
+        transform: translateY(0);
+    }
+    
+    .sidebar-header-mobile {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+    }
+    
+    .shop-layout {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Responsive Grids */
+    .responsive-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.75rem !important;
+        padding: 0.5rem !important;
+    }
+
+    /* Product Card Professionalism */
+    .product-card-grid-item, .product-card-min {
+        border-radius: 8px !important;
+        overflow: hidden;
+        border: 1px solid #f1f5f9 !important;
+        padding: 0 !important;
+        display: flex;
+        flex-direction: column;
+        background: white;
+        height: 100%;
+    }
+    
+    .product-card-grid-item .p-3, .product-card-grid-item .text-center {
+        padding: 0.75rem !important;
+        text-align: left !important;
+    }
+    
+    .product-card-grid-item img {
+        height: 160px !important;
+        width: 100%;
+        object-fit: contain;
+        padding: 0.5rem;
+        background: #f8fafc;
+    }
+
+    /* Spacing & Typography */
+    section { margin-bottom: 1.5rem !important; padding: 1rem !important; }
+    h1 { font-size: 1.4rem !important; }
+    h3 { font-size: 1.1rem !important; }
+    .text-sm { font-size: 0.8rem !important; }
+    
+    /* Navbar Clutter Reduction */
+    #global-search { font-size: 13px !important; padding: 0.6rem 1rem 0.6rem 2.5rem !important; }
+    .nav-actions { gap: 0.75rem !important; }
+}
+
+@media (max-width: 480px) {
+    /* 1-Column for small phones as requested */
+    .responsive-grid, .stack-on-mobile {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .product-card-grid-item img {
+        height: 200px !important;
+    }
+    
+    /* Better tap targets */
+    .btn, .nav-link, .dropdown-item {
+        min-height: 44px;
+    }
+    
+    .container { padding: 0 0.75rem; }
+}
+
+/* Horizontal Scroll Overrides */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Overlay Background */
+.filter-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(2px);
+    z-index: 1050;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+.filter-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Fix Hero Stretching */
+.carousel-item img {
+    height: 380px !important;
+    width: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+@media (max-width: 1024px) {
+    .carousel-item img {
+        height: 280px !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .carousel-item img {
+        height: 180px !important;
+    }
+}
+
 /* Horizontal Scroll / Flipkart Style */
 .horizontal-scroll-container {
     display: flex;
@@ -718,3 +882,54 @@ body { /* Added from remote */
 .line-clamp-2 { /* Added from remote */
     margin-bottom: 0.5rem; /* Added from remote */
 } /* Added from remote */
+
+/* --- CART & SUCCESS UI (Mobile-First) --- */
+@media (max-width: 640px) {
+    .cart-row {
+        flex-direction: column !important;
+        gap: 1rem !important;
+        padding: 1.25rem !important;
+        background: white;
+    }
+    .cart-row .w-24 {
+        width: 100% !important;
+        height: 140px !important;
+        border: none !important;
+    }
+    .cart-row img {
+        height: 100% !important;
+        object-fit: contain !important;
+    }
+    .cart-row .flex.justify-between.items-start {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .cart-row .text-right {
+        text-align: left !important;
+    }
+    .cart-row .flex.items-center.gap-6 {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem !important;
+        width: 100%;
+    }
+    .cart-row .buy-this-btn {
+        grid-column: span 2;
+        padding: 0.8rem !important;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .cart-row .qty-btn {
+        padding: 0.6rem 1rem !important;
+    }
+}
+
+/* Sticky Mobile Pricing Header (Optional/Utility) */
+.mobile-price-summary {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+    border-bottom: 1px solid #f1f5f9;
+}

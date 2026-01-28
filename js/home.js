@@ -172,14 +172,13 @@ async function fetchHomeData() {
     }
   } catch (err) {
     console.error("[HOME] ❌ Home fetch failed:", err);
-    console.error("[HOME] Error details:", err.message, err.stack);
-    showNoProductsPopup();
-    if (window.showToast) {
-      window.showToast(
-        "Failed to sync content: " + (err.message || err),
-        "error",
-      );
+    if (err.timeout) {
+      const popupTitle = document.querySelector("#no-products-popup h3");
+      const popupText = document.querySelector("#no-products-popup p");
+      if (popupTitle) popupTitle.innerText = "Connection Timeout";
+      if (popupText) popupText.innerText = "Backend is taking too long to wake up. Please click retry.";
     }
+    showNoProductsPopup();
   }
 }
 

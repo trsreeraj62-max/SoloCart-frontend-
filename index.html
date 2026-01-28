@@ -198,7 +198,7 @@
                     </div>
                     <a href="/shop?sort=newest" class="text-[#2874f0] text-xs font-bold hover:underline">VIEW ALL</a>
                 </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 md:gap-4" id="latest-products-grid">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 md:gap-4 responsive-grid" id="latest-products-grid">
                     <!-- Loaded via JS -->
                 </div>
             </section>
@@ -212,7 +212,7 @@
                     </div>
                     <a href="/shop" class="text-[#2874f0] text-xs font-bold hover:underline">VIEW ALL</a>
                 </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 md:gap-4" id="bestsellers-products-grid">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 md:gap-4 responsive-grid" id="bestsellers-products-grid">
                     <!-- Loaded via JS -->
                 </div>
             </section>
@@ -226,7 +226,7 @@
                     </div>
                     <a href="/shop" class="text-[#2874f0] text-xs font-bold hover:underline">VIEW ALL</a>
                 </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 md:gap-4" id="trending-products-grid">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 md:gap-4 responsive-grid" id="trending-products-grid">
                     <!-- Loaded via JS -->
                 </div>
             </section>
@@ -235,10 +235,10 @@
       </div>
 
 
-      <!-- Enhanced Popup -->
+      <!-- Enhanced Popup / Error State -->
       <div
         id="no-products-popup"
-        class="fixed inset-0 z-[2000] hidden bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-4"
+        class="fixed inset-0 z-[2000] hidden bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4"
       >
         <div
           class="bg-white rounded-[2.5rem] p-10 max-w-sm w-full text-center shadow-2xl border border-white"
@@ -246,17 +246,23 @@
           <div
             class="w-24 h-24 bg-indigo-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6"
           >
-            <i class="fas fa-layer-group text-4xl text-indigo-400"></i>
+            <i class="fas fa-sync text-4xl text-indigo-400 animate-spin-slow"></i>
           </div>
-          <h3 class="text-2xl font-black text-slate-900 mb-3 tracking-tight">No Products Found</h3>
+          <h3 class="text-2xl font-black text-slate-900 mb-2 tracking-tight">Backend Wake-Up</h3>
           <p class="text-slate-500 text-sm leading-relaxed mb-8">
-            We couldn't find any products in this section right now. Please check back later.
+            Our servers are waking up from a nap (Render Free Tier). This can take up to 30 seconds on the first load.
           </p>
           <button
-            onclick="document.getElementById('no-products-popup').style.display = 'none'"
-            class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold tracking-tight hover:bg-indigo-600 transition-all shadow-lg"
+            onclick="window.location.reload()"
+            class="w-full bg-[#2874f0] text-white py-4 rounded-2xl font-bold tracking-tight hover:bg-blue-700 transition-all shadow-lg active:scale-95 mb-3"
           >
-            CLOSE
+            RETRY / REFRESH
+          </button>
+          <button
+            onclick="document.getElementById('no-products-popup').style.display = 'none'"
+            class="text-slate-400 text-xs font-bold uppercase tracking-widest hover:text-slate-600 transition-colors"
+          >
+            Dismiss
           </button>
         </div>
       </div>
