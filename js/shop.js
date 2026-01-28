@@ -47,11 +47,10 @@ async function initShop() {
 
   updateSortButtons();
 
-  // Initial fetch
-  console.log("[SHOP] Fetching categories...");
-  await fetchCategories();
-  console.log("[SHOP] Fetching products...");
-  await fetchProducts();
+  // Initial fetch - Run in parallel to prevent blocking
+  console.log("[SHOP] Starting parallel fetches...");
+  fetchCategories();
+  fetchProducts();
 
   // Bind Event Listeners
   console.log("[SHOP] Setting up event listeners...");
@@ -72,14 +71,30 @@ function debounce(func, wait) {
 async function fetchCategories() {
   console.log("[SHOP] 📂 fetchCategories starting...");
   try {
-    const data = await apiCall("/categories");
-    console.log("[SHOP] 📂 Categories API response:", data);
-    const categories =
-      data.categories || data.data || (Array.isArray(data) ? data : []);
+    // Try dedicated categories endpoint first
+    const data = await apiCall("/categories", { timeout: 8000 }); // Faster timeout for categories
+    console.log("[SHOP] 📂 Categories API response received:", data);
+    
+    let categories = [];
+    if (data && data.success !== false) {
+        categories = data.categories || data.data || (Array.isArray(data) ? data : []);
+    } else {
+        console.warn("[SHOP] ⚠️ Categories API returned failure, trying fallback...");
+        const homeData = await apiCall("/home-data");
+        categories = homeData?.categories || homeData?.data?.categories || [];
+    }
+
     console.log("[SHOP] 📂 Extracted categories array:", categories);
     renderCategories(categories);
   } catch (e) {
-    console.error("[SHOP] ❌ fetchCategories failed:", e);
+    console.error("[SHOP] ❌ fetchCategories failed, trying final fallback:", e);
+    try {
+        const homeData = await apiCall("/home-data");
+        const categories = homeData?.categories || homeData?.data?.categories || [];
+        renderCategories(categories);
+    } catch (err) {
+        console.error("[SHOP] ❌ All category fetch attempts failed");
+    }
   }
 }
 
