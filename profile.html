@@ -62,7 +62,7 @@
     <main class="container mx-auto px-4 lg:px-8 py-10">
       <div class="flex flex-col lg:flex-row gap-8">
         <!-- Left Sidebar -->
-        <aside class="lg:w-1/4 space-y-6">
+        <aside class="hidden lg:block lg:w-1/4 space-y-6">
           <div
             class="bg-white p-6 flex items-center gap-4 rounded-3xl shadow-sm border border-slate-100"
           >
@@ -139,21 +139,24 @@
           </div>
 
           <form id="profile-form" class="max-w-2xl space-y-10">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="space-y-3">
-                  <label for="p-name" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+            <div class="flex flex-col gap-8 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-10">
+                <!-- Full Name -->
+                <div class="w-full">
+                  <label for="p-name" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">Full Name</label>
                   <input
                     type="text"
                     id="p-name"
                     name="name"
                     autocomplete="name"
                     class="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all text-sm font-bold"
+                    placeholder="Enter your full name"
                     required
                   />
                 </div>
 
-                <div class="space-y-3">
-                  <label for="p-phone" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number (10-Digit Mobile)</label>
+                <!-- Phone Number -->
+                <div class="w-full">
+                  <label for="p-phone" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">Phone Number (10-Digit Mobile)</label>
                   <input
                     type="tel"
                     id="p-phone"
@@ -167,8 +170,9 @@
                   />
                 </div>
 
-                <div class="space-y-3 col-span-2">
-                  <label for="p-email" class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                <!-- Email Address -->
+                <div class="w-full md:col-span-2">
+                  <label for="p-email" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">Email Address</label>
                   <div class="relative">
                     <input
                         type="email"
@@ -181,8 +185,9 @@
                   </div>
                 </div>
 
-                <div class="space-y-3 col-span-2 pt-4">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Profile Picture</label>
+                <!-- Profile Picture -->
+                <div class="w-full md:col-span-2 pt-4">
+                  <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-3">Profile Picture</label>
                   <div class="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 rounded-[2rem] bg-slate-50 border border-slate-100">
                     <div class="w-20 h-20 rounded-2xl overflow-hidden border-2 border-white shadow-xl bg-white relative group flex-shrink-0">
                         <img
@@ -206,8 +211,6 @@
                     </div>
                   </div>
                 </div>
-
-
             </div>
 
             <div class="pt-6">
