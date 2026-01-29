@@ -56,79 +56,29 @@ function setupListeners() {
       return;
     }
 
-    const payload = { percent };
+    const payload = { 
+      discount_percent: percent,
+      start_at: startVal || null,
+      end_at: endVal || null
+    };
+    
     const category = sel ? sel.value : "all";
     if (category !== "all") payload.category_id = parseInt(category);
 
-    try {
-      if (startVal) {
-        const s = new Date(startVal);
-        if (isNaN(s.getTime())) throw new Error("Invalid start date");
-        payload.start_at = s.toISOString();
-      }
-      if (endVal) {
-        const e = new Date(endVal);
-        if (isNaN(e.getTime())) throw new Error("Invalid end date");
-        payload.end_at = e.toISOString();
-      }
-      if (
-        payload.start_at &&
-        payload.end_at &&
-        new Date(payload.start_at) >= new Date(payload.end_at)
-      ) {
-        if (window.showToast)
-          window.showToast("Start must be before End", "error");
-        return;
-      }
-    } catch (dateErr) {
-      if (window.showToast)
-        window.showToast(dateErr.message || "Invalid date", "error");
+    if (!payload.start_at || !payload.end_at) {
+      if (window.showToast) window.showToast("Start and End times are required", "error");
       return;
     }
 
     try {
-      // helper to send payload and return response
-      async function sendApply(payloadToSend) {
-        let r = await apiCall("/admin/discounts/apply", {
-          method: "POST",
-          body: JSON.stringify(payloadToSend),
-        });
-        if ((!r || r.success === false) && r && r.statusCode === 405) {
-          r = await apiCall("/discounts/apply", {
-            method: "POST",
-            body: JSON.stringify(payloadToSend),
-          });
-        }
-        return r;
-      }
+      // Primary attempt
+      console.log("Discount apply: request", payload);
+      let res = await apiCall("/admin/discounts/apply", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
 
-      // Try primary payload first
-      console.groupCollapsed("Discount apply: request");
-      console.log("Primary payload", payload);
-      console.groupEnd();
-
-      let res = await sendApply(payload);
-
-      // If server failed with 500 or returned failure, try an alternate payload shape that some backends expect
-      if (
-        !res ||
-        res.statusCode === 500 ||
-        (res.success === false && /category discount/i.test(res.message || ""))
-      ) {
-        const alt = {
-          discount_percent: percent,
-          apply_to_all: category === "all",
-        };
-        if (category !== "all") alt.category_id = parseInt(category);
-        if (payload.start_at) alt.start_date = payload.start_at;
-        if (payload.end_at) alt.end_date = payload.end_at;
-
-        console.groupCollapsed("Discount apply: fallback request");
-        console.log("Fallback payload", alt);
-        console.groupEnd();
-
-        res = await sendApply(alt);
-      }
+      console.log("Discount apply: response", res);
 
       console.groupCollapsed("Discount apply: response");
       console.log(res);
