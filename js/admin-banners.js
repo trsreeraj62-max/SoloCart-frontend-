@@ -24,7 +24,7 @@ async function initAdminBanners() {
 
 async function fetchBanners() {
   try {
-    const data = await apiCall("/banners");
+    const data = await apiCall("/admin/banners");
     // Handle response structure: { success: true, data: [...] }
     const bannerList =
       data.data || data.banners || (Array.isArray(data) ? data : []);
@@ -64,7 +64,12 @@ function renderBanners(list) {
             <div class="h-40 bg-slate-100 relative overflow-hidden">
                 <img src="${imageUrl}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" onerror="this.src='https://placehold.co/1600x400?text=Banner'">
                 <div class="absolute top-2 right-2">
-                    <span class="px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${b.status === "active" ? "bg-green-500 text-white" : "bg-rose-500 text-white"}">
+                    <span class="px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${
+                      b.status === 'active' ? 'bg-green-500 text-white' : 
+                      b.status === 'scheduled' ? 'bg-blue-500 text-white' :
+                      b.status === 'expired' ? 'bg-slate-500 text-white' :
+                      'bg-rose-500 text-white'
+                    }">
                         ${b.status || "unknown"}
                     </span>
                 </div>
