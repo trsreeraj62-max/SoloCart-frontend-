@@ -536,9 +536,13 @@ async function saveDiscount(e) {
   const categoryValue = (
     document.getElementById("discount-category").value || "all"
   ).toString();
+  const startDate = document.getElementById("discount-start")?.value;
+  const endDate = document.getElementById("discount-end")?.value;
 
   const payload = {
     discount_percent: percent,
+    discount_start_date: startDate || null,
+    discount_end_date: endDate || null
   };
 
   if (categoryValue !== "all") {

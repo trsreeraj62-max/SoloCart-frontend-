@@ -175,6 +175,16 @@
               <option value="inactive">Inactive</option>
             </select>
           </div>
+          <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Start Date & Time</label>
+                <input type="datetime-local" id="b-start" class="w-full border-b-2 border-slate-100 py-2 outline-none focus:border-[#2874f0] text-xs font-bold">
+              </div>
+              <div class="space-y-2">
+                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">End Date & Time</label>
+                <input type="datetime-local" id="b-end" class="w-full border-b-2 border-slate-100 py-2 outline-none focus:border-[#2874f0] text-xs font-bold">
+              </div>
+          </div>
           <button
             type="submit"
             class="w-full bg-[#fb641b] text-white py-3 rounded-xl font-black text-sm uppercase shadow-lg"

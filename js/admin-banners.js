@@ -126,6 +126,12 @@ function editBanner(id) {
     document.getElementById("b-url").value = b.image_url || "";
   if (document.getElementById("b-status"))
     document.getElementById("b-status").value = b.status || "active";
+  
+  if (document.getElementById("b-start"))
+    document.getElementById("b-start").value = b.start_date ? b.start_date.substring(0, 16) : "";
+  if (document.getElementById("b-end"))
+    document.getElementById("b-end").value = b.end_date ? b.end_date.substring(0, 16) : "";
+
   document.getElementById("bannerModal")?.classList.remove("hidden");
 }
 
@@ -144,6 +150,8 @@ document
     const title = document.getElementById("b-title")?.value;
     const imageUrl = document.getElementById("b-url")?.value;
     const status = document.getElementById("b-status")?.value;
+    const startDate = document.getElementById("b-start")?.value;
+    const endDate = document.getElementById("b-end")?.value;
     const fileInput = document.getElementById("b-image");
     const file =
       fileInput?.files && fileInput.files[0] ? fileInput.files[0] : null;
@@ -158,7 +166,9 @@ document
         const fd = new FormData();
         if (title) fd.append("title", title);
         fd.append("image", file);
-        if (status) fd.append("status", status);
+        if (status) fd.append("is_active", status === "active" ? 1 : 0);
+        if (startDate) fd.append("start_date", startDate);
+        if (endDate) fd.append("end_date", endDate);
         // If backend expects POST with _method override for PUT, include it
         if (method === "PUT") fd.append("_method", "PUT");
 
@@ -168,7 +178,13 @@ document
         });
       } else {
         // No file selected: send JSON with image_url (backend may require image field name 'image')
-        const bodyData = { title, image_url: imageUrl, status };
+        const bodyData = { 
+            title, 
+            image_url: imageUrl, 
+            is_active: status === "active" ? 1 : 0,
+            start_date: startDate || null,
+            end_date: endDate || null
+        };
         data = await apiCall(endpoint, {
           method,
           body: JSON.stringify(bodyData),
