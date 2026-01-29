@@ -325,7 +325,10 @@ function setupEventListeners() {
   const discountForm = document.getElementById("discount-form");
   if (discountForm) {
     discountForm.addEventListener("submit", saveDiscount);
-    console.log("✓ Discount form submit listener attached");
+  }
+  const deleteDiscountBtn = document.getElementById("delete-discount-btn");
+  if (deleteDiscountBtn) {
+    deleteDiscountBtn.addEventListener("click", deleteDiscount);
   }
   // Image file preview handler
   const imageFileInput = document.getElementById("p-image-file");
@@ -541,8 +544,8 @@ async function saveDiscount(e) {
 
   const payload = {
     discount_percent: percent,
-    discount_start_date: startDate || null,
-    discount_end_date: endDate || null
+    start_at: startDate || null,
+    end_at: endDate || null
   };
 
   if (categoryValue !== "all") {
@@ -565,6 +568,35 @@ async function saveDiscount(e) {
     console.error("Failed to save discount", err);
     if (window.showToast)
       window.showToast(err.message || "Failed to apply discount", "error");
+  }
+}
+
+async function deleteDiscount() {
+  const categoryValue = (document.getElementById("discount-category").value || "all").toString();
+  const confirmMsg = categoryValue === "all" 
+    ? "Permanently remove ALL discounts from every category and product?" 
+    : `Remove discount from the selected category?`;
+
+  if (!confirm(confirmMsg)) return;
+
+  const payload = {};
+  if (categoryValue !== "all") payload.category_id = categoryValue;
+
+  try {
+    const data = await apiCall("/admin/discounts/remove", {
+      method: "DELETE",
+      body: JSON.stringify(payload)
+    });
+    if (data && data.success === true) {
+      if (window.showToast) window.showToast("Discount(s) removed successfully");
+      document.getElementById("discountModal").classList.add("hidden");
+      await fetchProducts(); // Refresh in case list shows prices
+    } else {
+      throw new Error(data?.message || "Recall failed");
+    }
+  } catch (err) {
+    console.error("Failed to delete discount", err);
+    if (window.showToast) window.showToast(err.message || "Failed to remove discount", "error");
   }
 }
 
