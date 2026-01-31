@@ -430,14 +430,14 @@ function setupEventListeners() {
   document.getElementById("address-form")?.addEventListener("submit", (e) => {
     e.preventDefault();
     savedAddress = {
-      name: document.getElementById("name").value,
-      email: document.getElementById("email").value,
-      phone: document.getElementById("phone").value,
-      pincode: document.getElementById("pincode").value,
+      name: document.getElementById("name")?.value || "",
+      email: document.getElementById("email")?.value || "",
+      phone: document.getElementById("phone")?.value || "",
+      pincode: document.getElementById("pincode")?.value || "",
       // Locality removed
-      address: document.getElementById("address").value,
-      city: document.getElementById("city").value,
-      state: document.getElementById("state").value,
+      address: document.getElementById("address")?.value || "",
+      city: document.getElementById("city")?.value || "",
+      state: document.getElementById("state")?.value || "",
     };
 
     // Persist address inside checkout_data for payment page
