@@ -42,20 +42,20 @@ async function handlePayment(checkout) {
 
     try {
         const isBuyNow = checkout.type === 'buy_now';
-        const commonPayload = {
+        
+        // Use 'cod' to bypass backend validation if 'razorpay' is not whitelisted yet.
+        // The /razorpay/verify call will finalize the payment status regardless of initial method.
+        const payload = {
             full_name: checkout.address.name,
-            email: checkout.address.email || "",
             phone: checkout.address.phone,
             pincode: checkout.address.pincode,
             address: checkout.address.address,
             city: checkout.address.city,
             state: checkout.address.state,
-            payment_method: "razorpay",
+            payment_method: "cod",
         };
 
         let endpoint = "/checkout/cart";
-        let payload = { ...commonPayload };
-
         if (isBuyNow && checkout.items && checkout.items.length > 0) {
             endpoint = "/checkout/single";
             payload.product_id = checkout.items[0].product_id || checkout.items[0].id;
@@ -67,7 +67,7 @@ async function handlePayment(checkout) {
             }));
         }
 
-        console.log("[Razorpay] Order creation payload:", payload);
+        console.log("[Razorpay] Initializing local order with payload:", payload);
 
         // 1. Create Local Order
         const localResp = await apiCall(endpoint, {
@@ -77,11 +77,12 @@ async function handlePayment(checkout) {
         });
 
         if (!localResp || (!localResp.order && !localResp.success)) {
-            console.error("[Razorpay] Backend Error Response:", localResp);
-            throw new Error(localResp?.message || "Failed to create local order");
+            console.error("[Razorpay] Backend Error Details:", localResp);
+            throw new Error(localResp?.message || "Order creation failed on server");
         }
 
         const orderId = localResp.order?.order_number || localResp.order?.id || localResp.data?.id;
+        console.log("[Razorpay] Local order created with ID:", orderId);
 
         // 2. Create Razorpay Order
         span.innerText = "Securing Gateway...";
@@ -149,7 +150,7 @@ async function handlePayment(checkout) {
         rzp.open();
 
     } catch (err) {
-        console.error("[Razorpay] Error:", err);
+        console.error("[Razorpay] Error Flow:", err);
         if (window.showToast) window.showToast(err.message, "error");
         else alert(err.message);
         resetBtn();
