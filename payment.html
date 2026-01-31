@@ -12,6 +12,9 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
+
+    <!-- Razorpay -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   </head>
 
   <body class="bg-[#f1f3f6] min-h-screen page-payment">
@@ -120,11 +123,20 @@
               </div>
           </label>
 
+          <!-- Razorpay (Online Payment) -->
+          <label class="block mb-3 payment-option-label">
+              <div class="flex items-center gap-3 p-3 border rounded cursor-pointer hover:bg-blue-50">
+                <input type="radio" name="payment_method" value="razorpay" />
+                <i class="fa-solid fa-bolt text-indigo-600"></i>
+                <span class="font-bold">Online Payment <span class="text-[10px] text-indigo-500 font-black uppercase ml-1">Razorpay</span></span>
+              </div>
+          </label>
+
           <!-- COD -->
           <label class="block mb-6 payment-option-label">
-              <div class="flex items-center gap-3 p-3 border rounded cursor-pointer hover:bg-blue-50">
+              <div class="flex items-center gap-3 p-3 border rounded cursor-pointer hover:bg-blue-50 border-blue-200 bg-blue-50/30">
                 <input type="radio" name="payment_method" value="cod" checked />
-                <i class="fa-solid fa-money-bill-wave text-lg"></i>
+                <i class="fa-solid fa-money-bill-wave text-lg text-green-600"></i>
                 <span class="font-bold">Cash on Delivery</span>
               </div>
           </label>

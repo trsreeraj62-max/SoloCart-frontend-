@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Razorpay Payment Test | SoloCart</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        }
+
+        .gradient-btn {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .gradient-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
+        }
+
+        .gradient-btn:active {
+            transform: translateY(0);
+        }
+
+        .input-focus {
+            transition: all 0.3s ease;
+        }
+
+        .input-focus:focus {
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+            border-color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="max-w-md w-full px-6">
+        <div class="glass-card rounded-3xl p-8 text-center">
+            <div class="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <i class="fa-solid fa-credit-card text-3xl text-blue-600"></i>
+            </div>
+            
+            <h2 class="text-2xl font-extrabold text-slate-800 mb-2">Razorpay Checkout Test</h2>
+            <p class="text-slate-500 text-sm mb-8">Simulate a real payment transaction using Razorpay's test environment.</p>
+
+            <div class="space-y-6 text-left">
+                <div>
+                    <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Local Order ID</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">#</span>
+                        <input type="number" id="local_order_id" 
+                            class="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl input-focus focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-700"
+                            placeholder="e.g. 1024">
+                    </div>
+                </div>
+
+                <div class="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex gap-3">
+                    <i class="fa-solid fa-circle-info text-amber-500 mt-1"></i>
+                    <p class="text-[11px] text-amber-700 leading-relaxed font-medium">
+                        Ensure you are logged in. The session token will be automatically attached to the request headers.
+                    </p>
+                </div>
+
+                <button onclick="payNow()" id="pay-button"
+                    class="w-full gradient-btn text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 tracking-wider text-sm">
+                    <span>PROCEED TO PAYMENT</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </div>
+
+            <div id="status-area" class="mt-6 hidden">
+                <div class="p-3 rounded-lg text-xs font-bold" id="status-message"></div>
+            </div>
+        </div>
+
+        <p class="text-center mt-8 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
+            SoloCart Payment Gateway Sandbox
+        </p>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3"></div>
+
+    <script type="module">
+        import { apiCall, getAuthToken } from './js/main.js';
+
+        window.payNow = async function() {
+            const localOrderId = document.getElementById('local_order_id').value;
+            const btn = document.getElementById('pay-button');
+            const btnText = btn.querySelector('span');
+            
+            if(!localOrderId) {
+                if(window.showToast) window.showToast("Please enter a valid local Order ID", "error");
+                else alert("Please enter a valid local Order ID");
+                return;
+            }
+
+            const token = getAuthToken();
+            if(!token) {
+                 if(window.showToast) window.showToast("You must be logged in to test payment", "error");
+                 return;
+            }
+
+            // UI State: Loading
+            btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
+            btnText.innerText = "PREPARING ORDER...";
+
+            try {
+                // 1. Create Razorpay Order via Backend
+                const orderData = await apiCall('/razorpay/order', {
+                    method: 'POST',
+                    body: JSON.stringify({ order_id: localOrderId })
+                });
+
+                if (!orderData || orderData.error || !orderData.order_id) {
+                    throw new Error(orderData?.message || "Failed to create Razorpay order");
+                }
+
+                const options = {
+                    key: orderData.key,
+                    amount: orderData.amount,
+                    currency: orderData.currency,
+                    name: "SoloCart",
+                    description: "Payment for Order #" + localOrderId,
+                    order_id: orderData.order_id,
+                    handler: async function (response) {
+                        btnText.innerText = "VERIFYING PAYMENT...";
+                        
+                        // 2. Verify Payment
+                        const verifyResult = await apiCall('/razorpay/verify', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                local_order_id: localOrderId,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature
+                            })
+                        });
+
+                        if(verifyResult.status === 'success') {
+                            if(window.showToast) window.showToast("Payment Successful!", "success");
+                            setTimeout(() => location.reload(), 2000);
+                        } else {
+                            if(window.showToast) window.showToast(verifyResult.message || "Verification failed", "error");
+                        }
+                        
+                        resetBtn();
+                    },
+                    prefill: {
+                        name: orderData.user?.name || "",
+                        email: orderData.user?.email || "",
+                        contact: orderData.user?.phone || ""
+                    },
+                    theme: { color: "#2563eb" },
+                    modal: {
+                        ondismiss: function() {
+                            resetBtn();
+                        }
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.open();
+
+            } catch (err) {
+                console.error(err);
+                if(window.showToast) window.showToast(err.message, "error");
+                resetBtn();
+            }
+        }
+
+        function resetBtn() {
+            const btn = document.getElementById('pay-button');
+            const btnText = btn.querySelector('span');
+            btn.disabled = false;
+            btn.classList.remove('opacity-70', 'cursor-not-allowed');
+            btnText.innerText = "PROCEED TO PAYMENT";
+        }
+    </script>
+</body>
+</html>

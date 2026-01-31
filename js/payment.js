@@ -131,36 +131,107 @@ async function initPayment() {
       console.log("[Payment] API Response:", resp);
 
       if (resp && (resp.order || resp.success === true)) {
-        if (window.showToast) window.showToast("Order Successful!");
         const orderId = resp.order?.order_number || resp.order?.id || resp.data?.id || "UNKNOWN";
         console.log("[Payment] Order created with ID:", orderId);
-        
-        // Final verification check
-        if (orderId === "UNKNOWN") {
-             console.error("[Payment] Warning: Order ID missing in response:", resp);
-        }
 
-        localStorage.removeItem(CHECKOUT_KEY);
-        localStorage.removeItem("buy_now_item");
-        localStorage.removeItem("checkout_type");
-        setTimeout(() => {
-          window.location.href = `/checkout-success.html?order_id=${orderId}`;
-        }, 900);
+        // --- RAZORPAY INTEGRATION ---
+        if (payment_method === "razorpay") {
+          payBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>Initiating Razorpay...';
+          
+          try {
+            // 1. Get Razorpay Order for this local order
+            const rzpOrder = await apiCall("/razorpay/order", {
+              method: "POST",
+              body: JSON.stringify({ order_id: orderId })
+            });
+
+            if (!rzpOrder || !rzpOrder.order_id) {
+              throw new Error(rzpOrder?.message || "Failed to initialize Razorpay order");
+            }
+
+            const options = {
+              key: rzpOrder.key,
+              amount: rzpOrder.amount,
+              currency: rzpOrder.currency,
+              name: "SoloCart",
+              description: "Order #" + orderId,
+              order_id: rzpOrder.order_id,
+              handler: async function (response) {
+                payBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>Verifying...';
+                
+                // 2. Verify Payment
+                const verify = await apiCall("/razorpay/verify", {
+                  method: "POST",
+                  body: JSON.stringify({
+                    local_order_id: orderId,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature
+                  })
+                });
+
+                if (verify.status === "success") {
+                  if (window.showToast) window.showToast("Payment Successful!");
+                  finishCheckout(orderId);
+                } else {
+                  if (window.showToast) window.showToast(verify.message || "Payment verification failed", "error");
+                  resetPayBtn(payBtn, origText);
+                }
+              },
+              prefill: {
+                name: rzpOrder.user?.name || checkout.address?.name || "",
+                email: rzpOrder.user?.email || checkout.address?.email || "",
+                contact: rzpOrder.user?.phone || checkout.address?.phone || ""
+              },
+              theme: { color: "#2874f0" },
+              modal: {
+                ondismiss: function() {
+                  console.log("[Payment] Razorpay modal dismissed");
+                  resetPayBtn(payBtn, origText);
+                }
+              }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.open();
+            return; // Exit and wait for handler
+          } catch (rzpErr) {
+            console.error("[Payment] Razorpay Error:", rzpErr);
+            if (window.showToast) window.showToast(rzpErr.message, "error");
+            resetPayBtn(payBtn, origText);
+            return;
+          }
+        }
+        // --- END RAZORPAY ---
+
+        if (window.showToast) window.showToast("Order Successful!");
+        finishCheckout(orderId);
       } else {
         console.error("[Payment] API returned failure:", resp);
         const errMsg = resp?.message || "Order creation failed (Unknown error)";
         if (window.showToast) window.showToast(errMsg, "error");
-        
-        payBtn.disabled = false;
-        payBtn.innerHTML = origText;
+        resetPayBtn(payBtn, origText);
       }
     } catch (e) {
       console.error("Payment exception:", e);
       if (window.showToast) window.showToast("Client error: " + e.message, "error");
-      payBtn.disabled = false;
-      payBtn.innerHTML = origText;
+      resetPayBtn(payBtn, origText);
     }
   });
+}
+
+function finishCheckout(orderId) {
+  localStorage.removeItem(CHECKOUT_KEY);
+  localStorage.removeItem("buy_now_item");
+  localStorage.removeItem("checkout_type");
+  setTimeout(() => {
+    window.location.href = `/checkout-success.html?order_id=${orderId}`;
+  }, 900);
+}
+
+function resetPayBtn(btn, origText) {
+  btn.disabled = false;
+  btn.innerHTML = origText;
 }
 
 function renderOrder(items) {
