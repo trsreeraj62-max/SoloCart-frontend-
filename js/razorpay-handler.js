@@ -49,7 +49,7 @@ async function handlePayment(checkout) {
             address: checkout.address.address,
             city: checkout.address.city,
             state: checkout.address.state,
-            payment_method: "razorpay",
+            payment_method: "cod",
         };
 
         let endpoint = "/checkout/cart";
