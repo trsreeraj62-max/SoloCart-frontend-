@@ -44,12 +44,13 @@ async function handlePayment(checkout) {
         const isBuyNow = checkout.type === 'buy_now';
         const commonPayload = {
             full_name: checkout.address.name,
+            email: checkout.address.email || "",
             phone: checkout.address.phone,
             pincode: checkout.address.pincode,
             address: checkout.address.address,
             city: checkout.address.city,
             state: checkout.address.state,
-            payment_method: "cod",
+            payment_method: "razorpay",
         };
 
         let endpoint = "/checkout/cart";
@@ -66,6 +67,8 @@ async function handlePayment(checkout) {
             }));
         }
 
+        console.log("[Razorpay] Order creation payload:", payload);
+
         // 1. Create Local Order
         const localResp = await apiCall(endpoint, {
             method: "POST",
@@ -74,6 +77,7 @@ async function handlePayment(checkout) {
         });
 
         if (!localResp || (!localResp.order && !localResp.success)) {
+            console.error("[Razorpay] Backend Error Response:", localResp);
             throw new Error(localResp?.message || "Failed to create local order");
         }
 

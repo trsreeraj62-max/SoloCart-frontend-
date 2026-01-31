@@ -431,6 +431,7 @@ function setupEventListeners() {
     e.preventDefault();
     savedAddress = {
       name: document.getElementById("name").value,
+      email: document.getElementById("email").value,
       phone: document.getElementById("phone").value,
       pincode: document.getElementById("pincode").value,
       // Locality removed
