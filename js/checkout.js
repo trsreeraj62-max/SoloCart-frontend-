@@ -532,25 +532,54 @@ function setupEventListeners() {
 }
 
 async function completeOrder() {
-  const btn = document.getElementById("complete-order-btn");
+  const btn = document.getElementById("confirm-summary-btn");
   if (btn) {
     btn.disabled = true;
-    btn.innerText = "Transmitting Order...";
+    btn.innerText = "Placing Order...";
   }
 
   try {
-    const data = await apiCall("/orders", {
+    const raw = localStorage.getItem(CHECKOUT_KEY);
+    const checkout = raw ? JSON.parse(raw) : {};
+    const isBuyNow = checkout.type === 'buy_now';
+
+    const payload = {
+      full_name: savedAddress.name,
+      phone: savedAddress.phone,
+      pincode: savedAddress.pincode,
+      address: savedAddress.address,
+      city: savedAddress.city,
+      state: savedAddress.state,
+      payment_method: "cod",
+    };
+
+    let endpoint = "/checkout/cart";
+    if (isBuyNow && checkout.items && checkout.items.length > 0) {
+        endpoint = "/checkout/single";
+        payload.product_id = checkout.items[0].product_id || checkout.items[0].id;
+        payload.quantity = checkout.items[0].quantity || 1;
+    } else {
+        payload.items = (checkout.items || []).map(it => ({
+            product_id: it.product_id || it.id,
+            quantity: it.quantity || it.qty || 1
+        }));
+    }
+
+    const data = await apiCall(endpoint, {
       method: "POST",
-      body: JSON.stringify({
-        address: savedAddress,
-        payment_method: "cod",
-      }),
+      body: JSON.stringify(payload),
       requireAuth: true,
     });
 
     if (data && (data.order || data.success)) {
       if (window.showToast) window.showToast("Order Successful!");
-      const orderId = data.order?.order_number || data.order?.id || "SUCCESS";
+      const orderId = data.order?.order_number || data.order?.id || data.data?.id || "SUCCESS";
+      
+      // Clear checkout data
+      localStorage.removeItem(CHECKOUT_KEY);
+      localStorage.removeItem("buy_now_item");
+      localStorage.removeItem("checkout_type");
+
       setTimeout(() => {
         window.location.href = `/checkout-success.html?order_id=${orderId}`;
       }, 1500);
@@ -559,7 +588,7 @@ async function completeOrder() {
         window.showToast(data?.message || "Order failed", "error");
       if (btn) {
         btn.disabled = false;
-        btn.innerText = "CONFIRM ORDER";
+        btn.innerText = "PLACE ORDER";
       }
     }
   } catch (e) {
@@ -567,7 +596,7 @@ async function completeOrder() {
     if (window.showToast) window.showToast("Server error", "error");
     if (btn) {
       btn.disabled = false;
-      btn.innerText = "CONFIRM ORDER";
+      btn.innerText = "PLACE ORDER";
     }
   }
 }
