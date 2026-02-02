@@ -35,7 +35,6 @@ export function getAuthToken() {
 }
 
 /* ---------------- API CALL ---------------- */
-/* ---------------- API CALL ---------------- */
 /**
  * Generic API Caller with Timeout & Error Handling
  * Handles Render cold starts (wait up to 15s)
