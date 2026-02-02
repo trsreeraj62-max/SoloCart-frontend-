@@ -35,22 +35,10 @@ export function getAuthToken() {
 }
 
 /* ---------------- API CALL ---------------- */
-let isRefreshing = false;
-let refreshSubscribers = [];
-
-function subscribeTokenRefresh(cb) {
-  refreshSubscribers.push(cb);
-}
-
-function onRefreshed(token) {
-  refreshSubscribers.forEach((cb) => cb(token));
-  refreshSubscribers = [];
-}
-
+/* ---------------- API CALL ---------------- */
 /**
  * Generic API Caller with Timeout & Error Handling
  * Handles Render cold starts (wait up to 15s)
- * Acts as an Interceptor for 401 token refresh
  */
 export async function apiCall(endpoint, options = {}) {
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
@@ -81,64 +69,6 @@ export async function apiCall(endpoint, options = {}) {
     const res = await fetch(url, fetchOptions);
     clearTimeout(id);
 
-    // AUTOMATIC INTERCEPTOR: Handle 401 Unauthorized (Token Expired)
-    if (res.status === 401 && !options._retry && !endpoint.includes("/refresh") && !endpoint.includes("/login")) {
-      const currentToken = getAuthToken();
-      
-      if (!isRefreshing) {
-        isRefreshing = true;
-        try {
-          console.log("[Auth] Token expired. Attempting automatic refresh...");
-          const refreshUrl = `${CONFIG.API_BASE_URL}/refresh`.replace(/^http:/, "https:");
-          
-          const refreshRes = await fetch(refreshUrl, {
-            method: "POST",
-            headers: { 
-              "Accept": "application/json",
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${currentToken}`
-            },
-            credentials: "include",
-          });
-
-          if (refreshRes.ok) {
-            const data = await refreshRes.json();
-            const newToken = data.token || data.access_token || (data.data && (data.data.token || data.data.access_token));
-            
-            if (newToken) {
-              console.log("[Auth] Token refreshed successfully.");
-              localStorage.setItem("auth_token", newToken);
-              if (data.user || data.data?.user) {
-                localStorage.setItem("user_data", JSON.stringify(data.user || data.data.user));
-              }
-              isRefreshing = false;
-              onRefreshed(newToken);
-              return apiCall(endpoint, { ...options, _retry: true });
-            }
-          }
-        } catch (err) {
-          console.error("[Auth] Refresh process failed:", err);
-        }
-        
-        // Refresh failed or no token
-        isRefreshing = false;
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("user_data");
-        localStorage.removeItem("user_profile");
-        if (!options.skipRedirect) {
-          window.location.href = "/login.html";
-          return { success: false, message: "Session expired", statusCode: 401 };
-        }
-      } else {
-        // Already refreshing, queue this request
-        console.log("[Auth] Refresh in progress, queuing request...");
-        return new Promise((resolve) => {
-          subscribeTokenRefresh((newToken) => {
-            resolve(apiCall(endpoint, { ...options, _retry: true }));
-          });
-        });
-      }
-    }
 
     const text = await res.text();
     let data = {};
