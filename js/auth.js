@@ -363,16 +363,14 @@ async function handleResendOtp() {
   }
 
   try {
-    const res = await fetch(`${CONFIG.API_BASE_URL}/otp/resend`, {
+    const data = await apiCall("/otp/resend", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
+      skipRedirect: true
     });
 
-    const data = await res.json();
-
     // HTTP 200-299 range = success
-    if (res.ok) {
+    if (data && data.success !== false) {
       if (window.showToast)
         window.showToast("OTP sent. Check your email.", "success");
 
