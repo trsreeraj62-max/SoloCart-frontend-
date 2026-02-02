@@ -50,6 +50,9 @@ async function handlePayment(checkout) {
         const isBuyNow = checkout.type === 'buy_now';
         
         // PAYLOAD CONFIG
+        // Note: We use 'cod' for the initial checkout endpoint because the backend validation 
+        // currently only accepts 'cod' to create a pending order. We handle the actual 
+        // payment logic (Razorpay vs COD) after this order is successfully created.
         const payload = {
             full_name: checkout.address.name,
             phone: checkout.address.phone,
@@ -57,7 +60,7 @@ async function handlePayment(checkout) {
             address: checkout.address.address,
             city: checkout.address.city,
             state: checkout.address.state,
-            payment_method: selectedMethod, 
+            payment_method: "cod", 
         };
 
         let endpoint = "/checkout/cart";
