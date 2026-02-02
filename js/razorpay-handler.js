@@ -34,19 +34,22 @@ async function initRazorpayFlow() {
 
 async function handlePayment(checkout) {
     const btn = document.getElementById("pay-btn");
-    const span = btn.querySelector("span");
+    const span = document.getElementById("pay-btn-text");
     const icon = btn.querySelector("i");
     
+    // Get selected payment method
+    const selectedMethod = document.querySelector('input[name="payment_method"]:checked')?.value || "razorpay";
+    const isCOD = selectedMethod === "cod";
+    console.log("[Payment-Flow] Selected method:", selectedMethod, "isCOD:", isCOD);
+
     btn.disabled = true;
-    span.innerText = "Initializing...";
+    span.innerText = isCOD ? "Confirming Order..." : "Initializing...";
     icon.className = "fas fa-spinner fa-spin text-xs";
 
     try {
         const isBuyNow = checkout.type === 'buy_now';
         
-        // PAYLOAD CONFIG: We use 'cod' here because the backend /checkout validation 
-        // is currently restricted to 'cod'. This creates the pending order ID.
-        // We do NOT include the email here as it might trigger further validation errors.
+        // PAYLOAD CONFIG
         const payload = {
             full_name: checkout.address.name,
             phone: checkout.address.phone,
@@ -54,7 +57,7 @@ async function handlePayment(checkout) {
             address: checkout.address.address,
             city: checkout.address.city,
             state: checkout.address.state,
-            payment_method: "cod", 
+            payment_method: selectedMethod, 
         };
 
         let endpoint = "/checkout/cart";
@@ -69,7 +72,7 @@ async function handlePayment(checkout) {
             }));
         }
 
-        console.log("[Razorpay-v2] Initializing local order with payload:", payload);
+        console.log("[Payment-Flow] Creating local order with payload:", payload);
 
         // 1. Create Local Order
         const localResp = await apiCall(endpoint, {
@@ -79,14 +82,29 @@ async function handlePayment(checkout) {
         });
 
         if (!localResp || (!localResp.order && !localResp.success)) {
-            console.error("[Razorpay-v2] Backend Validation FAILED:", localResp);
+            console.error("[Payment-Flow] Backend Validation FAILED:", localResp);
             throw new Error(localResp?.message || "Order creation failed on server");
         }
 
         const orderId = localResp.order?.order_number || localResp.order?.id || localResp.data?.id;
-        console.log("[Razorpay-v2] Local order created successfully. ID:", orderId);
+        console.log("[Payment-Flow] Local order created successfully. ID:", orderId);
 
-        // 2. Create Razorpay Order
+        // EXTRA: If COD, we are DONE. Redirect to success.
+        if (isCOD) {
+            if (window.showToast) window.showToast("Order Placed Successfully!");
+            
+            // Cleanup
+            localStorage.removeItem(CHECKOUT_KEY);
+            localStorage.removeItem("buy_now_item");
+            localStorage.removeItem("checkout_type");
+
+            setTimeout(() => {
+                window.location.href = `/checkout-success.html?order_id=${orderId}&payment_method=cod`;
+            }, 1000);
+            return; // EXIT
+        }
+
+        // 2. Create Razorpay Order (Only for Online)
         span.innerText = "Securing Gateway...";
         const rzpData = await apiCall("/razorpay/order", {
             method: "POST",
@@ -129,7 +147,7 @@ async function handlePayment(checkout) {
                     localStorage.removeItem("checkout_type");
 
                     setTimeout(() => {
-                        window.location.href = `/checkout-success.html?order_id=${orderId}`;
+                        window.location.href = `/checkout-success.html?order_id=${orderId}&payment_method=razorpay`;
                     }, 1000);
                 } else {
                     throw new Error(verify.message || "Verification failed");
@@ -161,10 +179,10 @@ async function handlePayment(checkout) {
 
 function resetBtn() {
     const btn = document.getElementById("pay-btn");
-    const span = btn.querySelector("span");
+    const span = document.getElementById("pay-btn-text");
     const icon = btn.querySelector("i");
     btn.disabled = false;
-    span.innerText = "Pay Now";
+    span.innerText = "Confirm & Pay";
     icon.className = "fa-solid fa-arrow-right text-xs";
 }
 

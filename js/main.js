@@ -35,9 +35,22 @@ export function getAuthToken() {
 }
 
 /* ---------------- API CALL ---------------- */
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+function subscribeTokenRefresh(cb) {
+  refreshSubscribers.push(cb);
+}
+
+function onRefreshed(token) {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+}
+
 /**
  * Generic API Caller with Timeout & Error Handling
  * Handles Render cold starts (wait up to 15s)
+ * Acts as an Interceptor for 401 token refresh
  */
 export async function apiCall(endpoint, options = {}) {
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
@@ -78,6 +91,62 @@ export async function apiCall(endpoint, options = {}) {
 
     if (!res.ok) {
       if (res.status === 401) {
+        // AUTOMATIC INTERCEPTOR: Handle 401 Unauthorized (Token Expired)
+        const currentToken = getAuthToken();
+
+        // Only attempt refresh if we have a token and it's not a refresh/login attempt
+        if (currentToken && !endpoint.includes("/refresh") && !endpoint.includes("/login") && !options._retry) {
+           if (!isRefreshing) {
+              isRefreshing = true;
+              console.log("Token expired. Attempting automatic refresh...");
+
+              try {
+                // Call the /refresh endpoint (using current expired token to identify session)
+                const refreshPath = "/refresh";
+                const refreshUrl = `${CONFIG.API_BASE_URL}${refreshPath}`.replace(/^http:/, "https:");
+
+                const refreshRes = await fetch(refreshUrl, {
+                  method: "POST",
+                  headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${currentToken}`,
+                  },
+                });
+
+                if (refreshRes.ok) {
+                  const refreshData = await refreshRes.json();
+                  const newToken = refreshData.access_token || refreshData.token;
+
+                  if (newToken) {
+                    console.log("Token refreshed successfully.");
+                    localStorage.setItem("auth_token", newToken);
+                    isRefreshing = false;
+                    onRefreshed(newToken);
+                    
+                    // Retry original request
+                    return apiCall(endpoint, { ...options, _retry: true });
+                  }
+                }
+              } catch (refreshErr) {
+                console.error("Token refresh failed:", refreshErr);
+              }
+
+              // If refresh logic falls through or fails
+              isRefreshing = false;
+              console.warn("Refresh failed or no new token. Logging out...");
+           } else {
+             // Already refreshing, queue this request
+             console.log("Refresh in progress, queuing request...");
+             return new Promise((resolve) => {
+               subscribeTokenRefresh((newToken) => {
+                 resolve(apiCall(endpoint, { ...options, _retry: true }));
+               });
+             });
+           }
+        }
+
+        // logout logic if no token, failed refresh, or not retryable
         localStorage.removeItem("auth_token");
         localStorage.removeItem("user_data");
         localStorage.removeItem("user_profile");

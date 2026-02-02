@@ -65,10 +65,51 @@
             <div class="premium-card rounded-[2.5rem] p-8 md:p-10">
                 <div class="text-center mb-10">
                     <div class="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-indigo-600">
-                        <i class="fa-solid fa-bolt-lightning text-3xl"></i>
+                        <i class="fa-solid fa-credit-card text-3xl"></i>
                     </div>
-                    <h1 class="text-2xl font-black text-slate-800 tracking-tight mb-2">Complete Payment</h1>
-                    <p class="text-slate-500 text-sm font-medium">Please finalize your transaction using Razorpay Secure.</p>
+                    <h1 class="text-2xl font-black text-slate-800 tracking-tight mb-2">Select Payment</h1>
+                    <p class="text-slate-500 text-sm font-medium">Choose your preferred payment method.</p>
+                </div>
+
+                <!-- Payment Selection -->
+                <div class="space-y-4 mb-8">
+                    <!-- Razorpay Option -->
+                    <label class="relative block cursor-pointer group">
+                        <input type="radio" name="payment_method" value="razorpay" checked class="peer sr-only">
+                        <div class="flex items-center justify-between p-6 bg-white border-2 border-slate-100 rounded-3xl transition-all peer-checked:border-indigo-600 peer-checked:bg-indigo-50/30 group-hover:border-slate-200">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600">
+                                    <i class="fa-solid fa-bolt-lightning text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="font-black text-slate-800 text-sm tracking-tight">Online Payment</p>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Razorpay / UP / Cards</p>
+                                </div>
+                            </div>
+                            <div class="w-6 h-6 border-2 border-slate-200 rounded-full flex items-center justify-center peer-checked:border-indigo-600 peer-checked:bg-indigo-600">
+                                <div class="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- COD Option -->
+                    <label class="relative block cursor-pointer group">
+                        <input type="radio" name="payment_method" value="cod" class="peer sr-only">
+                        <div class="flex items-center justify-between p-6 bg-white border-2 border-slate-100 rounded-3xl transition-all peer-checked:border-indigo-600 peer-checked:bg-indigo-50/30 group-hover:border-slate-200">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600">
+                                    <i class="fa-solid fa-truck-fast text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="font-black text-slate-800 text-sm tracking-tight">Cash on Delivery</p>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Pay when you receive</p>
+                                </div>
+                            </div>
+                            <div class="w-6 h-6 border-2 border-slate-200 rounded-full flex items-center justify-center peer-checked:border-indigo-600 peer-checked:bg-indigo-600">
+                                <div class="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                        </div>
+                    </label>
                 </div>
 
                 <!-- Order Info -->
@@ -91,13 +132,13 @@
                 </div>
 
                 <button id="pay-btn" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-slate-900 transition-all transform active:scale-[0.98] flex items-center justify-center gap-3">
-                    <span>Pay Now</span>
+                    <span id="pay-btn-text">Confirm & Pay</span>
                     <i class="fa-solid fa-arrow-right text-xs"></i>
                 </button>
 
                 <p class="text-center mt-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-center gap-2">
-                    <i class="fas fa-shield-halved text-emerald-500"></i>
-                    Powering by Razorpay Secure
+                    <i class="fas fa-lock text-emerald-500"></i>
+                    Secure SSL Encrypted Checkout
                 </p>
             </div>
         </div>
