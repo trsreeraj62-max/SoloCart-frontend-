@@ -39,6 +39,18 @@ export function getAuthToken() {
  * Generic API Caller with Timeout & Error Handling
  * Handles Render cold starts (wait up to 15s)
  */
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+function subscribeTokenRefresh(cb) {
+  refreshSubscribers.push(cb);
+}
+
+function onRefreshed(token) {
+  refreshSubscribers.map((cb) => cb(token));
+  refreshSubscribers = [];
+}
+
 export async function apiCall(endpoint, options = {}) {
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   const url = `${CONFIG.API_BASE_URL}${path}`.replace(/^http:/, "https:");
@@ -47,25 +59,81 @@ export async function apiCall(endpoint, options = {}) {
   const headers = {
     Accept: "application/json",
     "Content-Type": "application/json",
+    ...options.headers,
   };
 
   if (token) headers.Authorization = `Bearer ${token}`;
   if (options.body instanceof FormData) delete headers["Content-Type"];
 
-  // Timeout logic (Render free tier fix)
-  const timeout = options.timeout || 15000; // default 15s
+  const timeout = options.timeout || 15000;
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort("timeout"), timeout);
 
   try {
-    const res = await fetch(url, {
+    const fetchOptions = {
       ...options,
       headers,
       signal: controller.signal,
       cache: "no-store",
-    });
-    
+      credentials: "include", // Required for refresh token cookie
+    };
+
+    const res = await fetch(url, fetchOptions);
     clearTimeout(id);
+
+    // Handle 401 Unauthorized - Attempt Refresh
+    if (res.status === 401 && !options._retry && !endpoint.includes("/refresh") && !endpoint.includes("/login")) {
+      if (!isRefreshing) {
+        isRefreshing = true;
+        try {
+          console.log("[Auth] Token expired. Attempting refresh...");
+          const refreshRes = await fetch(`${CONFIG.API_BASE_URL}/refresh`, {
+            method: "POST",
+            headers: { "Accept": "application/json" },
+            credentials: "include",
+          });
+
+          if (refreshRes.ok) {
+            const data = await refreshRes.json();
+            const newToken = data.token || data.access_token || (data.data && (data.data.token || data.data.access_token));
+            
+            if (newToken) {
+              console.log("[Auth] Token refreshed successfully.");
+              localStorage.setItem("auth_token", newToken);
+              if (data.user || data.data?.user) {
+                localStorage.setItem("user_data", JSON.stringify(data.user || data.data.user));
+              }
+              isRefreshing = false;
+              onRefreshed(newToken);
+            } else {
+                throw new Error("No token returned from refresh");
+            }
+          } else {
+            throw new Error("Refresh failed");
+          }
+        } catch (err) {
+          console.error("[Auth] Refresh failed, redirecting to login:", err);
+          isRefreshing = false;
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("user_data");
+          localStorage.removeItem("user_profile");
+          if (!options.skipRedirect) {
+            window.location.href = "/login.html";
+          }
+          return { success: false, message: "Session expired", statusCode: 401 };
+        }
+      }
+
+      // Wait for refresh to complete if another request is already refreshing
+      return new Promise((resolve) => {
+        subscribeTokenRefresh((newToken) => {
+          options._retry = true;
+          // Clone headers and update authorization
+          const newHeaders = { ...headers, Authorization: `Bearer ${newToken}` };
+          resolve(apiCall(endpoint, { ...options, headers: newHeaders, _retry: true }));
+        });
+      });
+    }
 
     const text = await res.text();
     let data = {};
@@ -77,16 +145,12 @@ export async function apiCall(endpoint, options = {}) {
     }
 
     if (!res.ok) {
-      if (res.status === 401) {
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("user_data");
-        localStorage.removeItem("user_profile");
-        
-        if (!options.skipRedirect) {
-             window.location.href = "/login.html";
+        // If it's 401 here, it means even the retry or the login attempt failed
+        if (res.status === 401 && !options.skipRedirect) {
+            localStorage.removeItem("auth_token");
+            window.location.href = "/login.html";
         }
-      }
-      return { success: false, ...data, statusCode: res.status };
+        return { success: false, ...data, statusCode: res.status };
     }
 
     return data;
@@ -94,16 +158,11 @@ export async function apiCall(endpoint, options = {}) {
     clearTimeout(id);
     const isTimeout = err.name === 'AbortError' || err === 'timeout' || (err.message && err.message.includes('timeout'));
     
-    if (!isTimeout) {
-      console.error("API ERROR:", err);
-    }
-
     if (isTimeout) {
-      return { success: false, message: "Server connection timed out (Render cold start). Please refresh.", timeout: true };
+      return { success: false, message: "Server connection timed out. Please refresh.", timeout: true };
     }
     return { success: false, message: "Network error: " + err.message };
   } finally {
-    // Ensure loaders are hidden if any global loader exists
     const loader = document.getElementById("loading") || document.getElementById("global-loader");
     if (loader) loader.style.display = "none";
   }
