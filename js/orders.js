@@ -174,7 +174,9 @@ function renderOrders(orders) {
       <div class="bg-white p-4 rounded-sm shadow-sm border border-slate-100 flex gap-6 hover:shadow-md transition-shadow mb-3 relative group">
           <a href="/order-details.html?id=${order.id}" class="absolute inset-0 z-0 text-transparent">View</a>
           <div class="w-20 h-20 flex-shrink-0 border rounded-sm p-1 z-10 bg-white relative">
-              <img src="${imageUrl}" class="h-full w-full object-contain">
+              <a href="/order-details.html?id=${order.id}">
+                  <img src="${imageUrl}" class="h-full w-full object-contain hover:scale-105 transition-transform" alt="${title}">
+              </a>
           </div>
           <div class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-4 z-10 relative pointer-events-none">
               <div class="pointer-events-auto">

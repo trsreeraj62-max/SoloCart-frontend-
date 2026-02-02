@@ -350,10 +350,14 @@ function renderDetails(order) {
         return `
             <div class="p-6 flex gap-6 hover:bg-slate-50 transition-colors">
                 <div class="w-20 h-20 border rounded-sm p-2 flex-shrink-0 bg-white">
-                    <img src="${imageUrl}" class="h-full w-full object-contain">
+                    <a href="/product-details.html?id=${product.id || product.product_id}">
+                        <img src="${imageUrl}" class="h-full w-full object-contain hover:scale-110 transition-transform">
+                    </a>
                 </div>
                 <div class="flex-grow">
-                    <h4 class="text-sm font-bold text-slate-800">${product.name || "Unavailable"}</h4>
+                    <h4 class="text-sm font-bold text-slate-800 hover:text-[#2874f0] transition-colors">
+                        <a href="/product-details.html?id=${product.id || product.product_id}">${product.name || "Unavailable"}</a>
+                    </h4>
                     <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">Quantity: ${item.quantity}</p>
                     <div class="flex items-center gap-3 mt-4">
                         <span class="text-base font-black text-slate-900">₹${Number((item.price || 0) * item.quantity).toLocaleString()}</span>
